@@ -262,14 +262,20 @@
 
     // ── Image fetching from Fandom API ────────────────────────────────────────
     async function fetchBatch(names) {
-        const url = `https://stealabrainrot.fandom.com/api.php?action=query&titles=${encodeURIComponent(names.join('|'))}&prop=pageimages&piprop=thumbnail&pithumbsize=400&format=json&origin=*`;
-        try {
-            const r = await fetch(url);
-            const data = await r.json();
-            Object.values(data.query?.pages || {}).forEach(p => {
-                if (p.thumbnail?.source) imageCache[p.title] = p.thumbnail.source;
-            });
-        } catch(e) {}
+        const apiUrl = `https://stealabrainrot.fandom.com/api.php?action=query&titles=${encodeURIComponent(names.join('|'))}&prop=pageimages&piprop=thumbnail&pithumbsize=400&format=json&origin=*`;
+        // Try direct first, fall back to CORS proxy
+        const urls = [apiUrl, `https://corsproxy.io/?${encodeURIComponent(apiUrl)}`];
+        for (const url of urls) {
+            try {
+                const r = await fetch(url);
+                if (!r.ok) continue;
+                const data = await r.json();
+                Object.values(data.query?.pages || {}).forEach(p => {
+                    if (p.thumbnail?.source) imageCache[p.title] = p.thumbnail.source;
+                });
+                return; // success
+            } catch(e) {}
+        }
     }
 
     async function fetchAllImages() {
