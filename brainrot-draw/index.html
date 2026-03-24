@@ -260,22 +260,28 @@
         finally { imgEl.style.opacity = '1'; }
     }
 
-    // ── Image fetching from Fandom API ────────────────────────────────────────
+    // ── Image fetching via JSONP (bypasses CORS) ─────────────────────────────
+    function jsonp(url) {
+        return new Promise((resolve, reject) => {
+            const cb = '__cb_' + Date.now() + '_' + (Math.random() * 1e6 | 0);
+            const t = setTimeout(() => { cleanup(); reject(); }, 12000);
+            function cleanup() { clearTimeout(t); delete window[cb]; s.remove(); }
+            window[cb] = data => { cleanup(); resolve(data); };
+            const s = document.createElement('script');
+            s.onerror = () => { cleanup(); reject(); };
+            s.src = url + '&callback=' + cb;
+            document.head.appendChild(s);
+        });
+    }
+
     async function fetchBatch(names) {
-        const apiUrl = `https://stealabrainrot.fandom.com/api.php?action=query&titles=${encodeURIComponent(names.join('|'))}&prop=pageimages&piprop=thumbnail&pithumbsize=400&format=json&origin=*`;
-        // Try direct first, fall back to CORS proxy
-        const urls = [apiUrl, `https://corsproxy.io/?${encodeURIComponent(apiUrl)}`];
-        for (const url of urls) {
-            try {
-                const r = await fetch(url);
-                if (!r.ok) continue;
-                const data = await r.json();
-                Object.values(data.query?.pages || {}).forEach(p => {
-                    if (p.thumbnail?.source) imageCache[p.title] = p.thumbnail.source;
-                });
-                return; // success
-            } catch(e) {}
-        }
+        const url = `https://stealabrainrot.fandom.com/api.php?action=query&titles=${encodeURIComponent(names.join('|'))}&prop=pageimages&piprop=thumbnail&pithumbsize=400&format=json`;
+        try {
+            const data = await jsonp(url);
+            Object.values(data.query?.pages || {}).forEach(p => {
+                if (p.thumbnail?.source) imageCache[p.title] = p.thumbnail.source;
+            });
+        } catch(e) {}
     }
 
     async function fetchAllImages() {
