@@ -34,17 +34,14 @@
         .btn-print { background: var(--green); color: white; padding: 11px 28px; border-radius: 40px; border: none; cursor: pointer; font-weight: bold; font-size: 1rem; box-shadow: 0 4px 8px rgba(0,0,0,0.15); transition: 0.2s; }
         .btn-print:hover { transform: scale(1.05); background: #155f30; }
 
-        .category-filters { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; padding: 18px 15px 10px; }
-        .cat-btn { padding: 7px 16px; border-radius: 20px; border: 2px solid #ccc; background: white; cursor: pointer; font-size: 0.9rem; font-weight: bold; transition: 0.2s; color: #333; }
-        .cat-btn:hover { border-color: var(--accent); color: var(--accent); }
-        .cat-btn.active { background: var(--dark); color: white; border-color: var(--dark); }
+        .count-bar { padding: 10px; color: #888; font-size: 0.9rem; }
 
-        .gallery { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 18px; padding: 18px; max-width: 1200px; margin: 0 auto; }
-        .card { background: white; border-radius: 18px; padding: 15px 12px 12px; cursor: pointer; box-shadow: 0 4px 12px rgba(0,0,0,0.07); transition: 0.25s; border: 2px solid transparent; display: flex; flex-direction: column; align-items: center; min-height: 185px; }
+        .gallery { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 18px; padding: 18px; max-width: 1400px; margin: 0 auto; }
+        .card { background: white; border-radius: 18px; padding: 15px 12px 12px; cursor: pointer; box-shadow: 0 4px 12px rgba(0,0,0,0.07); transition: 0.25s; border: 2px solid transparent; display: flex; flex-direction: column; align-items: center; min-height: 175px; }
         .card:hover { border-color: var(--accent); transform: translateY(-5px); box-shadow: 0 8px 20px rgba(0,0,0,0.12); }
         .card img { width: 100px; height: 100px; object-fit: contain; margin-bottom: 10px; }
-        .card b { font-size: 0.88rem; color: #222; text-align: center; line-height: 1.3; direction: ltr; }
-        .card small { font-size: 0.75rem; color: #999; margin-top: 5px; }
+        .card-placeholder { width: 100px; height: 100px; display: flex; align-items: center; justify-content: center; font-size: 2.5rem; margin-bottom: 10px; }
+        .card b { font-size: 0.82rem; color: #222; text-align: center; line-height: 1.3; direction: ltr; word-break: break-word; }
 
         /* ── Tutorial overlay ── */
         #tutorial { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: white; z-index: 1000; flex-direction: column; align-items: center; overflow-y: auto; }
@@ -59,13 +56,7 @@
 
         #coord-hint { font-size: 3.5rem; font-weight: bold; color: var(--red); margin: 8px 0 0; letter-spacing: 2px; }
 
-        .grid-wrapper {
-            position: relative;
-            width: 90vw;
-            max-width: 380px;
-            aspect-ratio: 1 / 1;
-            margin: 35px auto 10px;
-        }
+        .grid-wrapper { position: relative; width: 90vw; max-width: 380px; aspect-ratio: 1/1; margin: 35px auto 10px; }
         .labels-top { position: absolute; top: -34px; width: 100%; display: flex; justify-content: space-around; font-weight: bold; color: var(--accent); font-size: 1.5rem; }
         .labels-side { position: absolute; right: -34px; height: 100%; display: flex; flex-direction: column; justify-content: space-around; font-weight: bold; color: var(--accent); font-size: 1.5rem; }
         .image-container { position: relative; width: 100%; height: 100%; border: 5px solid #222; background: white; display: grid; grid-template-columns: repeat(4, 1fr); grid-template-rows: repeat(4, 1fr); box-shadow: 0 10px 30px rgba(0,0,0,0.2); }
@@ -84,7 +75,6 @@
         .btn-red  { background: var(--accent); color: white; }
         .btn-grey { background: #666; color: white; }
 
-        /* ── Print template ── */
         #print-template { display: none; }
         .printable-grid { width: 560px; height: 560px; border: 6px solid black; display: grid; grid-template-columns: repeat(4, 1fr); grid-template-rows: repeat(4, 1fr); }
         .printable-cell { border: 1px solid #ccc; }
@@ -103,19 +93,12 @@
     </div>
 </header>
 
-<div class="category-filters no-print">
-    <button class="cat-btn active" onclick="setCategory('all', this)">🌍 הכל</button>
-    <button class="cat-btn" onclick="setCategory('OG', this)">⭐ OG מקוריים</button>
-    <button class="cat-btn" onclick="setCategory('Animals', this)">🐊 חיות כלאיים</button>
-    <button class="cat-btn" onclick="setCategory('Other', this)">✨ אחרים</button>
-</div>
-
+<div class="count-bar no-print" id="count-bar"></div>
 <div class="gallery no-print" id="gallery"></div>
 
-<!-- Tutorial modal -->
 <div id="tutorial" class="no-print">
     <div class="nav-bar">
-        <h2 id="tName">שם הדמות</h2>
+        <h2 id="tName"></h2>
         <button class="btn-close" onclick="closeTutorial()">✕ סגור</button>
     </div>
     <div class="phase-indicator">
@@ -140,7 +123,6 @@
     </div>
 </div>
 
-<!-- Print template (blank grid) -->
 <div id="print-template">
     <h2 style="font-size:2.2rem;">🧠 BrainrotDraw — דף ציור</h2>
     <div style="position:relative; width:620px; height:620px; margin-top:40px;">
@@ -156,193 +138,199 @@
 </div>
 
 <script>
-    // Background removal loads asynchronously — gallery renders immediately without waiting
-    let _removeBackground = null;
+    const COORDS = ["א1","ב1","ג1","ד1","א2","ב2","ג2","ד2","א3","ב3","ג3","ד3","א4","ב4","ג4","ד4"];
+
+    // All brainrot characters from the Steal a Brainrot wiki
+    const ALL_CHARS = [
+        "1x1x1x1","25","67","Agarrini la Palini","Alessio","Anpali Babel","Antonio","Aquanaut",
+        "Arachnid Family","Arcadopus","Astrolero Cervalero","Astrolero Cervarelo","Avocadini Antilopini",
+        "Avocadini Guffo","Avocadorilla","Bacuru and Egguru","Ballerina Cappuccina","Ballerina Peppermintina",
+        "Ballerino Lololo","Bambini Crostini","Bambu Bambu Sahur","Bananita Dolphinita","Bananito Bandito",
+        "Bandito Axolito","Bandito Bobritto","Belula Beluga","Berenjello Angello","Best Brainrot In Game",
+        "Bicicleteira Family","Bisonte Giuppitere","Blackhole Goat","Blueberrinni Octopusini",
+        "Boatito Auratito","Boba Panda","Bombardini Tortinii","Bombardiro Crocodilo","Bomomini Gusini",
+        "Boneca Ambalabu","Brainrot God","Brasilini Berimbini","Brr Brr Patapim","Brr es Teh Patipum",
+        "Brri Brri Bicus Dicus Bombicus","Brunito Marsito","Brutto Gialutto","Buho de Fuego",
+        "Buho de Noelo","Buho del Cielo","Bulbito Bandito Traktorito","Bunito Bunito Spinito",
+        "Bunnyman","Burbaloni Loliloli","Burguro And Fryuro","Burrito Bandito","Cacasito Satalito",
+        "Cachorrito Melonito","Cacto Hipopotamo","Capi Taco","Capitano Moby","Cappuccino Assassino",
+        "Cappuccino Clownino","Caramello Filtrello","Carloo","Carrotini Brainini","Cavallo Virtuoso",
+        "Celestial Pegasus","Celularcini Viciosini","Centrucci Nuclucci","Cerberus","Chachechi",
+        "Chef Crabracadabra","Chicleteira Bicicleteira","Chicleteira Cupideira","Chicleteira Noelteira",
+        "Chicleteirina Bicicleteirina","Chihuanini Taconini","Chill Puppy","Chillin Chili","Chimnino",
+        "Chimpanzini Bananini","Chimpanzini Spiderini","Chipso and Queso","Chocco Bunny","Chrismasmamat",
+        "Cigno Fulgoro","Clickerino Crabo","Cloverat Clapat","Clovkur Kurkur","Cocoa Assassino",
+        "Cocofanto Elefanto","Cocosini Mama","Coffin Tung Tung Tung Sahur","Cooki and Milki",
+        "Corn Corn Corn Sahur","Crabbo Limonetta","Cuadramat and Pakrahmatmamat","Cupcake Koala",
+        "Cupid Cupid Sahur","Cupid Hotspot","Divino Platypio","DJ Panda","Doi Doi Do",
+        "Dolphini Jetskini","Donkeyturbo Express","Dragon Cannelloni","Dragon Family","Dragon Gingerini",
+        "Dug dug dug","Dul Dul Dul","Dumborino Miracello","Duo Brainrots","Eid Eid Eid Sahur",
+        "Elefanto Frigo","Esok Sekolah","Espresso Signora","Eviledon","Extinct Ballerina",
+        "Extinct Matteo","Extinct Tralalero","Festive 67","Fishboard","Fishino Clownino","Fizzy Soda",
+        "Fluriflura","Fortunu and Cashuru","Foxini Lanternini","Fragola La La La","Fragrama and Chocrama",
+        "Frankentteo","Frigo Camelo","Frio Ninja","Frogato Pirato","Frogo Elfo","Ganganzelli Trulala",
+        "Gangster Footera","Garama and Madundung","Gato Celesto","Gattatino Neonino","Gattatino Nyanino",
+        "Gattito Tacoto","Giftini Spyderini","Ginger Cisterna","Ginger Gerat","Ginger Globo",
+        "Girafa Celestre","Glorbo Fruttodrillo","GOAT","Gobblino Uniciclino","Gold Elf","Gold Gold Gold",
+        "Gorillo Subwoofero","Gorillo Watermelondrillo","Graipuss Medussi","Granchiello Spiritell",
+        "Granny","Griffin","Guerriro Digitale","Guest 666","Harpuccino","Headless Horseman",
+        "Ho Ho Ho Sahur","Holy Arepa","Horegini Boom","Hydra Dragon Cannelloni","Ice Dragon",
+        "Jacko Jack Jack","Jacko Spaventosa","Jackorilla","Jingle Jingle Sahur","Job Job Job Sahur",
+        "John Pork","Jolly Jolly Sahur","Karker Sahur","Karkerheart Luvkur","Karkerkar Kurkur",
+        "Karkerkur Family","Ketchuru and Musturu","Ketupat Bros","Ketupat Kepat","Krupuk Pagi Pagi",
+        "La Casa Boo","La Cucaracha","La Extinct Grande","La Food Combinasion","La Ginger Sekolah",
+        "La Grande Combinasion","La Jolly Grande","La Karkerkar Combinasion","La Lucky Grande",
+        "La Romantic Grande","La Sahur Combinasion","La Secret Combinasion","La Spooky Grande",
+        "La Supreme Combinasion","La Taco Combinasion","La Vacca Jacko Linterino","La Vacca Lepre Lepreino",
+        "La Vacca Prese Presente","La Vacca Saturno Saturnita","Las Capuchinas","Las Sis",
+        "Las Tralaleritas","Las Vaquitas Saturnitas","Lavadorito Spinito","Lerulerulerule",
+        "Lionel Cactuseli","List List List Sahur","Los 25","Los 67","Los Amigos","Los Bombinitos",
+        "Los Bros","Los Burritos","Los Candies","Los Chicleteiras","Los Chihuaninis","Los Combinasionas",
+        "Los Crocodillitos","Los Cupids","Los Gattitos","Los Hotspotsitos","Los Jobcitos",
+        "Los Jolly Combinasionas","Los Karkeritos","Los Matteos","Los Mi Gatitos","Los Mobilis",
+        "Los Noobinis","Los Nooo My Hotspotsitos","Los Orcalitos","Los Planitos","Los Primos",
+        "Los Puggies","Los Quesadillas","Los Sekolahs","Los Spaghettis","Los Spooky Combinasionas",
+        "Los Spyderinis","Los Sweethearts","Los Tacoritas","Los Tipi Tacos","Los Tortus",
+        "Los Tralaleritos","Los Trios","Los Tungtungtungcitos","Love Love Bear","Love Love Love Sahur",
+        "Lovin Rose","Luck Luck Luck Sahur","Luv Luv Luv","Magi Ribbitini","Malame Amarele",
+        "Mangolini Parrocini","Mariachi Corazoni","Mastodontico Telepiedone","Matteo","Matteo Family",
+        "Megalodon Family","Meowl","Mi Gatito","Mieteteira Bicicleteira","Money Money Man",
+        "Money Money Puggy","Money Money Reindeer","Mummio Rappitto","Mummy Ambalabu","Nacho Spyder",
+        "Naughty Naughty","Noo La Polizia","Noo my Candy","Noo my Gold","Noo my Heart",
+        "Noo my Present","Noobini Pizzanini","Noobini Santanini","Nooo My Hotspot","Nuclearo Dinossauro",
+        "Odin Din Din Dun","Orangutini Ananassini","Orcaledon","Orcalero Orcala","Orcalita Orcala",
+        "Pakrahmatmamat","Pakrahmatmatina","Pandaccini Bananini","Pandanini Frostini",
+        "Paradiso Axolottino","Patteo","Pengolino Nuvoletto","Penguin Tree","Penguino Cocosino",
+        "Perochello Lemonchello","Perrito Burrito","Pi Pi Watermelon","Piccione Macchina",
+        "Piccionetta Machina","Pinealotto Fruttarino","Pipi Avocado","Pipi Corni","Pipi Kiwi",
+        "Pipi Potato","Pirulitoita Bicicleteira","Pop Pop Sahur","Popcuru and Fizzuru","Pot Hotspot",
+        "Pot Pumpkin","Prehistoric Family","Puffaball","Pumpkini Spyderini","Quackula",
+        "Quesadilla Crocodila","Quesadillo Vampiro","Quivioli Ameleonni","Raccooni Jandelini",
+        "Rang Ring Bus","Reindeer Tralala","Reinito Sleighito","Rhino Helicopterino","Rhino Toasterino",
+        "Rocco Disco","Rosetti Tualetti","Rosey and Teddy","Salamino Penguino","Sammyni Fattini",
+        "Sammyni Spyderini","Santa Hotspot","Santteo","Sealo Regalo","Serafinna Medusella",
+        "Seraphino Gruyero","Sigma Boy","Sigma Girl","Signore Carapace","Skibidi Toilet",
+        "Skull Skull Skull","Smurf Cat","Snailenzo","Snailo Clovero","Spaghetti Tualetti",
+        "Spinny Hammy","Spioniro Golubiro","Spongini Quackini","Spooky and Pumpky","Squalanana",
+        "Statutino Libertino","Stoppo Luminino","Strawberrelli Flamingelli","Strawberry Elephant",
+        "Svinina Bombardino","Swag Bunny","Swag Soda","Swaggy Bros","Ta Ta Ta Ta Sahur",
+        "Taco Brainrots","Tacorillo Crocodillo","Tacorita Bicicleta","Talpa Di Fero","Tang Tang Keletang",
+        "Tartaragno","Tartaruga Cisterna","Te Te Te Sahur","Telemorte","Tentacolo Tecnico",
+        "Ti Ti Ti Sahur","Tictac Sahur","Tigrilini Watermelini","Tigroligre Frutonni","Tim Cheese",
+        "Tipi Topi Taco","Tirilikalika Tirilikalako","To to to Sahur","Tob Tobi Tobi","Toiletto Focaccino",
+        "Tootini Shrimpini","Torrtuginni Dragonfrutini","Tracoducotulu Delapeladustuz","Tractoro Dinosauro",
+        "Tralaledon","Tralalero Tralala","Tralalita Tralala","Tree Tree Tree Sahur",
+        "Trenostruzzo Turbo 3000","Trenostruzzo Turbo 4000","Tric Trac Baraboom","Trickolino",
+        "Triplito Tralaleritos","Trippi Troppi","Trippi Troppi Troppa Trippa","Trulimero Trulicina",
+        "Tuff Toucan","Tukanno Bananno","Tung Tung Tung Sahur","Unclito Samito","Urubini Flamenguini",
+        "Vampira Cappuccina","Ventoliero Pavonero","Vulturino Skeletono","W or L","Wheelchair Granny",
+        "Wombo Rollo","Yeti Claus","Zibra Zubra Zibralini","Zombie Tralala"
+    ];
+
+    // ── State ────────────────────────────────────────────────────────────────
+    let searchTerm = '';
+    let currentStep = 0;
+    let currentPhase = 0;
+    let currentCharName = '';
+    const imageCache = {}; // name → image URL
+
+    // ── Background removal ────────────────────────────────────────────────────
+    let _removeBg = null;
     const _bgCache = new Map();
 
     (async () => {
         try {
             const mod = await import('https://cdn.jsdelivr.net/npm/@imgly/background-removal@1.4.5/dist/background-removal.js');
-            _removeBackground = mod.removeBackground;
-            // Re-process any images already in the gallery
-            document.querySelectorAll('.card img').forEach(el => {
-                if (el.complete && el.naturalWidth) removeBg(el);
-            });
-        } catch (e) { console.warn('BG removal unavailable:', e); }
+            _removeBg = mod.removeBackground;
+            document.querySelectorAll('.card img[data-ready]').forEach(el => applyBgRemoval(el));
+        } catch(e) {}
     })();
 
-    const BG_CONFIG = {
-        publicPath: 'https://cdn.jsdelivr.net/npm/@imgly/background-removal@1.4.5/dist/'
-    };
-
-    const COORDS = [
-        "א1","ב1","ג1","ד1",
-        "א2","ב2","ג2","ד2",
-        "א3","ב3","ג3","ד3",
-        "א4","ב4","ג4","ד4"
-    ];
-
-    // Proxy images through weserv.nl (which sends CORS headers)
-    const img = c => `https://images.weserv.nl/?url=${encodeURIComponent(c.url)}`;
-
-    // ── Background removal ────────────────────────────────────────────────────
-    async function removeBg(imgEl) {
-        if (!_removeBackground) return;
-        const srcKey = imgEl.src;
-        if (_bgCache.has(srcKey)) { imgEl.src = _bgCache.get(srcKey); return; }
+    async function applyBgRemoval(imgEl) {
+        if (!_removeBg) return;
+        const key = imgEl.src;
+        if (_bgCache.has(key)) { imgEl.src = _bgCache.get(key); return; }
         try {
             imgEl.style.opacity = '0.35';
-            const blob = await _removeBackground(srcKey, BG_CONFIG);
+            const blob = await _removeBg(key, { publicPath: 'https://cdn.jsdelivr.net/npm/@imgly/background-removal@1.4.5/dist/' });
             const url = URL.createObjectURL(blob);
-            _bgCache.set(srcKey, url);
+            _bgCache.set(key, url);
             imgEl.src = url;
-        } catch (e) { /* leave as-is on error */ }
+        } catch(e) {}
         finally { imgEl.style.opacity = '1'; }
     }
 
-    const CHARS = [
-        // OG Originals
-        {
-            name: "Tralalero Tralala",
-            he: "כריש בנייקי",
-            category: "OG",
-            url: "https://static.wikitide.net/italianbrainrotwiki/e/e0/Tralalelo_tralala.png"
-        },
-        {
-            name: "Bombardiro Crocodilo",
-            he: "תנין מטוס",
-            category: "OG",
-            url: "https://upload.wikimedia.org/wikipedia/commons/thumb/3/3f/Bombardiro_Crocodillo.jpg/330px-Bombardiro_Crocodillo.jpg"
-        },
-        {
-            name: "Tung Tung Tung Sahur",
-            he: "בול עץ עם מקל",
-            category: "OG",
-            url: "https://static.wikitide.net/italianbrainrotwiki/thumb/f/fa/Tung_tung_tung_sahur.png/300px-Tung_tung_tung_sahur.png"
-        },
-        {
-            name: "Cappuccino Assassino",
-            he: "מתנקש קפוצ׳ינו",
-            category: "OG",
-            url: "https://upload.wikimedia.org/wikipedia/commons/thumb/9/99/Cappucino_assasino.webp/330px-Cappucino_assasino.webp.png"
-        },
-        {
-            name: "Brr Brr Patapim",
-            he: "קוף עץ",
-            category: "OG",
-            url: "https://static.wikitide.net/italianbrainrotwiki/thumb/d/d5/Brr_brr_patapim_without_text.jpeg/300px-Brr_brr_patapim_without_text.jpeg"
-        },
-        {
-            name: "Boneca Ambalabu",
-            he: "צפרדע ורודה",
-            category: "OG",
-            url: "https://static.wikitide.net/italianbrainrotwiki/thumb/3/3e/Boneka-Ambalabu.png/300px-Boneka-Ambalabu.png"
-        },
-        // Hybrid Animals
-        {
-            name: "Lirili Larila",
-            he: "פיל קקטוס",
-            category: "Animals",
-            url: "https://static.wikitide.net/italianbrainrotwiki/thumb/5/52/Lirili_Larila.jpeg/300px-Lirili_Larila.jpeg"
-        },
-        {
-            name: "Glorbo Fruttodrillo",
-            he: "תנין פירות",
-            category: "Animals",
-            url: "https://static.wikitide.net/italianbrainrotwiki/thumb/3/37/Glorbo_Fruttodrillo.jpg/300px-Glorbo_Fruttodrillo.jpg"
-        },
-        {
-            name: "Frigo Camelo",
-            he: "גמל מקרר",
-            category: "Animals",
-            url: "https://static.wikitide.net/italianbrainrotwiki/6/61/Frigo_Camelo.jpg"
-        },
-        {
-            name: "La Vaca Saturno Saturnita",
-            he: "פרה שבתאי",
-            category: "Animals",
-            url: "https://static.wikitide.net/italianbrainrotwiki/thumb/6/62/Saturno_Saturnita.png/300px-Saturno_Saturnita.png"
-        },
-        {
-            name: "Trippi Troppi",
-            he: "ציפור טרופית",
-            category: "Animals",
-            url: "https://static.wikitide.net/italianbrainrotwiki/thumb/9/9e/Trippi_Troppi.webp/299px-Trippi_Troppi.webp.png"
-        },
-        {
-            name: "Chimpanzini Bananini",
-            he: "שימפנזה בננה",
-            category: "Animals",
-            url: "https://static.wikitide.net/italianbrainrotwiki/thumb/5/50/Chimpanzini_Bananino.png/300px-Chimpanzini_Bananino.png"
-        },
-        // Other
-        {
-            name: "Burbaloni Luliloli",
-            he: "בלון מדבר",
-            category: "Other",
-            url: "https://static.wikitide.net/italianbrainrotwiki/thumb/b/b2/Burbaloni_Luliloli.png/300px-Burbaloni_Luliloli.png"
-        },
-        {
-            name: "Ballerina Cappuccina",
-            he: "רקדנית קפוצ׳ינו",
-            category: "Other",
-            url: "https://static.wikitide.net/italianbrainrotwiki/thumb/9/9a/Ballerina_cappucappu.png/300px-Ballerina_cappucappu.png"
-        },
-    ];
+    // ── Image fetching from Fandom API ────────────────────────────────────────
+    async function fetchBatch(names) {
+        const url = `https://stealabrainrot.fandom.com/api.php?action=query&titles=${encodeURIComponent(names.join('|'))}&prop=pageimages&piprop=thumbnail&pithumbsize=400&format=json&origin=*`;
+        try {
+            const r = await fetch(url);
+            const data = await r.json();
+            Object.values(data.query?.pages || {}).forEach(p => {
+                if (p.thumbnail?.source) imageCache[p.title] = p.thumbnail.source;
+            });
+        } catch(e) {}
+    }
 
-    // ── State ────────────────────────────────────────────────────────────────
-    let currentStep = 0;
-    let currentPhase = 0;
-    let activeCategory = 'all';
-    let searchTerm = '';
-
-    // ── Gallery ──────────────────────────────────────────────────────────────
-    function renderGallery() {
-        const gal = document.getElementById('gallery');
-        gal.innerHTML = '';
-
-        const filtered = CHARS.filter(c => {
-            const catOk = activeCategory === 'all' || c.category === activeCategory;
-            const q = searchTerm.toLowerCase();
-            const searchOk = !q || c.he.includes(q) || c.name.toLowerCase().includes(q);
-            return catOk && searchOk;
-        });
-
-        if (filtered.length === 0) {
-            gal.innerHTML = '<p class="empty-state">לא נמצאו דמויות. נסו חיפוש אחר.</p>';
-            return;
-        }
-
-        filtered.forEach(c => {
-            const card = document.createElement('div');
-            card.className = 'card';
-            card.onclick = () => openTutorial(c);
-
-            const imgEl = document.createElement('img');
-            imgEl.crossOrigin = 'anonymous';
-            imgEl.loading = 'lazy';
-            imgEl.alt = c.name;
-            imgEl.src = img(c);
-            imgEl.onload = () => removeBg(imgEl);
-            imgEl.onerror = () => { imgEl.src = 'data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2280%22>🧠</text></svg>'; };
-
-            const name = document.createElement('b');
-            name.textContent = c.name;
-            const sub = document.createElement('small');
-            sub.textContent = c.he;
-
-            card.appendChild(imgEl);
-            card.appendChild(name);
-            card.appendChild(sub);
-            gal.appendChild(card);
+    async function fetchAllImages() {
+        const size = 50;
+        const batches = [];
+        for (let i = 0; i < ALL_CHARS.length; i += size) batches.push(ALL_CHARS.slice(i, i + size));
+        await Promise.all(batches.map(fetchBatch));
+        // Update any cards already rendered
+        document.querySelectorAll('.card[data-name]').forEach(card => {
+            const name = card.dataset.name;
+            const imgEl = card.querySelector('img');
+            if (imgEl && imageCache[name] && !imgEl.dataset.ready) {
+                imgEl.src = imageCache[name];
+                imgEl.dataset.ready = '1';
+                imgEl.onload = () => applyBgRemoval(imgEl);
+            }
         });
     }
 
-    function setCategory(cat, btn) {
-        activeCategory = cat;
-        document.querySelectorAll('.cat-btn').forEach(b => b.classList.remove('active'));
-        btn.classList.add('active');
-        renderGallery();
+    // ── Gallery ──────────────────────────────────────────────────────────────
+    const PLACEHOLDER = 'data:image/svg+xml,' + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><text y=".9em" font-size="80">🧠</text></svg>');
+
+    function renderGallery() {
+        const gal = document.getElementById('gallery');
+        const q = searchTerm.toLowerCase();
+        const filtered = ALL_CHARS.filter(n => !q || n.toLowerCase().includes(q));
+
+        document.getElementById('count-bar').textContent = `${filtered.length} דמויות`;
+
+        if (filtered.length === 0) {
+            gal.innerHTML = '<p class="empty-state">לא נמצאו דמויות.</p>';
+            return;
+        }
+
+        gal.innerHTML = '';
+        const frag = document.createDocumentFragment();
+        filtered.forEach(name => {
+            const card = document.createElement('div');
+            card.className = 'card';
+            card.dataset.name = name;
+            card.onclick = () => openTutorial(name);
+
+            const imgEl = document.createElement('img');
+            imgEl.alt = name;
+            if (imageCache[name]) {
+                imgEl.src = imageCache[name];
+                imgEl.dataset.ready = '1';
+                imgEl.onload = () => applyBgRemoval(imgEl);
+            } else {
+                imgEl.src = PLACEHOLDER;
+            }
+            imgEl.onerror = () => { imgEl.src = PLACEHOLDER; };
+
+            const b = document.createElement('b');
+            b.textContent = name;
+
+            card.appendChild(imgEl);
+            card.appendChild(b);
+            frag.appendChild(card);
+        });
+        gal.appendChild(frag);
     }
 
     function filterChars() {
@@ -351,19 +339,20 @@
     }
 
     // ── Tutorial ─────────────────────────────────────────────────────────────
-    function openTutorial(c) {
+    function openTutorial(name) {
+        currentCharName = name;
         currentStep = 0;
         currentPhase = 0;
         document.getElementById('tutorial').style.display = 'flex';
-        document.getElementById('tName').innerText = c.name;
+        document.getElementById('tName').innerText = name;
         document.body.style.overflow = 'hidden';
         const mainImg = document.getElementById('mainImg');
-        const url = img(c);
-        if (_bgCache.has(url)) {
-            mainImg.src = _bgCache.get(url);
+        const src = imageCache[name] || PLACEHOLDER;
+        if (_bgCache.has(src)) {
+            mainImg.src = _bgCache.get(src);
         } else {
-            mainImg.src = url;
-            mainImg.onload = () => removeBg(mainImg);
+            mainImg.src = src;
+            if (imageCache[name]) mainImg.onload = () => applyBgRemoval(mainImg);
         }
         updateUI();
     }
@@ -371,19 +360,15 @@
     function updateUI() {
         const image = document.getElementById('mainImg');
         image.className = currentPhase === 0 ? 'mode-pencil' : '';
-
         document.getElementById('phase0').classList.toggle('active', currentPhase === 0);
         document.getElementById('phase1').classList.toggle('active', currentPhase === 1);
-
         for (let i = 0; i < 16; i++) {
             const cell = document.getElementById('c' + i);
             if (i < currentStep)        cell.className = 'cell';
             else if (i === currentStep) cell.className = 'cell active';
             else                        cell.className = 'cell hidden';
         }
-
         document.getElementById('coord-hint').innerText = COORDS[currentStep];
-
         const isLast = currentStep === 15;
         document.getElementById('nextBtn').innerText =
             isLast ? (currentPhase === 0 ? 'עבור לצביעה 🎨' : 'סיימת! 🎉') : 'הבא ➡️';
@@ -391,22 +376,13 @@
 
     function changeStep(n) {
         if (currentStep === 15 && n > 0) {
-            if (currentPhase === 0) {
-                currentPhase = 1;
-                currentStep = 0;
-            } else {
-                closeTutorial();
-                return;
-            }
+            if (currentPhase === 0) { currentPhase = 1; currentStep = 0; }
+            else { closeTutorial(); return; }
         } else {
             currentStep += n;
             if (currentStep < 0) {
-                if (currentPhase === 1) {
-                    currentPhase = 0;
-                    currentStep = 15;
-                } else {
-                    currentStep = 0;
-                }
+                if (currentPhase === 1) { currentPhase = 0; currentStep = 15; }
+                else { currentStep = 0; }
             }
         }
         updateUI();
@@ -419,6 +395,7 @@
 
     // ── Init ─────────────────────────────────────────────────────────────────
     renderGallery();
+    fetchAllImages();
 </script>
 </body>
 </html>
