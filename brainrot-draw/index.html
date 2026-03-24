@@ -155,7 +155,13 @@
     </div>
 </div>
 
-<script>
+<script type="module">
+    import { removeBackground } from 'https://cdn.jsdelivr.net/npm/@imgly/background-removal@1.4.5/dist/background-removal.js';
+
+    const BG_CONFIG = {
+        publicPath: 'https://cdn.jsdelivr.net/npm/@imgly/background-removal@1.4.5/dist/'
+    };
+
     const COORDS = [
         "א1","ב1","ג1","ד1",
         "א2","ב2","ג2","ד2",
@@ -169,55 +175,17 @@
     // ── Background removal ────────────────────────────────────────────────────
     const _bgCache = new Map();
 
-    function removeBg(imgEl) {
+    async function removeBg(imgEl) {
         const srcKey = imgEl.src;
         if (_bgCache.has(srcKey)) { imgEl.src = _bgCache.get(srcKey); return; }
-
-        const MAX = 400;
-        const sw = imgEl.naturalWidth || MAX;
-        const sh = imgEl.naturalHeight || MAX;
-        const scale = Math.min(1, MAX / Math.max(sw, sh));
-        const w = Math.round(sw * scale);
-        const h = Math.round(sh * scale);
-
-        const canvas = document.createElement('canvas');
-        canvas.width = w; canvas.height = h;
-        const ctx = canvas.getContext('2d');
-
         try {
-            ctx.drawImage(imgEl, 0, 0, w, h);
-            const data = ctx.getImageData(0, 0, w, h);
-            const px = data.data;
-
-            // Sample all four corners to determine background color
-            const corners = [0, w - 1, w * (h - 1), w * h - 1];
-            let rSum = 0, gSum = 0, bSum = 0;
-            corners.forEach(i => { rSum += px[i*4]; gSum += px[i*4+1]; bSum += px[i*4+2]; });
-            const bgR = rSum / 4, bgG = gSum / 4, bgB = bSum / 4;
-            const tol = 45;
-
-            // Flood fill from corners — erase matching pixels
-            const visited = new Uint8Array(w * h);
-            const stack = [...corners];
-            while (stack.length) {
-                const pos = stack.pop();
-                if (visited[pos]) continue;
-                visited[pos] = 1;
-                const i = pos * 4;
-                if (Math.abs(px[i]-bgR) + Math.abs(px[i+1]-bgG) + Math.abs(px[i+2]-bgB) > tol * 3) continue;
-                px[i+3] = 0; // make transparent
-                const x = pos % w, y = (pos / w) | 0;
-                if (x > 0)     stack.push(pos - 1);
-                if (x < w - 1) stack.push(pos + 1);
-                if (y > 0)     stack.push(pos - w);
-                if (y < h - 1) stack.push(pos + w);
-            }
-
-            ctx.putImageData(data, 0, 0);
-            const result = canvas.toDataURL('image/png');
-            _bgCache.set(srcKey, result);
-            imgEl.src = result;
-        } catch (e) { /* CORS blocked — leave image as-is */ }
+            imgEl.style.opacity = '0.35';
+            const blob = await removeBackground(srcKey, BG_CONFIG);
+            const url = URL.createObjectURL(blob);
+            _bgCache.set(srcKey, url);
+            imgEl.src = url;
+        } catch (e) { /* leave as-is on error */ }
+        finally { imgEl.style.opacity = '1'; }
     }
 
     const CHARS = [
@@ -438,6 +406,12 @@
     }
 
     // ── Init ─────────────────────────────────────────────────────────────────
+    // Expose functions for HTML onclick handlers (required for type="module")
+    window.filterChars   = filterChars;
+    window.setCategory   = setCategory;
+    window.closeTutorial = closeTutorial;
+    window.changeStep    = changeStep;
+
     renderGallery();
 </script>
 </body>
