@@ -162,11 +162,11 @@
         '</svg>'
     );
 
-    // ── Image URL via Clearbit ────────────────────────────────────────────────
+    // ── Image URL via Google Favicon API ─────────────────────────────────────
     function getImageUrl(name) {
         const domain = LOGO_DOMAINS[name];
         if (!domain) return PLACEHOLDER;
-        return 'https://logo.clearbit.com/' + domain + '?size=300';
+        return 'https://www.google.com/s2/favicons?domain=' + domain + '&sz=256';
     }
 
     // ── All logos with categories ─────────────────────────────────────────────
