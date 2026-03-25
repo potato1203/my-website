@@ -1,0 +1,459 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FoodDraw - צייר אוכל מכל העולם 🍕</title>
+    <style>
+        :root {
+            --orange: #e85d04;
+            --dark: #1a1a2e;
+            --green: #2d6a4f;
+            --red: #c1121f;
+            --yellow: #ffd60a;
+            --bg: #fffbf5;
+        }
+
+        @media print {
+            body * { visibility: hidden; }
+            #print-template, #print-template * { visibility: visible; }
+            #print-template { position: absolute; left: 0; top: 0; width: 100%; display: flex !important; flex-direction: column; align-items: center; padding-top: 50px; }
+            .no-print { display: none !important; }
+        }
+
+        * { box-sizing: border-box; }
+        body { font-family: system-ui, -apple-system, sans-serif; background: var(--bg); margin: 0; text-align: center; user-select: none; overflow-x: hidden; }
+
+        header { background: var(--dark); color: white; padding: 20px 25px 25px; border-bottom: 6px solid var(--orange); box-shadow: 0 4px 15px rgba(0,0,0,0.3); }
+        h1 { margin: 0 0 5px; font-size: 2rem; letter-spacing: 1px; }
+        h1 span { color: var(--yellow); }
+        .subtitle { margin: 0; font-size: 1rem; opacity: 0.7; }
+
+        .nav-tools { display: flex; flex-direction: column; align-items: center; gap: 10px; margin: 15px 0 0; }
+        #search { padding: 11px 22px; width: 85%; max-width: 450px; border-radius: 30px; border: 3px solid var(--orange); outline: none; font-size: 1.05rem; direction: rtl; }
+        .btn-print { background: var(--green); color: white; padding: 11px 28px; border-radius: 40px; border: none; cursor: pointer; font-weight: bold; font-size: 1rem; box-shadow: 0 4px 8px rgba(0,0,0,0.15); transition: 0.2s; }
+        .btn-print:hover { transform: scale(1.05); background: #1e4d39; }
+
+        /* Category filters */
+        .cat-filters { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; padding: 14px 16px 0; }
+        .cat-btn { padding: 7px 16px; border-radius: 20px; border: 2px solid #ddd; background: white; cursor: pointer; font-size: 0.88rem; font-weight: bold; transition: 0.2s; }
+        .cat-btn:hover { border-color: var(--orange); }
+        .cat-btn.active { background: var(--orange); color: white; border-color: var(--orange); }
+
+        .count-bar { padding: 10px; color: #888; font-size: 0.9rem; }
+
+        .gallery { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 18px; padding: 18px; max-width: 1400px; margin: 0 auto; }
+        .card { background: white; border-radius: 18px; padding: 15px 12px 12px; cursor: pointer; box-shadow: 0 4px 12px rgba(0,0,0,0.07); transition: 0.25s; border: 2px solid transparent; display: flex; flex-direction: column; align-items: center; min-height: 175px; }
+        .card:hover { border-color: var(--orange); transform: translateY(-5px); box-shadow: 0 8px 20px rgba(0,0,0,0.12); }
+        .card img { width: 100px; height: 100px; object-fit: contain; margin-bottom: 10px; filter: saturate(4) contrast(1.35) brightness(1.05); }
+        .card b { font-size: 0.82rem; color: #222; text-align: center; line-height: 1.3; direction: ltr; word-break: break-word; }
+
+        /* ── Tutorial overlay ── */
+        #tutorial { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: white; z-index: 1000; flex-direction: column; align-items: center; overflow-y: auto; }
+
+        .nav-bar { width: 100%; background: var(--dark); color: white; padding: 14px 20px; display: flex; justify-content: space-between; align-items: center; }
+        .nav-bar h2 { margin: 0; font-size: 1.15rem; direction: ltr; }
+        .btn-close { padding: 9px 18px; border-radius: 10px; border: none; cursor: pointer; font-weight: bold; font-size: 0.95rem; background: var(--red); color: white; }
+
+        .phase-indicator { display: flex; gap: 12px; margin: 18px 0 0; flex-wrap: wrap; justify-content: center; }
+        .phase-btn { padding: 10px 22px; border-radius: 25px; border: 2px solid #ddd; background: #f5f5f5; font-weight: bold; opacity: 0.5; font-size: 0.95rem; transition: 0.2s; }
+        .phase-btn.active { opacity: 1; border-color: var(--orange); background: #fff4ee; color: var(--orange); transform: scale(1.08); }
+
+        #coord-hint { font-size: 3.5rem; font-weight: bold; color: var(--red); margin: 8px 0 0; letter-spacing: 2px; }
+
+        .grid-wrapper { position: relative; width: 90vw; max-width: 380px; aspect-ratio: 1/1; margin: 35px auto 10px; }
+        .labels-top { position: absolute; top: -34px; width: 100%; display: flex; justify-content: space-around; font-weight: bold; color: var(--orange); font-size: 1.5rem; }
+        .labels-side { position: absolute; right: -34px; height: 100%; display: flex; flex-direction: column; justify-content: space-around; font-weight: bold; color: var(--orange); font-size: 1.5rem; }
+        .image-container { position: relative; width: 100%; height: 100%; border: 5px solid #222; background: white; display: grid; grid-template-columns: repeat(4, 1fr); grid-template-rows: repeat(4, 1fr); box-shadow: 0 10px 30px rgba(0,0,0,0.2); }
+
+        #mainImg { position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: contain; pointer-events: none; transition: filter 0.5s; padding: 6px; }
+        .mode-pencil { filter: grayscale(1) contrast(180%) brightness(1.2) opacity(0.25); }
+
+        .cell { position: relative; border: 1px solid rgba(0,0,0,0.06); z-index: 2; transition: 0.2s; }
+        .cell.hidden { background: rgba(255,255,255,0.98); }
+        .cell.active { border: 4px solid var(--red); z-index: 10; animation: blink 0.9s infinite; background: transparent; }
+        @keyframes blink { 0%, 100% { border-color: var(--red); } 50% { border-color: transparent; } }
+
+        .controls { display: flex; gap: 18px; margin: 22px 0; padding-bottom: 50px; }
+        .nav-ctrl { padding: 13px 36px; border-radius: 40px; border: none; cursor: pointer; font-weight: bold; font-size: 1.2rem; box-shadow: 0 4px 8px rgba(0,0,0,0.12); transition: 0.2s; }
+        .nav-ctrl:hover { transform: scale(1.04); }
+        .btn-red  { background: var(--orange); color: white; }
+        .btn-grey { background: #666; color: white; }
+
+        #print-template { display: none; }
+        .printable-grid { width: 560px; height: 560px; border: 6px solid black; display: grid; grid-template-columns: repeat(4, 1fr); grid-template-rows: repeat(4, 1fr); }
+        .printable-cell { border: 1px solid #ccc; }
+
+        .empty-state { padding: 60px 20px; color: #999; font-size: 1.2rem; grid-column: 1/-1; }
+    </style>
+</head>
+<body>
+
+<header class="no-print">
+    <h1>🍕 <span>Food</span>Draw</h1>
+    <p class="subtitle">צייר אוכל מכל העולם בשיטת הרשת</p>
+    <div class="nav-tools">
+        <input type="text" id="search" placeholder="🔍 חפשו אוכל..." oninput="filterFoods()">
+        <button class="btn-print" onclick="window.print()">🖨️ הדפס דף רשת לציור</button>
+    </div>
+</header>
+
+<div class="cat-filters no-print" id="cat-filters"></div>
+<div class="count-bar no-print" id="count-bar"></div>
+<div class="gallery no-print" id="gallery"></div>
+
+<div id="tutorial" class="no-print">
+    <div class="nav-bar">
+        <h2 id="tName"></h2>
+        <button class="btn-close" onclick="closeTutorial()">✕ סגור</button>
+    </div>
+    <div class="phase-indicator">
+        <div id="phase0" class="phase-btn active">✏️ שלב א׳: עיפרון (מתאר)</div>
+        <div id="phase1" class="phase-btn">🎨 שלב ב׳: צבעים</div>
+    </div>
+    <div id="coord-hint">א1</div>
+    <div class="grid-wrapper">
+        <div class="labels-top"><span>א</span><span>ב</span><span>ג</span><span>ד</span></div>
+        <div class="labels-side"><span>1</span><span>2</span><span>3</span><span>4</span></div>
+        <div class="image-container">
+            <img id="mainImg" class="mode-pencil" src="" alt="">
+            <div id="c0"  class="cell"></div><div id="c1"  class="cell"></div><div id="c2"  class="cell"></div><div id="c3"  class="cell"></div>
+            <div id="c4"  class="cell"></div><div id="c5"  class="cell"></div><div id="c6"  class="cell"></div><div id="c7"  class="cell"></div>
+            <div id="c8"  class="cell"></div><div id="c9"  class="cell"></div><div id="c10" class="cell"></div><div id="c11" class="cell"></div>
+            <div id="c12" class="cell"></div><div id="c13" class="cell"></div><div id="c14" class="cell"></div><div id="c15" class="cell"></div>
+        </div>
+    </div>
+    <div class="controls">
+        <button class="nav-ctrl btn-grey" onclick="changeStep(-1)">⬅️ הקודם</button>
+        <button class="nav-ctrl btn-red"  onclick="changeStep(1)" id="nextBtn">הבא ➡️</button>
+    </div>
+</div>
+
+<div id="print-template">
+    <h2 style="font-size:2.2rem;">🍕 FoodDraw - דף ציור</h2>
+    <div style="position:relative; width:620px; height:620px; margin-top:40px;">
+        <div class="labels-top" style="top:-50px; font-size:3rem;"><span>א</span><span>ב</span><span>ג</span><span>ד</span></div>
+        <div class="labels-side" style="right:-55px; font-size:3rem;"><span>1</span><span>2</span><span>3</span><span>4</span></div>
+        <div class="printable-grid">
+            <div class="printable-cell"></div><div class="printable-cell"></div><div class="printable-cell"></div><div class="printable-cell"></div>
+            <div class="printable-cell"></div><div class="printable-cell"></div><div class="printable-cell"></div><div class="printable-cell"></div>
+            <div class="printable-cell"></div><div class="printable-cell"></div><div class="printable-cell"></div><div class="printable-cell"></div>
+            <div class="printable-cell"></div><div class="printable-cell"></div><div class="printable-cell"></div><div class="printable-cell"></div>
+        </div>
+    </div>
+    <p id="print-name" style="font-size:2rem; margin-top:40px;"></p>
+</div>
+
+<script src="images.js"></script>
+<script>
+    // ── Food list with categories ─────────────────────────────────────────────
+    // Food list from https://goodfood.fandom.com/wiki/Category:Food
+    const ALL_FOODS = [
+        // Fruits
+        { name: "Apple",                          cat: "fruits" },
+        { name: "Avocado",                        cat: "fruits" },
+        { name: "Banana",                         cat: "fruits" },
+        { name: "Blackberries",                   cat: "fruits" },
+        { name: "Blueberries",                    cat: "fruits" },
+        { name: "Cherry",                         cat: "fruits" },
+        { name: "Coconut",                        cat: "fruits" },
+        { name: "Cranberries",                    cat: "fruits" },
+        { name: "Dragonfruit",                    cat: "fruits" },
+        { name: "Fresh Fruit",                    cat: "fruits" },
+        { name: "Grapefruit",                     cat: "fruits" },
+        { name: "Grapes",                         cat: "fruits" },
+        { name: "Kiwi",                           cat: "fruits" },
+        { name: "Lemon",                          cat: "fruits" },
+        { name: "Lime",                           cat: "fruits" },
+        { name: "Mango",                          cat: "fruits" },
+        { name: "Olive",                          cat: "fruits" },
+        { name: "Orange",                         cat: "fruits" },
+        { name: "Peach",                          cat: "fruits" },
+        { name: "Pear",                           cat: "fruits" },
+        { name: "Pineapple",                      cat: "fruits" },
+        { name: "Plum",                           cat: "fruits" },
+        { name: "Raisins",                        cat: "fruits" },
+        { name: "Raspberry",                      cat: "fruits" },
+        { name: "Starfruit",                      cat: "fruits" },
+        { name: "Strawberry",                     cat: "fruits" },
+        { name: "Watermelon",                     cat: "fruits" },
+        // Vegetables
+        { name: "Artichokes",                     cat: "vegetables" },
+        { name: "Asparagus",                      cat: "vegetables" },
+        { name: "Beans",                          cat: "vegetables" },
+        { name: "Beets",                          cat: "vegetables" },
+        { name: "Broccoli",                       cat: "vegetables" },
+        { name: "Brussels Sprouts",               cat: "vegetables" },
+        { name: "Cabbage",                        cat: "vegetables" },
+        { name: "Carrot",                         cat: "vegetables" },
+        { name: "Cauliflower",                    cat: "vegetables" },
+        { name: "Celery",                         cat: "vegetables" },
+        { name: "Corn",                           cat: "vegetables" },
+        { name: "Cucumber",                       cat: "vegetables" },
+        { name: "Eggplant",                       cat: "vegetables" },
+        { name: "Garlic",                         cat: "vegetables" },
+        { name: "Lettuce",                        cat: "vegetables" },
+        { name: "Mushroom",                       cat: "vegetables" },
+        { name: "Onion",                          cat: "vegetables" },
+        { name: "Pea",                            cat: "vegetables" },
+        { name: "Pepper",                         cat: "vegetables" },
+        { name: "Peppers",                        cat: "vegetables" },
+        { name: "Pickle",                         cat: "vegetables" },
+        { name: "Potato",                         cat: "vegetables" },
+        { name: "Squash",                         cat: "vegetables" },
+        { name: "Tomato",                         cat: "vegetables" },
+        // Meat & Seafood
+        { name: "Bacon",                          cat: "meat" },
+        { name: "Bologna",                        cat: "meat" },
+        { name: "Chicken",                        cat: "meat" },
+        { name: "Chicken Breasts",                cat: "meat" },
+        { name: "Chicken Legs",                   cat: "meat" },
+        { name: "Chicken Nuggets",                cat: "meat" },
+        { name: "Chicken Wings",                  cat: "meat" },
+        { name: "Chicken tenders",                cat: "meat" },
+        { name: "Ham",                            cat: "meat" },
+        { name: "Meatball",                       cat: "meat" },
+        { name: "Meatloaf",                       cat: "meat" },
+        { name: "Pepperonis",                     cat: "meat" },
+        { name: "Pork chop",                      cat: "meat" },
+        { name: "Sausage",                        cat: "meat" },
+        { name: "Seafood",                        cat: "meat" },
+        { name: "Shrimp",                         cat: "meat" },
+        { name: "Steak",                          cat: "meat" },
+        // Dairy & Eggs
+        { name: "Butter",                         cat: "dairy" },
+        { name: "Cheese",                         cat: "dairy" },
+        { name: "Egg",                            cat: "dairy" },
+        { name: "Ice Cream",                      cat: "dairy" },
+        { name: "Icecream Cake",                  cat: "dairy" },
+        { name: "Sour Cream",                     cat: "dairy" },
+        { name: "Whip Cream",                     cat: "dairy" },
+        { name: "Yogurt",                         cat: "dairy" },
+        // Bread & Grains
+        { name: "Bagel",                          cat: "bread" },
+        { name: "Bread",                          cat: "bread" },
+        { name: "Breadstick",                     cat: "bread" },
+        { name: "Cereal",                         cat: "bread" },
+        { name: "Crackers",                       cat: "bread" },
+        { name: "Granola",                        cat: "bread" },
+        { name: "Granola Bar",                    cat: "bread" },
+        { name: "Noodles",                        cat: "bread" },
+        { name: "Pasta",                          cat: "bread" },
+        { name: "Pretzel",                        cat: "bread" },
+        { name: "Ramen",                          cat: "bread" },
+        { name: "Rice",                           cat: "bread" },
+        { name: "Waffles",                        cat: "bread" },
+        // Dishes
+        { name: "Biscuits & Gravy",               cat: "dishes" },
+        { name: "Burrito",                        cat: "dishes" },
+        { name: "Chili",                          cat: "dishes" },
+        { name: "Corn Dog",                       cat: "dishes" },
+        { name: "Egg Roll",                       cat: "dishes" },
+        { name: "French Fries",                   cat: "dishes" },
+        { name: "Fried Rice",                     cat: "dishes" },
+        { name: "Grilled Cheese Sandwich",        cat: "dishes" },
+        { name: "Hamburger",                      cat: "dishes" },
+        { name: "Hot Dog",                        cat: "dishes" },
+        { name: "Kebab",                          cat: "dishes" },
+        { name: "Macaroni & Cheese",              cat: "dishes" },
+        { name: "Mashed Potatoes",                cat: "dishes" },
+        { name: "Nachos",                         cat: "dishes" },
+        { name: "Omelette",                       cat: "dishes" },
+        { name: "Onion Rings",                    cat: "dishes" },
+        { name: "Pancakes",                       cat: "dishes" },
+        { name: "Peanut Butter & Jelly Sandwich", cat: "dishes" },
+        { name: "Peanut Butter & Jellyfish Sandwich", cat: "dishes" },
+        { name: "Pizza",                          cat: "dishes" },
+        { name: "Ravioli",                        cat: "dishes" },
+        { name: "Salad",                          cat: "dishes" },
+        { name: "Sandwich",                       cat: "dishes" },
+        { name: "Soup",                           cat: "dishes" },
+        { name: "Sushi",                          cat: "dishes" },
+        { name: "Taco",                           cat: "dishes" },
+        // Desserts & Sweets
+        { name: "Brownie",                        cat: "desserts" },
+        { name: "Cake",                           cat: "desserts" },
+        { name: "Candy",                          cat: "desserts" },
+        { name: "Cheesecake",                     cat: "desserts" },
+        { name: "Chocolate",                      cat: "desserts" },
+        { name: "Chocolate Bar",                  cat: "desserts" },
+        { name: "Churro",                         cat: "desserts" },
+        { name: "Cookie",                         cat: "desserts" },
+        { name: "Cupcake",                        cat: "desserts" },
+        { name: "Donut",                          cat: "desserts" },
+        { name: "Marshmallows",                   cat: "desserts" },
+        { name: "Muffin",                         cat: "desserts" },
+        { name: "Pie",                            cat: "desserts" },
+        // Snacks
+        { name: "Chips",                          cat: "snacks" },
+        { name: "Nuts",                           cat: "snacks" },
+        { name: "Popcorn",                        cat: "snacks" },
+        // Condiments & Sauces
+        { name: "Apple Sauce",                    cat: "condiments" },
+        { name: "Barbecue Sauce",                 cat: "condiments" },
+        { name: "Caramel Syrup",                  cat: "condiments" },
+        { name: "Chocolate Syrup",                cat: "condiments" },
+        { name: "Guacamole",                      cat: "condiments" },
+        { name: "Honey Mustard",                  cat: "condiments" },
+        { name: "Jelly",                          cat: "condiments" },
+        { name: "Ketchup",                        cat: "condiments" },
+        { name: "Maple Syrup",                    cat: "condiments" },
+        { name: "Mayonnaise",                     cat: "condiments" },
+        { name: "Mustard",                        cat: "condiments" },
+        { name: "Peanut Butter",                  cat: "condiments" },
+        { name: "Salsa",                          cat: "condiments" },
+        { name: "Salt",                           cat: "condiments" },
+        { name: "Strawberry Syrup",               cat: "condiments" },
+        { name: "Sugar",                          cat: "condiments" },
+    ];
+
+    const CATEGORIES = [
+        { id: "all",        label: "🍽️ הכל" },
+        { id: "fruits",     label: "🍎 פירות" },
+        { id: "vegetables", label: "🥦 ירקות" },
+        { id: "meat",       label: "🥩 בשר ודגים" },
+        { id: "dairy",      label: "🧀 חלב וביצים" },
+        { id: "bread",      label: "🍞 מאפים ודגנים" },
+        { id: "dishes",     label: "🌮 מנות" },
+        { id: "desserts",   label: "🍰 קינוחים" },
+        { id: "snacks",     label: "🍿 חטיפים" },
+        { id: "condiments", label: "🧂 רטבים" },
+    ];
+
+    function getImageUrl(name) {
+        const url = IMAGE_URLS[name];
+        if (url) return 'https://wsrv.nl/?url=' + encodeURIComponent(url) + '&w=300&output=webp';
+        // Fallback: AI-generated cartoon for foods without a wiki image
+        const prompt = encodeURIComponent(`cute cartoon ${name} food illustration, simple flat design, colorful, white background, clipart style, no text`);
+        return `https://image.pollinations.ai/prompt/${prompt}?width=300&height=300&nologo=true&seed=77`;
+    }
+
+    // ── Coordinates ───────────────────────────────────────────────────────────
+    const COORDS = ['א1','ב1','ג1','ד1','א2','ב2','ג2','ד2','א3','ב3','ג3','ד3','א4','ב4','ג4','ד4'];
+    const PLACEHOLDER = 'data:image/svg+xml,' + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><text y=".9em" font-size="80">🍽️</text></svg>');
+
+    // ── State ─────────────────────────────────────────────────────────────────
+    let searchTerm = '';
+    let activeCategory = 'all';
+    let currentStep = 0;
+    let currentPhase = 0;
+    let currentFoodName = '';
+
+    // ── Category buttons ──────────────────────────────────────────────────────
+    function renderCategories() {
+        const container = document.getElementById('cat-filters');
+        CATEGORIES.forEach(c => {
+            const btn = document.createElement('button');
+            btn.className = 'cat-btn' + (c.id === 'all' ? ' active' : '');
+            btn.textContent = c.label;
+            btn.onclick = () => {
+                activeCategory = c.id;
+                document.querySelectorAll('.cat-btn').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                renderGallery();
+            };
+            container.appendChild(btn);
+        });
+    }
+
+    // ── Gallery ───────────────────────────────────────────────────────────────
+    function renderGallery() {
+        const gal = document.getElementById('gallery');
+        const q = searchTerm.toLowerCase();
+        const filtered = ALL_FOODS.filter(f =>
+            (activeCategory === 'all' || f.cat === activeCategory) &&
+            (!q || f.name.toLowerCase().includes(q))
+        );
+
+        document.getElementById('count-bar').textContent = `${filtered.length} מאכלים`;
+
+        if (filtered.length === 0) {
+            gal.innerHTML = '<p class="empty-state">לא נמצאו מאכלים.</p>';
+            return;
+        }
+
+        gal.innerHTML = '';
+        const frag = document.createDocumentFragment();
+        filtered.forEach(food => {
+            const card = document.createElement('div');
+            card.className = 'card';
+            card.onclick = () => openTutorial(food.name);
+
+            const imgEl = document.createElement('img');
+            imgEl.alt = food.name;
+            imgEl.loading = 'lazy';
+            imgEl.src = getImageUrl(food.name) || PLACEHOLDER;
+            imgEl.onerror = () => { imgEl.src = PLACEHOLDER; };
+
+            const b = document.createElement('b');
+            b.textContent = food.name;
+
+            card.appendChild(imgEl);
+            card.appendChild(b);
+            frag.appendChild(card);
+        });
+        gal.appendChild(frag);
+    }
+
+    function filterFoods() {
+        searchTerm = document.getElementById('search').value;
+        renderGallery();
+    }
+
+    // ── Tutorial ──────────────────────────────────────────────────────────────
+    function openTutorial(name) {
+        currentFoodName = name;
+        currentStep = 0;
+        currentPhase = 0;
+        document.getElementById('tutorial').style.display = 'flex';
+        document.getElementById('tName').innerText = name;
+        document.body.style.overflow = 'hidden';
+        const mainImg = document.getElementById('mainImg');
+        mainImg.src = getImageUrl(name) || PLACEHOLDER;
+        mainImg.onerror = () => { mainImg.src = PLACEHOLDER; };
+        document.getElementById('print-name').textContent = name;
+        updateUI();
+    }
+
+    function updateUI() {
+        const image = document.getElementById('mainImg');
+        image.className = currentPhase === 0 ? 'mode-pencil' : '';
+        document.getElementById('phase0').classList.toggle('active', currentPhase === 0);
+        document.getElementById('phase1').classList.toggle('active', currentPhase === 1);
+        for (let i = 0; i < 16; i++) {
+            const cell = document.getElementById('c' + i);
+            if (i < currentStep)        cell.className = 'cell';
+            else if (i === currentStep) cell.className = 'cell active';
+            else                        cell.className = 'cell hidden';
+        }
+        document.getElementById('coord-hint').innerText = COORDS[currentStep];
+        const isLast = currentStep === 15;
+        document.getElementById('nextBtn').innerText =
+            isLast ? (currentPhase === 0 ? 'עבור לצבעים 🎨' : 'סיימתי! 🎉') : 'הבא ➡️';
+    }
+
+    function changeStep(n) {
+        if (currentStep === 15 && n > 0) {
+            if (currentPhase === 0) { currentPhase = 1; currentStep = 0; }
+            else { closeTutorial(); return; }
+        } else {
+            currentStep += n;
+            if (currentStep < 0) {
+                if (currentPhase === 1) { currentPhase = 0; currentStep = 15; }
+                else { currentStep = 0; }
+            }
+        }
+        updateUI();
+    }
+
+    function closeTutorial() {
+        document.getElementById('tutorial').style.display = 'none';
+        document.body.style.overflow = 'auto';
+    }
+
+    // ── Init ──────────────────────────────────────────────────────────────────
+    renderCategories();
+    renderGallery();
+</script>
+</body>
+</html>

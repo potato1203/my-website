@@ -35,6 +35,12 @@ const PROJECTS = [
     url: "./brainrot-draw/",
     icon: "🧠"
   },
+  {
+    title: "FoodDraw",
+    description: "Learn to draw foods from all over the world step-by-step using the grid method. Covers fruits, vegetables, dishes, desserts, snacks and much more.",
+    url: "./food-draw/",
+    icon: "🍕"
+  },
 ];
 
 // =============================================================
