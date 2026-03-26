@@ -53,6 +53,12 @@ const PROJECTS = [
     url: "./space-jam-draw/",
     icon: "🏀"
   },
+  {
+    title: "AnimalDraw",
+    description: "Learn to draw animals from around the world step-by-step using the grid method. Covers mammals, birds, reptiles, sea creatures, insects and farm animals.",
+    url: "./animal-draw/",
+    icon: "🦁"
+  },
 ];
 
 // =============================================================
