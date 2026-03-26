@@ -1,8 +1,9 @@
-// icon: Simple Icons slug (https://simpleicons.org) — crisp vector SVG
-// color: brand hex color for the icon fill
-// domain: fallback domain for Google favicon if Simple Icons slug fails
+// icon:   Simple Icons slug (https://simpleicons.org) — crisp vector SVG, confirmed present
+// color:  brand hex color for the icon fill
+// url:    direct Wikimedia SVG thumbnail — used when no Simple Icons entry exists
+// domain: last-resort Google favicon fallback
 const LOGO_DATA = {
-  // Tech
+  // ── Tech ──────────────────────────────────────────────────────────────────
   "Apple":            { icon: "apple",           color: "000000", domain: "apple.com" },
   "Google":           { icon: "google",          color: "4285F4", domain: "google.com" },
   "Microsoft":        { icon: "microsoft",       color: "0078D4", domain: "microsoft.com" },
@@ -31,7 +32,7 @@ const LOGO_DATA = {
   "Intel":            { icon: "intel",           color: "0071C5", domain: "intel.com" },
   "Oracle":           { icon: "oracle",          color: "F80000", domain: "oracle.com" },
   "IBM":              { icon: "ibm",             color: "052FAD", domain: "ibm.com" },
-  // Food & Beverage
+  // ── Food & Beverage ───────────────────────────────────────────────────────
   "McDonald's":       { icon: "mcdonalds",       color: "FFC72C", domain: "mcdonalds.com" },
   "Starbucks":        { icon: "starbucks",       color: "00704A", domain: "starbucks.com" },
   "Coca-Cola":        { icon: "cocacola",        color: "F40009", domain: "coca-cola.com" },
@@ -40,24 +41,24 @@ const LOGO_DATA = {
   "Burger King":      { icon: "burgerking",      color: "D62300", domain: "burgerking.com" },
   "Subway":           { icon: "subway",          color: "009B3A", domain: "subway.com" },
   "Pizza Hut":        { icon: "pizzahut",        color: "EE3124", domain: "pizzahut.com" },
-  "Domino's":         { icon: "dominospizza",    color: "006491", domain: "dominos.com" },
-  "Dunkin":           { icon: "dunkin",          color: "FF671F", domain: "dunkindonuts.com" },
-  "Chipotle":         { icon: "chipotle",        color: "A81612", domain: "chipotle.com" },
-  "Wendy's":          { icon: "wendys",          color: "E2203D", domain: "wendys.com" },
+  "Domino's":         { url: "https://upload.wikimedia.org/wikipedia/commons/thumb/3/3e/Domino%27s_pizza_logo.svg/300px-Domino%27s_pizza_logo.svg.png", domain: "dominos.com" },
+  "Dunkin":           { url: "https://upload.wikimedia.org/wikipedia/commons/thumb/2/22/Dunkin%27_logo.svg/300px-Dunkin%27_logo.svg.png", domain: "dunkindonuts.com" },
+  "Chipotle":         { domain: "chipotle.com" },
+  "Wendy's":          { url: "https://upload.wikimedia.org/wikipedia/commons/thumb/6/66/Wendy%27s_logo_2012.svg/300px-Wendy%27s_logo_2012.svg.png", domain: "wendys.com" },
   "Taco Bell":        { icon: "tacobell",        color: "702082", domain: "tacobell.com" },
-  "Red Bull":         { icon: "redbull",         color: "CC1B28", domain: "redbull.com" },
-  "Nestle":           { icon: "nestle",          color: "009FDA", domain: "nestle.com" },
-  // Sports
+  "Red Bull":         { icon: "redbull",         color: "DB0A40", domain: "redbull.com" },
+  "Nestle":           { url: "https://upload.wikimedia.org/wikipedia/commons/thumb/b/bf/Nestl%C3%A9_textlogo.svg/300px-Nestl%C3%A9_textlogo.svg.png", domain: "nestle.com" },
+  // ── Sports ────────────────────────────────────────────────────────────────
   "Nike":             { icon: "nike",            color: "000000", domain: "nike.com" },
   "Adidas":           { icon: "adidas",          color: "000000", domain: "adidas.com" },
   "Puma":             { icon: "puma",            color: "000000", domain: "puma.com" },
-  "Under Armour":     { icon: "underarmour",     color: "1D1D1B", domain: "underarmour.com" },
+  "Under Armour":     { icon: "underarmour",     color: "1D1D1D", domain: "underarmour.com" },
   "New Balance":      { icon: "newbalance",      color: "CF0A2C", domain: "newbalance.com" },
-  "Reebok":           { icon: "reebok",          color: "000000", domain: "reebok.com" },
+  "Reebok":           { icon: "reebok",          color: "E41D1B", domain: "reebok.com" },
   "ESPN":             { icon: "espn",            color: "CC0000", domain: "espn.com" },
   "NBA":              { icon: "nba",             color: "006BB6", domain: "nba.com" },
-  "NFL":              { icon: "nfl",             color: "013369", domain: "nfl.com" },
-  // Automotive
+  "NFL":              { url: "https://upload.wikimedia.org/wikipedia/commons/thumb/e/e4/NFL_wordmark_logo_2008.svg/300px-NFL_wordmark_logo_2008.svg.png", domain: "nfl.com" },
+  // ── Automotive ────────────────────────────────────────────────────────────
   "Toyota":           { icon: "toyota",          color: "EB0A1E", domain: "toyota.com" },
   "BMW":              { icon: "bmw",             color: "0066B1", domain: "bmw.com" },
   "Mercedes-Benz":    { icon: "mercedesbenz",    color: "222222", domain: "mercedes-benz.com" },
@@ -68,22 +69,22 @@ const LOGO_DATA = {
   "Lamborghini":      { icon: "lamborghini",     color: "CC9900", domain: "lamborghini.com" },
   "Porsche":          { icon: "porsche",         color: "D5001C", domain: "porsche.com" },
   "Audi":             { icon: "audi",            color: "000000", domain: "audi.com" },
-  // Fashion
-  "Louis Vuitton":    { domain: "louisvuitton.com" },
-  "Gucci":            { domain: "gucci.com" },
-  "Chanel":           { domain: "chanel.com" },
-  "Prada":            { domain: "prada.com" },
+  // ── Fashion ───────────────────────────────────────────────────────────────
+  "Louis Vuitton":    { url: "https://upload.wikimedia.org/wikipedia/commons/thumb/7/76/Louis_Vuitton_logo_and_wordmark.svg/300px-Louis_Vuitton_logo_and_wordmark.svg.png", domain: "louisvuitton.com" },
+  "Gucci":            { url: "https://upload.wikimedia.org/wikipedia/commons/thumb/c/c5/Gucci_logo.svg/300px-Gucci_logo.svg.png", domain: "gucci.com" },
+  "Chanel":           { url: "https://upload.wikimedia.org/wikipedia/en/thumb/9/92/Chanel_logo_interlocking_cs.svg/300px-Chanel_logo_interlocking_cs.svg.png", domain: "chanel.com" },
+  "Prada":            { url: "https://upload.wikimedia.org/wikipedia/commons/thumb/b/b8/Prada-Logo.svg/300px-Prada-Logo.svg.png", domain: "prada.com" },
   "H&M":              { icon: "hm",              color: "E50010", domain: "hm.com" },
-  "Zara":             { domain: "zara.com" },
-  "Ralph Lauren":     { domain: "ralphlauren.com" },
-  "Versace":          { domain: "versace.com" },
-  "Burberry":         { domain: "burberry.com" },
-  // Entertainment
+  "Zara":             { icon: "zara",            color: "000000", domain: "zara.com" },
+  "Ralph Lauren":     { url: "https://upload.wikimedia.org/wikipedia/commons/thumb/7/72/Ralph_Lauren_logo.svg/300px-Ralph_Lauren_logo.svg.png", domain: "ralphlauren.com" },
+  "Versace":          { url: "https://upload.wikimedia.org/wikipedia/commons/thumb/4/4c/Versace_old_logo.svg/300px-Versace_old_logo.svg.png", domain: "versace.com" },
+  "Burberry":         { url: "https://upload.wikimedia.org/wikipedia/commons/thumb/b/b4/Logo_Burberry_01.svg/300px-Logo_Burberry_01.svg.png", domain: "burberry.com" },
+  // ── Entertainment ─────────────────────────────────────────────────────────
   "Disney":           { icon: "disney",          color: "113CCF", domain: "disney.com" },
-  "Warner Bros":      { domain: "warnerbros.com" },
-  "Universal":        { domain: "universalpictures.com" },
+  "Warner Bros":      { url: "https://upload.wikimedia.org/wikipedia/commons/thumb/a/a6/Warner_Bros._Discovery_%28symbol%29.svg/300px-Warner_Bros._Discovery_%28symbol%29.svg.png", domain: "warnerbros.com" },
+  "Universal":        { url: "https://upload.wikimedia.org/wikipedia/commons/thumb/b/b6/Universal_Pictures_logo.svg/300px-Universal_Pictures_logo.svg.png", domain: "universalpictures.com" },
   "Sony":             { icon: "sony",            color: "003087", domain: "sony.com" },
-  "Marvel":           { domain: "marvel.com" },
+  "Marvel":           { url: "https://upload.wikimedia.org/wikipedia/commons/thumb/b/ba/Marvel_Comics_2024_logo.svg/300px-Marvel_Comics_2024_logo.svg.png", domain: "marvel.com" },
   "HBO":              { icon: "hbo",             color: "000000", domain: "hbo.com" },
   "Nintendo":         { icon: "nintendo",        color: "E60012", domain: "nintendo.com" },
   "PlayStation":      { icon: "playstation",     color: "003087", domain: "playstation.com" },
@@ -91,24 +92,24 @@ const LOGO_DATA = {
   "EA":               { icon: "ea",              color: "000000", domain: "ea.com" },
   "Steam":            { icon: "steam",           color: "000000", domain: "store.steampowered.com" },
   "Rockstar Games":   { icon: "rockstargames",   color: "FCAF17", domain: "rockstargames.com" },
-  // Social
+  // ── Social ────────────────────────────────────────────────────────────────
   "Instagram":        { icon: "instagram",       color: "E4405F", domain: "instagram.com" },
   "Facebook":         { icon: "facebook",        color: "1877F2", domain: "facebook.com" },
   "Reddit":           { icon: "reddit",          color: "FF4500", domain: "reddit.com" },
   "Pinterest":        { icon: "pinterest",       color: "E60023", domain: "pinterest.com" },
   "WhatsApp":         { icon: "whatsapp",        color: "25D366", domain: "whatsapp.com" },
   "Twitch":           { icon: "twitch",          color: "9146FF", domain: "twitch.tv" },
-  // Finance
+  // ── Finance ───────────────────────────────────────────────────────────────
   "Visa":             { icon: "visa",            color: "1A1F71", domain: "visa.com" },
   "Mastercard":       { icon: "mastercard",      color: "EB001B", domain: "mastercard.com" },
   "American Express": { icon: "americanexpress", color: "007BC1", domain: "americanexpress.com" },
   "Stripe":           { icon: "stripe",          color: "008CDD", domain: "stripe.com" },
-  // Retail
+  // ── Retail ────────────────────────────────────────────────────────────────
   "Walmart":          { icon: "walmart",         color: "0071CE", domain: "walmart.com" },
   "Target":           { icon: "target",          color: "CC0000", domain: "target.com" },
   "IKEA":             { icon: "ikea",            color: "0058A3", domain: "ikea.com" },
   "eBay":             { icon: "ebay",            color: "E53238", domain: "ebay.com" },
-  "Costco":           { domain: "costco.com" },
-  "Home Depot":       { icon: "homedepot",       color: "F96302", domain: "homedepot.com" },
-  "Best Buy":         { icon: "bestbuy",         color: "0046BE", domain: "bestbuy.com" },
+  "Costco":           { url: "https://upload.wikimedia.org/wikipedia/commons/thumb/5/59/Costco_Wholesale_logo_2010-10-26.svg/300px-Costco_Wholesale_logo_2010-10-26.svg.png", domain: "costco.com" },
+  "Home Depot":       { url: "https://upload.wikimedia.org/wikipedia/commons/thumb/5/5f/TheHomeDepot.svg/300px-TheHomeDepot.svg.png", domain: "homedepot.com" },
+  "Best Buy":         { url: "https://upload.wikimedia.org/wikipedia/commons/thumb/c/c4/Best_Buy_logo_2018.svg/300px-Best_Buy_logo_2018.svg.png", domain: "bestbuy.com" },
 };
