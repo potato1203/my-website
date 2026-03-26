@@ -24,6 +24,12 @@
 
 const PROJECTS = [
   {
+    title: "GoalDraw",
+    description: "Learn to draw football club logos step-by-step using the grid method. Covers Premier League, La Liga, Bundesliga, Serie A, Ligue 1 and more.",
+    url: "./goal-draw/",
+    icon: "⚽"
+  },
+  {
     title: "LogoDraw",
     description: "Learn to draw famous company logos step-by-step using the grid method. Covers tech, food, sports, automotive, fashion, entertainment and more.",
     url: "./logo-draw/",

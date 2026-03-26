@@ -1,0 +1,357 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GoalDraw - ציירו סמלי קבוצות כדורגל ⚽</title>
+    <style>
+        :root {
+            --green: #1a7a4a;
+            --dark: #1a2636;
+            --accent: #2e86de;
+            --red: #e63946;
+            --yellow: #f9c74f;
+            --bg: #f4f7f6;
+        }
+
+        @media print {
+            body * { visibility: hidden; }
+            #print-template, #print-template * { visibility: visible; }
+            #print-template { position: absolute; left: 0; top: 0; width: 100%; display: flex !important; flex-direction: column; align-items: center; padding-top: 50px; }
+            .no-print { display: none !important; }
+        }
+
+        * { box-sizing: border-box; }
+        body { font-family: system-ui, -apple-system, sans-serif; background: var(--bg); margin: 0; text-align: center; user-select: none; overflow-x: hidden; }
+
+        header { background: var(--dark); color: white; padding: 20px 25px 25px; border-bottom: 6px solid var(--green); box-shadow: 0 4px 15px rgba(0,0,0,0.3); }
+        h1 { margin: 0 0 5px; font-size: 2rem; letter-spacing: 1px; }
+        h1 span { color: var(--yellow); }
+        .subtitle { margin: 0; font-size: 1rem; opacity: 0.7; }
+
+        .nav-tools { display: flex; flex-direction: column; align-items: center; gap: 10px; margin: 15px 0 0; }
+        #search { padding: 11px 22px; width: 85%; max-width: 450px; border-radius: 30px; border: 3px solid var(--accent); outline: none; font-size: 1.05rem; direction: rtl; }
+        .btn-print { background: var(--green); color: white; padding: 11px 28px; border-radius: 40px; border: none; cursor: pointer; font-weight: bold; font-size: 1rem; box-shadow: 0 4px 8px rgba(0,0,0,0.15); transition: 0.2s; }
+        .btn-print:hover { transform: scale(1.05); background: #155f38; }
+
+        .league-filters { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; padding: 18px 15px 10px; }
+        .league-btn { padding: 7px 16px; border-radius: 20px; border: 2px solid #ccc; background: white; cursor: pointer; font-size: 0.9rem; font-weight: bold; transition: 0.2s; color: #333; }
+        .league-btn:hover { border-color: var(--accent); color: var(--accent); }
+        .league-btn.active { background: var(--dark); color: white; border-color: var(--dark); }
+
+        .gallery { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 18px; padding: 18px; max-width: 1200px; margin: 0 auto; }
+        .card { background: white; border-radius: 18px; padding: 15px 12px 12px; cursor: pointer; box-shadow: 0 4px 12px rgba(0,0,0,0.07); transition: 0.25s; border: 2px solid transparent; display: flex; flex-direction: column; align-items: center; min-height: 185px; }
+        .card:hover { border-color: var(--accent); transform: translateY(-5px); box-shadow: 0 8px 20px rgba(0,0,0,0.12); }
+        .card img { width: 100px; height: 100px; object-fit: contain; margin-bottom: 10px; }
+        .card b { font-size: 0.95rem; color: #222; text-align: center; line-height: 1.3; }
+        .card small { font-size: 0.75rem; color: #999; margin-top: 5px; }
+
+        /* ── Tutorial overlay ── */
+        #tutorial { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: white; z-index: 1000; flex-direction: column; align-items: center; overflow-y: auto; }
+
+        .nav-bar { width: 100%; background: var(--dark); color: white; padding: 14px 20px; display: flex; justify-content: space-between; align-items: center; }
+        .nav-bar h2 { margin: 0; font-size: 1.15rem; }
+        .btn-close { padding: 9px 18px; border-radius: 10px; border: none; cursor: pointer; font-weight: bold; font-size: 0.95rem; background: var(--red); color: white; }
+
+        .phase-indicator { display: flex; gap: 12px; margin: 18px 0 0; flex-wrap: wrap; justify-content: center; }
+        .phase-btn { padding: 10px 22px; border-radius: 25px; border: 2px solid #ddd; background: #f5f5f5; font-weight: bold; opacity: 0.5; font-size: 0.95rem; transition: 0.2s; }
+        .phase-btn.active { opacity: 1; border-color: var(--accent); background: #e8f4fd; color: var(--accent); transform: scale(1.08); }
+
+        #coord-hint { font-size: 3.5rem; font-weight: bold; color: var(--red); margin: 8px 0 0; letter-spacing: 2px; }
+
+        .grid-wrapper {
+            position: relative;
+            width: 90vw;
+            max-width: 380px;
+            aspect-ratio: 1 / 1;
+            margin: 35px auto 10px;
+        }
+        .labels-top { position: absolute; top: -34px; width: 100%; display: flex; justify-content: space-around; font-weight: bold; color: var(--accent); font-size: 1.5rem; }
+        .labels-side { position: absolute; right: -34px; height: 100%; display: flex; flex-direction: column; justify-content: space-around; font-weight: bold; color: var(--accent); font-size: 1.5rem; }
+        .image-container { position: relative; width: 100%; height: 100%; border: 5px solid #222; background: white; display: grid; grid-template-columns: repeat(4, 1fr); grid-template-rows: repeat(4, 1fr); box-shadow: 0 10px 30px rgba(0,0,0,0.2); }
+
+        #mainImg { position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: contain; pointer-events: none; transition: filter 0.5s; padding: 6px; }
+        .mode-pencil { filter: grayscale(1) contrast(180%) brightness(1.2) opacity(0.25); }
+
+        .cell { position: relative; border: 1px solid rgba(0,0,0,0.06); z-index: 2; transition: 0.2s; }
+        .cell.hidden { background: rgba(255,255,255,0.98); }
+        .cell.active { border: 4px solid var(--red); z-index: 10; animation: blink 0.9s infinite; background: transparent; }
+        @keyframes blink { 0%, 100% { border-color: var(--red); } 50% { border-color: transparent; } }
+
+        .controls { display: flex; gap: 18px; margin: 22px 0; padding-bottom: 50px; }
+        .nav-ctrl { padding: 13px 36px; border-radius: 40px; border: none; cursor: pointer; font-weight: bold; font-size: 1.2rem; box-shadow: 0 4px 8px rgba(0,0,0,0.12); transition: 0.2s; }
+        .nav-ctrl:hover { transform: scale(1.04); }
+        .btn-blue { background: var(--accent); color: white; }
+        .btn-grey { background: #666; color: white; }
+
+        /* ── Print template ── */
+        #print-template { display: none; }
+        .printable-grid { width: 560px; height: 560px; border: 6px solid black; display: grid; grid-template-columns: repeat(4, 1fr); grid-template-rows: repeat(4, 1fr); }
+        .printable-cell { border: 1px solid #ccc; }
+
+        .empty-state { padding: 60px 20px; color: #999; font-size: 1.2rem; grid-column: 1/-1; }
+    </style>
+</head>
+<body>
+
+<header class="no-print">
+    <h1>⚽ <span>Goal</span>Draw</h1>
+    <p class="subtitle">ציירו סמלי קבוצות כדורגל בשיטת הרשת</p>
+    <div class="nav-tools">
+        <input type="text" id="search" placeholder="🔍 חפשו קבוצה..." oninput="filterTeams()">
+        <button class="btn-print" onclick="window.print()">🖨️ הדפס דף רשת לציור</button>
+    </div>
+</header>
+
+<div class="league-filters no-print">
+    <button class="league-btn active" onclick="setLeague('all', this)">🌍 הכל</button>
+    <button class="league-btn" onclick="setLeague('Premier League', this)">🏴󠁧󠁢󠁥󠁮󠁧󠁿 פרמייר ליג</button>
+    <button class="league-btn" onclick="setLeague('La Liga', this)">🇪🇸 לה ליגה</button>
+    <button class="league-btn" onclick="setLeague('Bundesliga', this)">🇩🇪 בונדסליגה</button>
+    <button class="league-btn" onclick="setLeague('Serie A', this)">🇮🇹 סריה A</button>
+    <button class="league-btn" onclick="setLeague('Ligue 1', this)">🇫🇷 ליג 1</button>
+    <button class="league-btn" onclick="setLeague('Other', this)">🌐 אחר</button>
+</div>
+
+<div class="gallery no-print" id="gallery"></div>
+
+<!-- Tutorial modal -->
+<div id="tutorial" class="no-print">
+    <div class="nav-bar">
+        <h2 id="tName">שם הקבוצה</h2>
+        <button class="btn-close" onclick="closeTutorial()">✕ סגור</button>
+    </div>
+    <div class="phase-indicator">
+        <div id="phase0" class="phase-btn active">✏️ שלב א׳: צייר (עיפרון)</div>
+        <div id="phase1" class="phase-btn">🎨 שלב ב׳: צביעה</div>
+    </div>
+    <div id="coord-hint">א1</div>
+    <div class="grid-wrapper">
+        <div class="labels-top"><span>א</span><span>ב</span><span>ג</span><span>ד</span></div>
+        <div class="labels-side"><span>1</span><span>2</span><span>3</span><span>4</span></div>
+        <div class="image-container">
+            <img id="mainImg" class="mode-pencil" src="" alt="">
+            <div id="c0"  class="cell"></div><div id="c1"  class="cell"></div><div id="c2"  class="cell"></div><div id="c3"  class="cell"></div>
+            <div id="c4"  class="cell"></div><div id="c5"  class="cell"></div><div id="c6"  class="cell"></div><div id="c7"  class="cell"></div>
+            <div id="c8"  class="cell"></div><div id="c9"  class="cell"></div><div id="c10" class="cell"></div><div id="c11" class="cell"></div>
+            <div id="c12" class="cell"></div><div id="c13" class="cell"></div><div id="c14" class="cell"></div><div id="c15" class="cell"></div>
+        </div>
+    </div>
+    <div class="controls">
+        <button class="nav-ctrl btn-grey" onclick="changeStep(-1)">⬅️ הקודם</button>
+        <button class="nav-ctrl btn-blue" onclick="changeStep(1)" id="nextBtn">הבא ➡️</button>
+    </div>
+</div>
+
+<!-- Print template (blank grid) -->
+<div id="print-template">
+    <h2 style="font-size:2.2rem;">⚽ GoalDraw — דף ציור</h2>
+    <div style="position:relative; width:620px; height:620px; margin-top:40px;">
+        <div class="labels-top" style="top:-50px; font-size:3rem;"><span>א</span><span>ב</span><span>ג</span><span>ד</span></div>
+        <div class="labels-side" style="right:-55px; font-size:3rem;"><span>1</span><span>2</span><span>3</span><span>4</span></div>
+        <div class="printable-grid">
+            <div class="printable-cell"></div><div class="printable-cell"></div><div class="printable-cell"></div><div class="printable-cell"></div>
+            <div class="printable-cell"></div><div class="printable-cell"></div><div class="printable-cell"></div><div class="printable-cell"></div>
+            <div class="printable-cell"></div><div class="printable-cell"></div><div class="printable-cell"></div><div class="printable-cell"></div>
+            <div class="printable-cell"></div><div class="printable-cell"></div><div class="printable-cell"></div><div class="printable-cell"></div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Grid coords: columns א ב ג ד × rows 1 2 3 4 (left-to-right, top-to-bottom)
+    const COORDS = [
+        "א1","ב1","ג1","ד1",
+        "א2","ב2","ג2","ד2",
+        "א3","ב3","ג3","ד3",
+        "א4","ב4","ג4","ד4"
+    ];
+
+    // Logo source: football-data.org free crests, proxied through weserv.nl to avoid CORS
+    // Teams with a direct `url` field use that instead (TheSportsDB fallback for mismatched IDs)
+    const logo = t => t.url
+        ? `https://images.weserv.nl/?url=${encodeURIComponent(t.url)}`
+        : `https://images.weserv.nl/?url=${encodeURIComponent(`https://crests.football-data.org/${t.id}.png`)}`;
+
+    // ── Team data ────────────────────────────────────────────────────────────
+    const TEAMS = [
+        // Premier League
+        { id: 57,  he: "ארסנל",                en: "Arsenal",             league: "Premier League" },
+        { id: 58,  he: "אסטון וילה",            en: "Aston Villa",         league: "Premier League" },
+        { id: 61,  he: "צ׳לסי",                en: "Chelsea",             league: "Premier League" },
+        { id: 62,  he: "אוורטון",               en: "Everton",             league: "Premier League" },
+        { id: 63,  he: "פולהאם",                en: "Fulham",              league: "Premier League" },
+        { id: 64,  he: "ליברפול",               en: "Liverpool",           league: "Premier League" },
+        { id: 65,  he: "מנצ׳סטר סיטי",          en: "Man City",            league: "Premier League" },
+        { id: 66,  he: "מנצ׳סטר יונייטד",       en: "Man United",          league: "Premier League" },
+        { id: 67,  he: "ניוקאסל יונייטד",       en: "Newcastle Utd",       league: "Premier League" },
+        { id: 73,  he: "טוטנהאם הוטספר",        en: "Tottenham",           league: "Premier League" },
+        { id: 76,  he: "וולברהמפטון",            en: "Wolves",              league: "Premier League" },
+        { id: 338, he: "לסטר סיטי",             en: "Leicester City",      league: "Premier League" },
+        { id: 354, he: "קריסטל פאלאס",          en: "Crystal Palace",      league: "Premier League" },
+        { id: 397, he: "בריטון",                en: "Brighton",            league: "Premier League" },
+        { id: 563, he: "ווסט האם יונייטד",      en: "West Ham Utd",        league: "Premier League" },
+
+        // La Liga
+        { id: 77,  he: "אתלטיק בילבאו",         en: "Athletic Bilbao",     league: "La Liga" },
+        { id: 78,  he: "אטלטיקו מדריד",         en: "Atletico Madrid",     league: "La Liga" },
+        { id: 79,  he: "אוסאסונה",              en: "Osasuna",             league: "La Liga" },
+        { id: 81,  he: "ברצלונה",               en: "FC Barcelona",        league: "La Liga" },
+        { id: 86,  he: "ריאל מדריד",            en: "Real Madrid",         league: "La Liga" },
+        { id: 92,  he: "ריאל סוסיאדד",          en: "Real Sociedad",       league: "La Liga" },
+        { id: 94,  he: "וייארריאל",              en: "Villarreal",          league: "La Liga" },
+        { id: 95,  he: "ולנסיה",                en: "Valencia CF",         league: "La Liga" },
+        { id: 558, he: "ריאל בטיס",             en: "Real Betis",          league: "La Liga" },
+        { id: 559, he: "סביליה",                en: "Sevilla FC",          league: "La Liga" },
+
+        // Bundesliga
+        { id: 3,   he: "באייר לברקוזן",          en: "Bayer Leverkusen",    league: "Bundesliga" },
+        { id: 4,   he: "בורוסיה דורטמונד",      en: "Borussia Dortmund",   league: "Bundesliga" },
+        { id: 5,   he: "בייארן מינכן",           en: "Bayern Munich",       league: "Bundesliga" },
+        { id: 18,  he: "בורוסיה מנכנגלדבאך",    en: "B. Mönchengladbach",  league: "Bundesliga" },
+        { id: 19,  he: "איינטרכט פרנקפורט",     en: "Eintracht Frankfurt", league: "Bundesliga" },
+        { id: 22,  he: "וולפסבורג",              en: "Wolfsburg",           league: "Bundesliga", url: "https://r2.thesportsdb.com/images/media/team/badge/07kp421599680274.png" },
+        { id: 721, he: "RB לייפציג",             en: "RB Leipzig",          league: "Bundesliga" },
+
+        // Serie A
+        { id: 98,  he: "AC מילאן",              en: "AC Milan",            league: "Serie A" },
+        { id: 99,  he: "פיורנטינה",             en: "Fiorentina",          league: "Serie A" },
+        { id: 100, he: "AS רומא",               en: "AS Roma",             league: "Serie A" },
+        { id: 102, he: "אטלנטה",                en: "Atalanta BC",         league: "Serie A" },
+        { id: 108, he: "אינטר מילאן",            en: "Inter Milan",         league: "Serie A" },
+        { id: 109, he: "יובנטוס",               en: "Juventus",            league: "Serie A" },
+        { id: 110, he: "לאציו",                 en: "SS Lazio",            league: "Serie A" },
+        { id: 113, he: "נאפולי",                en: "SSC Napoli",          league: "Serie A" },
+
+        // Ligue 1
+        { id: 516, he: "מרסיי",                 en: "Marseille",           league: "Ligue 1" },
+        { id: 521, he: "ליל",                   en: "Lille",               league: "Ligue 1" },
+        { id: 522, he: "ניס",                   en: "Nice",                league: "Ligue 1" },
+        { id: 523, he: "ליון",                  en: "Lyon",                league: "Ligue 1" },
+        { id: 524, he: "פאריס סן ז׳רמן",        en: "PSG",                 league: "Ligue 1" },
+        { id: 548, he: "מונקו",                 en: "AS Monaco",           league: "Ligue 1" },
+
+        // Other (Portugal, Netherlands, Scotland, Turkey)
+        { id: 264, he: "סלטיק",                 en: "Celtic FC",           league: "Other", url: "https://r2.thesportsdb.com/images/media/team/badge/3uv1641758780002.png" },
+        { id: 347, he: "ריינג׳רס",              en: "Rangers FC",          league: "Other", url: "https://r2.thesportsdb.com/images/media/team/badge/ti24j61614290048.png" },
+        { id: 497, he: "ספורטינג",               en: "Sporting CP",         league: "Other", url: "https://r2.thesportsdb.com/images/media/team/badge/ohj6ih1628855978.png" },
+        { id: 498, he: "בנפיקה",                en: "SL Benfica",          league: "Other", url: "https://r2.thesportsdb.com/images/media/team/badge/0pywy21662316682.png" },
+        { id: 503, he: "FC פורטו",              en: "FC Porto",            league: "Other" },
+        { id: 674, he: "PSV איינדהובן",          en: "PSV Eindhoven",       league: "Other" },
+        { id: 678, he: "אייאקס",                en: "AFC Ajax",            league: "Other" },
+        { id: 683, he: "פיינורד",               en: "Feyenoord",           league: "Other", url: "https://r2.thesportsdb.com/images/media/team/badge/uturtx1473534803.png" },
+    ];
+
+    // ── State ────────────────────────────────────────────────────────────────
+    let currentStep = 0;
+    let currentPhase = 0;
+    let activeLeague = 'all';
+    let searchTerm = '';
+
+    // ── Gallery ──────────────────────────────────────────────────────────────
+    function renderGallery() {
+        const gal = document.getElementById('gallery');
+        gal.innerHTML = '';
+
+        const filtered = TEAMS.filter(t => {
+            const leagueOk = activeLeague === 'all' || t.league === activeLeague;
+            const q = searchTerm.toLowerCase();
+            const searchOk = !q || t.he.includes(q) || t.en.toLowerCase().includes(q);
+            return leagueOk && searchOk;
+        });
+
+        if (filtered.length === 0) {
+            gal.innerHTML = '<p class="empty-state">לא נמצאו קבוצות. נסו חיפוש אחר.</p>';
+            return;
+        }
+
+        filtered.forEach(t => {
+            const card = document.createElement('div');
+            card.className = 'card';
+            card.onclick = () => openTutorial(t);
+            card.innerHTML = `
+                <img src="${logo(t)}" loading="lazy" alt="${t.en}" onerror="this.src='data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2280%22>⚽</text></svg>'">
+                <b>${t.he}</b>
+                <small>${t.en}</small>
+            `;
+            gal.appendChild(card);
+        });
+    }
+
+    function setLeague(league, btn) {
+        activeLeague = league;
+        document.querySelectorAll('.league-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        renderGallery();
+    }
+
+    function filterTeams() {
+        searchTerm = document.getElementById('search').value;
+        renderGallery();
+    }
+
+    // ── Tutorial ─────────────────────────────────────────────────────────────
+    function openTutorial(t) {
+        currentStep = 0;
+        currentPhase = 0;
+        document.getElementById('tutorial').style.display = 'flex';
+        document.getElementById('tName').innerText = t.he + ' — ' + t.en;
+        document.getElementById('mainImg').src = logo(t);
+        document.body.style.overflow = 'hidden';
+        updateUI();
+    }
+
+    function updateUI() {
+        const img = document.getElementById('mainImg');
+        img.className = currentPhase === 0 ? 'mode-pencil' : '';
+
+        document.getElementById('phase0').classList.toggle('active', currentPhase === 0);
+        document.getElementById('phase1').classList.toggle('active', currentPhase === 1);
+
+        for (let i = 0; i < 16; i++) {
+            const cell = document.getElementById('c' + i);
+            if (i < currentStep)       cell.className = 'cell';        // revealed
+            else if (i === currentStep) cell.className = 'cell active'; // highlighted
+            else                        cell.className = 'cell hidden'; // covered
+        }
+
+        document.getElementById('coord-hint').innerText = COORDS[currentStep];
+
+        const isLast = currentStep === 15;
+        document.getElementById('nextBtn').innerText =
+            isLast ? (currentPhase === 0 ? 'עבור לצביעה 🎨' : 'סיימת! 🎉') : 'הבא ➡️';
+    }
+
+    function changeStep(n) {
+        if (currentStep === 15 && n > 0) {
+            if (currentPhase === 0) {
+                currentPhase = 1;
+                currentStep = 0;
+            } else {
+                closeTutorial();
+                return;
+            }
+        } else {
+            currentStep += n;
+            if (currentStep < 0) {
+                if (currentPhase === 1) {
+                    currentPhase = 0;
+                    currentStep = 15;
+                } else {
+                    currentStep = 0;
+                }
+            }
+        }
+        updateUI();
+    }
+
+    function closeTutorial() {
+        document.getElementById('tutorial').style.display = 'none';
+        document.body.style.overflow = 'auto';
+    }
+
+    // ── Init ─────────────────────────────────────────────────────────────────
+    renderGallery();
+</script>
+</body>
+</html>
