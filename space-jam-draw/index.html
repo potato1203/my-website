@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>SpaceJamDraw - צייר דמויות מ-Space Jam 🏀</title>
+    <script src="https://cdn.jsdelivr.net/npm/@imgly/background-removal@1.4.5/dist/browser.js"></script>
     <style>
         :root {
             --orange: #f77f00;
@@ -44,7 +45,8 @@
         .gallery { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 18px; padding: 18px; max-width: 1400px; margin: 0 auto; }
         .card { background: white; border-radius: 18px; padding: 15px 12px 12px; cursor: pointer; box-shadow: 0 4px 12px rgba(0,0,0,0.07); transition: 0.25s; border: 2px solid transparent; display: flex; flex-direction: column; align-items: center; min-height: 175px; }
         .card:hover { border-color: var(--orange); transform: translateY(-5px); box-shadow: 0 8px 20px rgba(0,0,0,0.12); }
-        .card img { width: 100px; height: 100px; object-fit: contain; margin-bottom: 10px; mix-blend-mode: multiply; }
+        .card img { width: 100px; height: 100px; object-fit: contain; margin-bottom: 10px; transition: opacity 0.3s; }
+        .card img.processing { opacity: 0.5; }
         .card b { font-size: 0.82rem; color: #222; text-align: center; line-height: 1.3; direction: ltr; word-break: break-word; }
 
         /* ── Tutorial overlay ── */
@@ -219,11 +221,34 @@
         { id: "cameos",     label: "🦸 קמאות" },
     ];
 
-    function getImageUrl(name) {
+    // ── Image URLs ────────────────────────────────────────────────────────────
+    function getRawUrl(name) {
         const url = IMAGE_URLS[name];
         if (url) return 'https://wsrv.nl/?url=' + encodeURIComponent(url) + '&w=300&output=webp';
         const prompt = encodeURIComponent(`cartoon ${name} Space Jam character illustration, white background`);
         return `https://image.pollinations.ai/prompt/${prompt}?width=300&height=300&nologo=true&seed=42`;
+    }
+
+    // ── Background removal ────────────────────────────────────────────────────
+    const bgCache = new Map();
+
+    async function removeBackground(imgEl, name) {
+        if (bgCache.has(name)) {
+            imgEl.src = bgCache.get(name);
+            return;
+        }
+        imgEl.classList.add('processing');
+        try {
+            const blob = await BackgroundRemoval.removeBackground(getRawUrl(name), {
+                publicPath: 'https://cdn.jsdelivr.net/npm/@imgly/background-removal@1.4.5/dist/'
+            });
+            const objectUrl = URL.createObjectURL(blob);
+            bgCache.set(name, objectUrl);
+            imgEl.src = objectUrl;
+        } catch (e) {
+            // keep original image if removal fails
+        }
+        imgEl.classList.remove('processing');
     }
 
     const COORDS = ['א1','ב1','ג1','ד1','א2','ב2','ג2','ד2','א3','ב3','ג3','ד3','א4','ב4','ג4','ד4'];
@@ -276,8 +301,11 @@
             const imgEl = document.createElement('img');
             imgEl.alt = char.name;
             imgEl.loading = 'lazy';
-            imgEl.src = getImageUrl(char.name) || PLACEHOLDER;
+            imgEl.src = bgCache.has(char.name) ? bgCache.get(char.name) : getRawUrl(char.name);
             imgEl.onerror = () => { imgEl.src = PLACEHOLDER; };
+            if (!bgCache.has(char.name)) {
+                imgEl.onload = () => removeBackground(imgEl, char.name);
+            }
 
             const b = document.createElement('b');
             b.textContent = char.name;
@@ -302,8 +330,11 @@
         document.getElementById('tName').innerText = name;
         document.body.style.overflow = 'hidden';
         const mainImg = document.getElementById('mainImg');
-        mainImg.src = getImageUrl(name) || PLACEHOLDER;
+        mainImg.src = bgCache.has(name) ? bgCache.get(name) : getRawUrl(name);
         mainImg.onerror = () => { mainImg.src = PLACEHOLDER; };
+        if (!bgCache.has(name)) {
+            mainImg.onload = () => removeBackground(mainImg, name);
+        }
         document.getElementById('print-name').textContent = name;
         updateUI();
     }
