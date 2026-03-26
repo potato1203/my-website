@@ -226,8 +226,14 @@
 
     function getRawUrl(name) {
         const url = IMAGE_URLS[name];
-        if (url) return 'https://wsrv.nl/?url=' + encodeURIComponent(url) + '&w=300&output=webp';
-        return null;
+        if (!url) return null;
+        if (url.endsWith('.svg')) return url;   // emoji SVGs: serve directly, already transparent
+        return 'https://wsrv.nl/?url=' + encodeURIComponent(url) + '&w=300&output=webp';
+    }
+
+    function needsBgRemoval(name) {
+        const url = IMAGE_URLS[name];
+        return url && !url.endsWith('.svg');    // only photos need AI background removal
     }
 
     const bgCache = new Map();
@@ -297,7 +303,7 @@
             const rawUrl = getRawUrl(animal.name) || PLACEHOLDER;
             imgEl.src = bgCache.has(animal.name) ? bgCache.get(animal.name) : rawUrl;
             imgEl.onerror = () => { imgEl.src = PLACEHOLDER; };
-            if (!bgCache.has(animal.name)) imgEl.onload = () => removeBg(imgEl, animal.name, rawUrl);
+            if (!bgCache.has(animal.name) && needsBgRemoval(animal.name)) imgEl.onload = () => removeBg(imgEl, animal.name, rawUrl);
 
             const b = document.createElement('b');
             b.textContent = animal.name;
@@ -324,7 +330,7 @@
         const rawUrl = getRawUrl(name) || PLACEHOLDER;
         mainImg.src = bgCache.has(name) ? bgCache.get(name) : rawUrl;
         mainImg.onerror = () => { mainImg.src = PLACEHOLDER; };
-        if (!bgCache.has(name)) mainImg.onload = () => removeBg(mainImg, name, rawUrl);
+        if (!bgCache.has(name) && needsBgRemoval(name)) mainImg.onload = () => removeBg(mainImg, name, rawUrl);
         document.getElementById('print-name').textContent = name;
         updateUI();
     }
