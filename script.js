@@ -41,6 +41,12 @@ const PROJECTS = [
     url: "./food-draw/",
     icon: "🍕"
   },
+  {
+    title: "SpaceJamDraw",
+    description: "Learn to draw Space Jam characters step-by-step using the grid method. Features Bugs Bunny, Michael Jordan, the Monstars, DC heroes and more.",
+    url: "./space-jam-draw/",
+    icon: "🏀"
+  },
 ];
 
 // =============================================================
