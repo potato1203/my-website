@@ -1,0 +1,1252 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <title>המרוץ למיליון — גרסת הילדים 🏆</title>
+  <style>
+    /* ═══════════════════════════════════════
+       BASE
+    ═══════════════════════════════════════ */
+    :root {
+      --bg:     #08050f;
+      --card:   #12102a;
+      --gold:   #FFD700;
+      --gold2:  #FF9500;
+      --txt:    #f1f5f9;
+      --dim:    #64748b;
+      --green:  #22c55e;
+      --red:    #ef4444;
+      --rad:    22px;
+      --team:   #FF6B35;
+      --team-s: rgba(255,107,53,.3);
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+
+    body {
+      font-family: system-ui, -apple-system, 'Segoe UI', sans-serif;
+      background: var(--bg);
+      color: var(--txt);
+      min-height: 100dvh;
+      overflow-x: hidden;
+    }
+
+    /* starfield */
+    body::before {
+      content: '';
+      position: fixed; inset: 0; pointer-events: none; z-index: 0;
+      background-image: radial-gradient(circle, rgba(255,255,255,.55) 1px, transparent 1px);
+      background-size: 28px 28px;
+      opacity: .04;
+    }
+
+    .screen {
+      display: none; position: relative; z-index: 1;
+      min-height: 100dvh; padding: 0;
+    }
+    .screen.active { display: flex; flex-direction: column; }
+
+    .inner {
+      width: 100%; max-width: 480px;
+      margin: 0 auto; padding: 24px 20px 40px;
+      display: flex; flex-direction: column; align-items: center; gap: 20px;
+    }
+
+    /* ═══════════════════════════════════════
+       TYPOGRAPHY
+    ═══════════════════════════════════════ */
+    .logo-title {
+      font-size: clamp(2rem, 8vw, 3rem);
+      font-weight: 900; color: var(--gold);
+      text-shadow: 0 0 40px rgba(255,215,0,.4);
+      text-align: center; line-height: 1.1;
+    }
+    .logo-sub {
+      font-size: clamp(1.1rem, 4vw, 1.5rem);
+      color: #94a3b8; text-align: center; margin-top: 4px;
+    }
+
+    /* ═══════════════════════════════════════
+       BUTTONS
+    ═══════════════════════════════════════ */
+    .btn {
+      display: flex; align-items: center; justify-content: center;
+      gap: 8px; border: none; border-radius: 99px;
+      font-weight: 800; cursor: pointer; transition: .15s;
+      font-family: inherit; font-size: 1.15rem; padding: 16px 36px;
+      width: 100%; max-width: 360px;
+    }
+    .btn:active { transform: scale(.96); }
+
+    .btn-gold {
+      background: linear-gradient(135deg, var(--gold2), var(--gold));
+      color: #000; box-shadow: 0 4px 20px rgba(255,215,0,.35);
+    }
+    .btn-gold:hover { box-shadow: 0 6px 28px rgba(255,215,0,.5); }
+
+    .btn-green {
+      background: var(--green); color: #fff;
+      font-size: clamp(1.1rem, 4vw, 1.5rem); padding: 20px 24px;
+      box-shadow: 0 4px 16px rgba(34,197,94,.35);
+    }
+    .btn-red {
+      background: var(--red); color: #fff;
+      font-size: clamp(1.1rem, 4vw, 1.5rem); padding: 20px 24px;
+      box-shadow: 0 4px 16px rgba(239,68,68,.35);
+    }
+    .btn-ghost {
+      background: rgba(255,255,255,.07);
+      border: 2px solid rgba(255,255,255,.15);
+      color: var(--txt); padding: 14px 32px;
+    }
+    .btn-ghost:hover { background: rgba(255,255,255,.12); }
+
+    .num-row { display: flex; gap: 14px; justify-content: center; }
+    .num-btn {
+      width: 72px; height: 72px; border-radius: 50%;
+      border: 3px solid rgba(255,255,255,.15);
+      background: rgba(255,255,255,.06);
+      color: var(--txt); font-size: 2rem; font-weight: 900;
+      cursor: pointer; transition: .15s; font-family: inherit;
+    }
+    .num-btn.sel {
+      background: var(--gold); color: #000;
+      border-color: var(--gold);
+      box-shadow: 0 0 20px rgba(255,215,0,.4);
+    }
+    .num-btn:active { transform: scale(.9); }
+
+    /* ═══════════════════════════════════════
+       SETUP SCREEN
+    ═══════════════════════════════════════ */
+    .setup-section { width: 100%; }
+    .setup-label {
+      font-size: 1rem; font-weight: 700; color: #94a3b8;
+      margin-bottom: 12px; text-align: center;
+    }
+
+    .team-row {
+      display: flex; align-items: center; gap: 14px;
+      background: rgba(255,255,255,.05);
+      border: 2px solid transparent;
+      border-radius: var(--rad); padding: 14px 18px;
+      margin-bottom: 10px; transition: .2s;
+    }
+    .team-row:focus-within { border-color: var(--team-border, rgba(255,215,0,.4)); }
+
+    .team-icon-big { font-size: 2.2rem; flex-shrink: 0; }
+
+    .team-input {
+      flex: 1; background: transparent; border: none; outline: none;
+      color: var(--txt); font-size: 1.25rem; font-weight: 700;
+      font-family: inherit;
+    }
+    .team-input::placeholder { color: #475569; }
+
+    /* ═══════════════════════════════════════
+       GAME HEADER
+    ═══════════════════════════════════════ */
+    #g-header {
+      position: sticky; top: 0; z-index: 50;
+      background: rgba(8,5,15,.92);
+      backdrop-filter: blur(12px);
+      border-bottom: 1px solid rgba(255,255,255,.07);
+      padding: 10px 16px;
+      display: flex; align-items: center; justify-content: space-between; gap: 10px;
+    }
+
+    #g-round {
+      font-size: .95rem; font-weight: 700; color: var(--gold);
+      white-space: nowrap;
+    }
+
+    #g-scores {
+      display: flex; gap: 8px; flex-wrap: wrap; justify-content: center;
+    }
+    .score-pill {
+      font-size: .8rem; font-weight: 800;
+      padding: 4px 10px; border-radius: 99px;
+      border: 2px solid; white-space: nowrap;
+    }
+
+    #btn-lang {
+      background: rgba(255,255,255,.1);
+      border: 1.5px solid rgba(255,255,255,.2);
+      color: var(--txt); border-radius: 8px;
+      padding: 5px 10px; font-size: .82rem; font-weight: 700;
+      cursor: pointer; font-family: inherit; white-space: nowrap;
+    }
+
+    /* ═══════════════════════════════════════
+       TEAM BANNER
+    ═══════════════════════════════════════ */
+    .team-banner {
+      margin: 16px 16px 0;
+      border-radius: var(--rad);
+      padding: 16px 20px;
+      display: flex; align-items: center; gap: 14px;
+      border: 2px solid; position: relative; overflow: hidden;
+    }
+    .team-banner::before {
+      content: ''; position: absolute; inset: 0;
+      background: currentColor; opacity: .08;
+    }
+    .tb-icon { font-size: 2.5rem; }
+    .tb-name { font-size: 1.6rem; font-weight: 900; flex: 1; }
+    .tb-turn { font-size: 1rem; font-weight: 700; opacity: .75; }
+
+    /* ═══════════════════════════════════════
+       CHALLENGE CARD
+    ═══════════════════════════════════════ */
+    #g-card-wrap { padding: 16px; width: 100%; }
+
+    .c-card {
+      background: rgba(255,255,255,.04);
+      border: 2px solid rgba(255,255,255,.08);
+      border-radius: var(--rad);
+      padding: 28px 24px; text-align: center;
+      transition: .3s; width: 100%;
+    }
+    .c-card.closed {
+      background: linear-gradient(135deg, #1a0a3e, #0a0a2e);
+      border-color: rgba(255,215,0,.2);
+      min-height: 220px;
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+    }
+
+    .card-qmarks {
+      font-size: 3rem; letter-spacing: 8px; opacity: .4; margin-bottom: 12px;
+    }
+    .card-hint {
+      font-size: 1.1rem; color: #94a3b8; font-weight: 600;
+    }
+
+    .c-cat {
+      display: inline-block;
+      background: rgba(255,255,255,.08);
+      border-radius: 99px; padding: 4px 14px;
+      font-size: .8rem; font-weight: 700; color: var(--dim);
+      margin-bottom: 14px;
+    }
+    .c-emoji { font-size: 3.5rem; margin-bottom: 10px; display: block; }
+    .c-title { font-size: 1.6rem; font-weight: 900; margin-bottom: 10px; }
+    .c-desc  { font-size: 1rem; color: #94a3b8; line-height: 1.6; margin-bottom: 14px; }
+    .c-time  { font-size: .9rem; color: var(--gold); font-weight: 700; }
+
+    @keyframes cardFlip {
+      0%   { transform: scale(1) rotateY(0); opacity: 1; }
+      45%  { transform: scale(.85) rotateY(90deg); opacity: 0; }
+      55%  { transform: scale(.85) rotateY(90deg); opacity: 0; }
+      100% { transform: scale(1) rotateY(0); opacity: 1; }
+    }
+    .flipping { animation: cardFlip .75s ease; }
+
+    /* ═══════════════════════════════════════
+       TIMER
+    ═══════════════════════════════════════ */
+    #g-timer-wrap { padding: 0 16px 10px; text-align: center; }
+
+    #timer-num {
+      font-size: clamp(5rem, 22vw, 8rem);
+      font-weight: 900; line-height: 1;
+      color: var(--green); transition: color .5s;
+    }
+    #timer-num.yellow { color: #eab308; }
+    #timer-num.red    { color: var(--red); }
+
+    @keyframes timerPulse {
+      0%,100% { transform: scale(1); }
+      50%     { transform: scale(1.08); }
+    }
+    #timer-num.urgent { animation: timerPulse .35s infinite; }
+
+    .timer-bar-track {
+      height: 14px; background: rgba(255,255,255,.08);
+      border-radius: 99px; overflow: hidden; margin: 8px 0;
+    }
+    #timer-bar {
+      height: 100%; border-radius: 99px; background: var(--green);
+      transition: width 1s linear, background .5s;
+    }
+    #timer-label { font-size: .9rem; color: var(--dim); font-weight: 600; }
+
+    .time-up-banner {
+      font-size: 2rem; font-weight: 900; color: var(--red);
+      text-align: center; padding: 10px 0;
+      animation: timerPulse .5s infinite;
+    }
+
+    /* ═══════════════════════════════════════
+       ACTION BUTTONS
+    ═══════════════════════════════════════ */
+    #g-actions { padding: 10px 16px 20px; display: flex; flex-direction: column; gap: 12px; }
+
+    .judge-row { display: flex; gap: 12px; }
+    .judge-row .btn { flex: 1; max-width: none; }
+
+    /* ═══════════════════════════════════════
+       LEADERBOARD SCREEN
+    ═══════════════════════════════════════ */
+    .lb-title {
+      font-size: 1.8rem; font-weight: 900; color: var(--gold);
+      text-align: center;
+    }
+    .lb-sub { font-size: 1rem; color: var(--dim); text-align: center; }
+
+    .lb-row {
+      display: flex; align-items: center; gap: 14px;
+      background: rgba(255,255,255,.04);
+      border: 2px solid rgba(255,255,255,.07);
+      border-radius: var(--rad); padding: 16px 20px; width: 100%;
+      transition: .2s;
+    }
+    .lb-row.rank1 { border-color: var(--gold); box-shadow: 0 0 20px rgba(255,215,0,.2); }
+    .lb-row.rank2 { border-color: #94a3b8; }
+    .lb-row.rank3 { border-color: #CD7F32; }
+
+    .lb-medal { font-size: 2rem; flex-shrink: 0; }
+    .lb-icon  { font-size: 1.8rem; flex-shrink: 0; }
+    .lb-name  { flex: 1; font-size: 1.2rem; font-weight: 800; }
+    .lb-pts   { font-size: 1.6rem; font-weight: 900; color: var(--gold); }
+
+    /* ═══════════════════════════════════════
+       WINNER SCREEN
+    ═══════════════════════════════════════ */
+    #s-winner { justify-content: center; }
+
+    .win-trophy { font-size: clamp(5rem, 20vw, 8rem); text-align: center; margin-bottom: 10px; }
+    .win-label  { font-size: 1.4rem; color: var(--dim); font-weight: 700; text-align: center; }
+    .win-icon   { font-size: clamp(4rem, 16vw, 6rem); text-align: center; margin: 8px 0; }
+    .win-name   { font-size: clamp(2rem, 8vw, 3.5rem); font-weight: 900; color: var(--gold); text-align: center; }
+    .win-pts    { font-size: 1.3rem; color: #94a3b8; text-align: center; margin-bottom: 16px; }
+
+    /* ═══════════════════════════════════════
+       OVERLAYS
+    ═══════════════════════════════════════ */
+    .overlay {
+      display: none; position: fixed; inset: 0; z-index: 200;
+      background: rgba(0,0,0,.85);
+      align-items: center; justify-content: center; flex-direction: column;
+    }
+    .overlay.show { display: flex; }
+
+    .ov-box {
+      background: linear-gradient(135deg, #1a0a3e, #0a0a2e);
+      border: 2px solid rgba(255,215,0,.3);
+      border-radius: 28px; padding: 40px 32px;
+      text-align: center; max-width: 340px; width: 90%;
+    }
+
+    @keyframes zoomIn {
+      from { transform: scale(.5); opacity: 0; }
+      to   { transform: scale(1);  opacity: 1; }
+    }
+    .ov-box { animation: zoomIn .4s cubic-bezier(.34,1.56,.64,1); }
+
+    .ov-round { font-size: clamp(3rem, 12vw, 5rem); font-weight: 900; color: var(--gold); }
+    .ov-sub   { font-size: 1.3rem; color: #94a3b8; margin-top: 8px; }
+
+    @keyframes ptsPop {
+      0%   { transform: scale(.5); opacity: 0; }
+      60%  { transform: scale(1.2); }
+      100% { transform: scale(1);  opacity: 1; }
+    }
+    .pts-big {
+      font-size: clamp(3rem, 14vw, 5.5rem);
+      font-weight: 900; color: var(--gold);
+      animation: ptsPop .5s cubic-bezier(.34,1.56,.64,1);
+    }
+    .pts-sub { font-size: 1.4rem; color: #94a3b8; margin-top: 8px; }
+    .pts-bonus { font-size: 1.2rem; color: var(--gold); margin-top: 6px; font-weight: 700; }
+
+    /* ═══════════════════════════════════════
+       CONFETTI CANVAS
+    ═══════════════════════════════════════ */
+    #confetti-canvas {
+      position: fixed; inset: 0;
+      pointer-events: none; z-index: 9999;
+    }
+
+    /* ═══════════════════════════════════════
+       RESPONSIVE
+    ═══════════════════════════════════════ */
+    @media (max-width: 400px) {
+      .c-title { font-size: 1.3rem; }
+      .btn { font-size: 1rem; padding: 14px 24px; }
+      .num-btn { width: 60px; height: 60px; font-size: 1.6rem; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ════════════════════════════════════
+     SETUP SCREEN
+════════════════════════════════════ -->
+<div id="s-setup" class="screen active">
+  <div class="inner">
+    <div>
+      <div class="logo-title" id="setup-title">🏆 המרוץ למיליון</div>
+      <div class="logo-sub" id="setup-sub">גרסת הילדים!</div>
+    </div>
+
+    <div class="setup-section">
+      <div class="setup-label" id="lbl-numteams">כמה צוותים?</div>
+      <div class="num-row">
+        <button class="num-btn" data-n="2" onclick="selectNumTeams(2)">2</button>
+        <button class="num-btn" data-n="3" onclick="selectNumTeams(3)">3</button>
+        <button class="num-btn" data-n="4" onclick="selectNumTeams(4)">4</button>
+      </div>
+    </div>
+
+    <div id="setup-team-inputs" class="setup-section" style="width:100%"></div>
+
+    <button class="btn btn-gold" onclick="startGame()" id="btn-start">יצאו לדרך! 🏃</button>
+    <button id="btn-lang-setup" onclick="toggleLang()"
+      style="background:rgba(255,255,255,.08);border:1.5px solid rgba(255,255,255,.2);
+             color:#e2e8f0;border-radius:8px;padding:7px 16px;font-size:.9rem;
+             font-weight:700;cursor:pointer;font-family:inherit;">EN</button>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════
+     GAME SCREEN
+════════════════════════════════════ -->
+<div id="s-game" class="screen" style="flex-direction:column">
+  <div id="g-header">
+    <div id="g-round">סיבוב 1 מ-5</div>
+    <div id="g-scores"></div>
+    <button id="btn-lang" onclick="toggleLang()">EN</button>
+  </div>
+
+  <div id="g-team-banner"></div>
+
+  <div id="g-card-wrap">
+    <div id="g-card" class="c-card closed">
+      <div class="card-qmarks">❓❓❓</div>
+      <div class="card-hint">משכו אתגר!</div>
+    </div>
+  </div>
+
+  <div id="g-timer-wrap" style="display:none">
+    <div id="timer-num">30</div>
+    <div class="timer-bar-track"><div id="timer-bar" style="width:100%"></div></div>
+    <div id="timer-label"></div>
+  </div>
+
+  <div id="g-actions"></div>
+</div>
+
+<!-- ════════════════════════════════════
+     LEADERBOARD SCREEN
+════════════════════════════════════ -->
+<div id="s-leaderboard" class="screen">
+  <div class="inner">
+    <div class="lb-title" id="lb-title">📊 טבלת הניקוד</div>
+    <div class="lb-sub" id="lb-sub"></div>
+    <div id="lb-list" style="width:100%;display:flex;flex-direction:column;gap:10px"></div>
+    <button class="btn btn-gold" id="lb-btn" onclick="nextRound()"></button>
+    <button id="btn-lang-lb" onclick="toggleLang()"
+      style="background:rgba(255,255,255,.08);border:1.5px solid rgba(255,255,255,.2);
+             color:#e2e8f0;border-radius:8px;padding:7px 16px;font-size:.9rem;
+             font-weight:700;cursor:pointer;font-family:inherit;margin-top:-4px;">EN</button>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════
+     WINNER SCREEN
+════════════════════════════════════ -->
+<div id="s-winner" class="screen">
+  <div class="inner">
+    <div class="win-trophy">🏆</div>
+    <div class="win-label" id="win-label">המנצחים הם...</div>
+    <div class="win-icon" id="win-icon"></div>
+    <div class="win-name" id="win-name"></div>
+    <div class="win-pts"  id="win-pts"></div>
+    <div id="win-lb" style="width:100%;display:flex;flex-direction:column;gap:8px;margin:8px 0"></div>
+    <button class="btn btn-gold" onclick="resetGame()" id="btn-again">🔄 שחקו שוב!</button>
+    <button id="btn-lang-win" onclick="toggleLang()"
+      style="background:rgba(255,255,255,.08);border:1.5px solid rgba(255,255,255,.2);
+             color:#e2e8f0;border-radius:8px;padding:7px 16px;font-size:.9rem;
+             font-weight:700;cursor:pointer;font-family:inherit;margin-top:-4px;">EN</button>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════
+     OVERLAYS
+════════════════════════════════════ -->
+<div id="o-round" class="overlay">
+  <div class="ov-box">
+    <div class="ov-round" id="o-round-num"></div>
+    <div class="ov-sub"   id="o-round-sub"></div>
+  </div>
+</div>
+
+<div id="o-result" class="overlay">
+  <div class="ov-box">
+    <div class="pts-big"   id="o-pts"></div>
+    <div class="pts-sub"   id="o-pts-sub"></div>
+    <div class="pts-bonus" id="o-pts-bonus"></div>
+  </div>
+</div>
+
+<canvas id="confetti-canvas"></canvas>
+
+<script>
+/* ════════════════════════════════════════════════
+   AUDIO
+════════════════════════════════════════════════ */
+let _ac = null;
+const ac = () => { if (!_ac) _ac = new (window.AudioContext || window.webkitAudioContext)(); return _ac; };
+
+function tone(f, d, type='sine', vol=.22, delay=0) {
+  try {
+    const ctx = ac(), t = ctx.currentTime + delay;
+    const o = ctx.createOscillator(), g = ctx.createGain();
+    o.type = type; o.frequency.value = f;
+    g.gain.setValueAtTime(vol, t);
+    g.gain.exponentialRampToValueAtTime(.001, t + d);
+    o.connect(g); g.connect(ctx.destination);
+    o.start(t); o.stop(t + d + .01);
+  } catch(e) {}
+}
+
+const SFX = {
+  tick:    () => tone(800, .04, 'square', .07),
+  urgent:  () => tone(900, .06, 'square', .2),
+  timeUp:  () => { tone(220, .4, 'sawtooth', .3); tone(180, .6, 'sawtooth', .25, .4); },
+  draw:    () => { tone(440, .07, 'sine', .15); tone(660, .12, 'sine', .2, .1); tone(880, .18, 'sine', .18, .22); },
+  success: () => { [523,659,784,1047].forEach((f,i) => tone(f, i<3?.1:.35, 'sine', .22, i*.12)); },
+  fail:    () => { [380,280,200].forEach((f,i) => tone(f, .18, 'square', .22, i*.18)); },
+  roundStart: () => { [523,659,784,1047].forEach((f,i) => tone(f, .12, 'sine', .2, i*.13)); },
+  winner:  () => {
+    [[523,.15],[659,.15],[784,.15],[1047,.2],[1319,.5],[1047,.3],[1319,.8]].forEach(([f,d],i) =>
+      tone(f, d, 'sine', .22, i*.16));
+  },
+};
+
+/* ════════════════════════════════════════════════
+   STRINGS (HE / EN)
+════════════════════════════════════════════════ */
+let lang = localStorage.getItem('hm-lang') || 'he';
+
+const S = {
+  he: {
+    setupTitle: '🏆 המרוץ למיליון',    setupSub: 'גרסת הילדים!',
+    numTeams: 'כמה צוותים?',
+    teamName: i => `שם הצוות ה${['ראשון','שני','שלישי','רביעי'][i]}`,
+    placeholder: ['הנמרים','הדולפינים','החד-קרנים','הדרקונים'],
+    startRace: 'יצאו לדרך! 🏃',
+    round: n => `סיבוב ${n}`,
+    ofRounds: n => `מ-${n}`,
+    roundLabel: (r,m) => `סיבוב ${r} מ-${m}`,
+    yourTurn: 'תורכם!',
+    drawBtn: '🎴 משכו אתגר!',
+    startTimer: '⏱️ מתחילים!',
+    timeLeft: 'שניות נשארו',
+    timeUp: '⏰ הזמן נגמר!',
+    judgeQ: 'שופט — האם הצוות הצליח?',
+    success: '✅ הצליחו!',
+    fail: '❌ לא הצליחו',
+    pts: 'נ׳',
+    speedBonus: '⚡ בונוס מהירות! +5',
+    lb: '📊 טבלת הניקוד',
+    afterRound: r => `אחרי סיבוב ${r}`,
+    nextRound: 'הסיבוב הבא ▶',
+    finalBtn: 'לתוצאות הסופיות! 🏆',
+    winLabel: 'המנצחים הם...',
+    winWith: (n,p) => `עם ${p} נקודות!`,
+    tieLabel: '🤝 תיקו!',
+    playAgain: '🔄 שחקו שוב!',
+    gotPts: n => `+${n} נקודות!`,
+    gotZero: 'נסו בסיבוב הבא! 💪',
+    roundStarts: r => `סיבוב ${r}`,
+    begins: 'מתחיל! 🚀',
+    langBtn: 'EN',
+    catName: { physical:'💪 פיזי', search:'🔍 חיפוש', build:'🏗️ בנייה', perform:'🎭 הופעה' },
+    timerHint: s => `⏱️ ${s} שניות`,
+    medals: ['🥇','🥈','🥉','4️⃣'],
+  },
+  en: {
+    setupTitle: '🏆 Race to a Million',  setupSub: "Kids Edition!",
+    numTeams: 'How many teams?',
+    teamName: i => `Team ${i+1} Name`,
+    placeholder: ['Tigers','Dolphins','Unicorns','Dragons'],
+    startRace: 'Start the Race! 🏃',
+    round: n => `Round ${n}`,
+    ofRounds: n => `of ${n}`,
+    roundLabel: (r,m) => `Round ${r} of ${m}`,
+    yourTurn: 'Your Turn!',
+    drawBtn: '🎴 Draw a Challenge!',
+    startTimer: '⏱️ Start Timer!',
+    timeLeft: 'seconds left',
+    timeUp: "⏰ Time's Up!",
+    judgeQ: 'Judge — did the team succeed?',
+    success: '✅ Success!',
+    fail: '❌ Failed!',
+    pts: 'pts',
+    speedBonus: '⚡ Speed Bonus! +5',
+    lb: '📊 Leaderboard',
+    afterRound: r => `After Round ${r}`,
+    nextRound: 'Next Round ▶',
+    finalBtn: 'Final Results! 🏆',
+    winLabel: 'The Winner is...',
+    winWith: (n,p) => `with ${p} points!`,
+    tieLabel: "🤝 It's a Tie!",
+    playAgain: '🔄 Play Again!',
+    gotPts: n => `+${n} points!`,
+    gotZero: 'Try again next round! 💪',
+    roundStarts: r => `Round ${r}`,
+    begins: 'Begins! 🚀',
+    langBtn: 'עב',
+    catName: { physical:'💪 Physical', search:'🔍 Search', build:'🏗️ Build', perform:'🎭 Perform' },
+    timerHint: s => `⏱️ ${s} seconds`,
+    medals: ['🥇','🥈','🥉','4️⃣'],
+  }
+};
+const s = () => S[lang];
+
+/* ════════════════════════════════════════════════
+   TEAM CONFIG
+════════════════════════════════════════════════ */
+const TEAMS_CFG = [
+  { icon:'🦁', color:'#FF6B35', border:'rgba(255,107,53,.5)' },
+  { icon:'🐬', color:'#4CC9F0', border:'rgba(76,201,240,.5)'  },
+  { icon:'🦄', color:'#C77DFF', border:'rgba(199,125,255,.5)' },
+  { icon:'🐉', color:'#52B788', border:'rgba(82,183,136,.5)'  },
+];
+
+/* ════════════════════════════════════════════════
+   CHALLENGES
+════════════════════════════════════════════════ */
+const CHALLENGES = [
+  { id:1,  cat:'physical', e:'🤸', sec:40,
+    he:{t:'ג׳אמפינג ג׳קס שרים',  d:'עשו 10 ג׳אמפינג ג׳קס תוך כדי שאתם שרים "יום הולדת שמח"!'},
+    en:{t:'Jumping Jack Singer',  d:'Do 10 jumping jacks while singing "Happy Birthday"!'} },
+  { id:2,  cat:'physical', e:'🎩', sec:30,
+    he:{t:'כרית בראש',            d:'איזנו כרית על הראש והלכו דרך החדר כולו בלי שתיפול!'},
+    en:{t:'Pillow Head',          d:'Balance a pillow on your head and walk the whole room without it falling!'} },
+  { id:3,  cat:'physical', e:'🦘', sec:25,
+    he:{t:'קפיצה על רגל אחת',    d:'קפצו 15 פעמים על רגל אחת בלי לעצור ובלי ליפול!'},
+    en:{t:'One-Foot Hop',         d:'Hop 15 times on one foot without stopping or falling!'} },
+  { id:4,  cat:'physical', e:'🌀', sec:25,
+    he:{t:'הליכת מסתובבים',       d:'הסתובבו 5 סיבובים ואז הלכו ישר לקיר. הצלחתם?'},
+    en:{t:'Dizzy Walk',           d:'Spin 5 times then walk straight to the wall. Did you make it?'} },
+  { id:5,  cat:'physical', e:'⚡', sec:15,
+    he:{t:'מגע רצפה',             d:'געו ברצפה 10 פעמים כמה שיותר מהר!'},
+    en:{t:'Floor Toucher',        d:'Touch the floor 10 times as fast as you can!'} },
+  { id:6,  cat:'physical', e:'🤖', sec:20,
+    he:{t:'הליכת רובוט',          d:'הלכו כמו רובוט מקיר לקיר — תנועות קפואות ומדויקות!'},
+    en:{t:'Robot Walk',           d:'Walk like a robot from wall to wall — stiff, mechanical moves!'} },
+  { id:7,  cat:'physical', e:'🎬', sec:20,
+    he:{t:'סלו מושן',             d:'עשו הכל בסלו מושן למשך 15 שניות. כל תנועה — לאט לאט!'},
+    en:{t:'Slow Motion',          d:'Move in slow motion for 15 seconds. Every movement super slow!'} },
+  { id:8,  cat:'physical', e:'👯', sec:25,
+    he:{t:'ריקוד צוות מסונכרן',   d:'כל הצוות חייב לעשות את אותה תנועת ריקוד — בדיוק בו זמנית!'},
+    en:{t:'Sync Team Dance',      d:'Everyone must do the exact same dance move — at the exact same time!'} },
+  { id:9,  cat:'physical', e:'🏋️', sec:30,
+    he:{t:'5 שכיבות סמיכה',      d:'עשו 5 שכיבות סמיכה! (גם על הברכיים זה בסדר!)'},
+    en:{t:'5 Push-Ups',           d:'Do 5 push-ups! (On your knees is totally fine!)'} },
+  { id:10, cat:'physical', e:'🚶', sec:25,
+    he:{t:'הליכה אחורה',          d:'הלכו אחורה מקצה החדר לשני — בלי לפגוע בשום דבר!'},
+    en:{t:'Backwards Walk',       d:'Walk backwards across the room without bumping into anything!'} },
+  { id:11, cat:'search',   e:'🔴', sec:60,
+    he:{t:'5 דברים אדומים',       d:'מצאו 5 דברים אדומים בבית והביאו אותם לכאן!'},
+    en:{t:'5 Red Things',         d:'Find 5 red objects in the house and bring them here!'} },
+  { id:12, cat:'search',   e:'🤲', sec:45,
+    he:{t:'קשה, רך, עגול',        d:'מצאו: דבר אחד קשה, דבר אחד רך, ודבר אחד עגול!'},
+    en:{t:'Hard, Soft, Round',    d:'Find: one hard thing, one soft thing, and one round thing!'} },
+  { id:13, cat:'search',   e:'✋', sec:40,
+    he:{t:'קטן מהיד',             d:'מצאו 3 דברים שקטנים יותר מהיד שלכם!'},
+    en:{t:'Smaller Than Hand',    d:'Find 3 things smaller than your hand!'} },
+  { id:14, cat:'search',   e:'🔤', sec:90,
+    he:{t:'אותיות השם',           d:'מצאו דבר אחד שמתחיל בכל אות בשמכם הפרטי!'},
+    en:{t:'Name Letters',         d:'Find something starting with each letter of your first name!'} },
+  { id:15, cat:'search',   e:'🪞', sec:30,
+    he:{t:'השתקפות',              d:'מצאו משהו בבית שאפשר לראות בו את ההשתקפות שלכם!'},
+    en:{t:'Find a Reflection',    d:'Find something where you can see your own reflection!'} },
+  { id:16, cat:'search',   e:'🌈', sec:45,
+    he:{t:'3 דברים באותו צבע',    d:'מצאו 3 דברים באותו צבע בדיוק והביאו לכאן!'},
+    en:{t:'Same Color Trio',      d:'Find 3 things that are exactly the same color and bring them here!'} },
+  { id:17, cat:'search',   e:'📏', sec:30,
+    he:{t:'הדבר הארוך ביותר',     d:'מצאו את הדבר הארוך ביותר שאפשר להזיז בחדר!'},
+    en:{t:'Longest Thing',        d:'Find the longest moveable thing in the room!'} },
+  { id:18, cat:'search',   e:'🔊', sec:60,
+    he:{t:'10 דברים ביתיים',      d:'ציינו 10 דברים שנמצאים בכל בית — אבל לא בחדר הזה!'},
+    en:{t:'10 Household Things',  d:'Name 10 things in every home — but NOT in this room right now!'} },
+  { id:19, cat:'build',    e:'🏗️', sec:90,
+    he:{t:'מגדל 10 פריטים',       d:'בנו מגדל מ-10 פריטים מהמטבח. חייב לעמוד לבד!'},
+    en:{t:'Tower of 10',          d:'Build a tower from 10 kitchen items. It must stand on its own!'} },
+  { id:20, cat:'build',    e:'📚', sec:60,
+    he:{t:'ערימת 5 ספרים',        d:'ערמו 5 ספרים זה על זה. חייב להחזיק לפחות 5 שניות!'},
+    en:{t:'Book Stack',           d:'Stack 5 books on top of each other. Must hold for 5 seconds!'} },
+  { id:21, cat:'build',    e:'✈️', sec:90,
+    he:{t:'מטוס נייר',            d:'קפלו מטוס נייר ותעיפו אותו לפחות 3 מטר!'},
+    en:{t:'Paper Airplane',       d:'Fold a paper airplane and fly it at least 3 meters!'} },
+  { id:22, cat:'build',    e:'🏠', sec:120,
+    he:{t:'מבצר כריות',           d:'בנו מבצר מכריות ושמיכות שמישהו יכול להיכנס אליו (חלקית)!'},
+    en:{t:'Pillow Fort',          d:'Build a pillow fort that someone can (partially) fit inside!'} },
+  { id:23, cat:'build',    e:'🗼', sec:60,
+    he:{t:'מגדל עיפרונות',        d:'בנו את המגדל הגבוה ביותר שאפשר מעיפרונות בלבד!'},
+    en:{t:'Pencil Tower',         d:'Build the tallest tower possible using only pencils!'} },
+  { id:24, cat:'perform',  e:'🎨', sec:30,
+    he:{t:'ציירו כלב',            d:'ציירו כלב שניתן לזהות אותו תוך 30 שניות!'},
+    en:{t:'Draw a Dog',           d:'Draw a recognizable dog in 30 seconds!'} },
+  { id:25, cat:'perform',  e:'🖼️', sec:45,
+    he:{t:'ציירו בית עם פרטים',   d:'ציירו בית עם לפחות 4 פרטים (דלת, חלון, גג, עוד משהו) תוך 45 שניות!'},
+    en:{t:'Draw a House',         d:'Draw a house with at least 4 details in 45 seconds!'} },
+  { id:26, cat:'perform',  e:'😄', sec:15,
+    he:{t:'פרצוף מצחיק',          d:'עשו את הפרצוף המצחיק ביותר שלכם ותחזיקו אותו 10 שניות!'},
+    en:{t:'Funny Face',           d:'Make your funniest face and hold it for 10 seconds!'} },
+  { id:27, cat:'perform',  e:'🎤', sec:30,
+    he:{t:'הבדיחה הטובה ביותר',   d:'ספרו את הבדיחה הכי טובה שאתם יודעים!'},
+    en:{t:'Best Joke',            d:'Tell the best joke you know!'} },
+  { id:28, cat:'perform',  e:'🐘', sec:30,
+    he:{t:'חקו חיה',              d:'חקו חיה עד שמישהו מנחש מה היא! (לפחות 2 ניחושים)'},
+    en:{t:'Animal Impression',    d:'Act like an animal until someone guesses it! (at least 2 guesses needed)'} },
+  { id:29, cat:'perform',  e:'💬', sec:30,
+    he:{t:'תארו בלי לומר',        d:'תארו דבר אחד בלי לומר את שמו — עד שמנחשים!'},
+    en:{t:'Describe It',          d:'Describe one object without saying its name — until others guess it!'} },
+  { id:30, cat:'perform',  e:'🦸', sec:10,
+    he:{t:'נחיתת גיבור',          d:'עשו את נחיתת הגיבור הטובה ביותר שלכם ותחזיקו 5 שניות!'},
+    en:{t:'Superhero Landing',    d:'Do your best superhero landing pose and hold for 5 seconds!'} },
+  { id:31, cat:'perform',  e:'🤖', sec:15,
+    he:{t:'אוכל רובוט',           d:'דברו כמו רובוט 10 שניות על האוכל האהוב עליכם!'},
+    en:{t:'Robot Food',           d:'Speak like a robot for 10 seconds about your favorite food!'} },
+  { id:32, cat:'perform',  e:'🎭', sec:20,
+    he:{t:'חיקוי',                d:'חקו מישהו מפורסם או בן משפחה עד שמנחשים!'},
+    en:{t:'Impression',           d:'Imitate a famous person or family member until someone guesses who!'} },
+  { id:33, cat:'perform',  e:'🧙', sec:30,
+    he:{t:'הקסם שלי',             d:'הציגו "קסם" — כל קסם עובד! (גם אם לא עובד ממש)'},
+    en:{t:'Magic Trick',          d:'Perform a "magic trick" — any trick counts! (even if it doesn\'t work)'} },
+  { id:34, cat:'perform',  e:'📣', sec:35,
+    he:{t:'קריאת עידוד',          d:'המציאו וצעקו קריאת עידוד מקורית לצוות שלכם תוך 30 שניות!'},
+    en:{t:'Team Cheer',           d:'Invent and shout an original team cheer in 30 seconds!'} },
+  { id:35, cat:'perform',  e:'👐', sec:30,
+    he:{t:'מחמאות לצוות',         d:'תנו מחמאה ייחודית לכל חבר בצוות! אסור לחזור על מחמאות!'},
+    en:{t:'Compliments',          d:'Give each team member a unique compliment! No repeating!'} },
+];
+
+/* ════════════════════════════════════════════════
+   GAME STATE
+════════════════════════════════════════════════ */
+let numTeams = 2;
+const G = {
+  teams: [],
+  round: 1, maxRounds: 5,
+  teamIdx: 0,
+  challenge: null,
+  usedIds: [],
+  phase: 'drawing',   // drawing | ready | timing | done
+  timeLeft: 0, timeTotal: 0,
+  timerInt: null,
+  timedOut: false,
+  timerStartLeft: 0,
+};
+
+/* ════════════════════════════════════════════════
+   UTILS
+════════════════════════════════════════════════ */
+function shuffle(a) {
+  for (let i = a.length-1; i > 0; i--) {
+    const j = Math.floor(Math.random()*(i+1));
+    [a[i],a[j]] = [a[j],a[i]];
+  }
+  return a;
+}
+
+function pickChallenge() {
+  let pool = CHALLENGES.filter(c => !G.usedIds.includes(c.id));
+  if (pool.length === 0) { G.usedIds = []; pool = [...CHALLENGES]; }
+  return shuffle(pool)[0];
+}
+
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+}
+
+function esc(s) {
+  return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+/* ════════════════════════════════════════════════
+   LANGUAGE
+════════════════════════════════════════════════ */
+function toggleLang() {
+  lang = lang === 'he' ? 'en' : 'he';
+  localStorage.setItem('hm-lang', lang);
+  document.documentElement.lang = lang;
+  document.documentElement.dir  = lang === 'he' ? 'rtl' : 'ltr';
+  const btn = lang === 'he' ? 'EN' : 'עב';
+  ['btn-lang','btn-lang-setup','btn-lang-lb','btn-lang-win'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.textContent = btn;
+  });
+  rerenderCurrentScreen();
+}
+
+function rerenderCurrentScreen() {
+  const active = document.querySelector('.screen.active');
+  if (!active) return;
+  const id = active.id;
+  if (id === 's-setup') renderSetup();
+  else if (id === 's-game') renderGame();
+  else if (id === 's-leaderboard') renderLeaderboard();
+  else if (id === 's-winner') renderWinner();
+}
+
+/* ════════════════════════════════════════════════
+   SETUP SCREEN
+════════════════════════════════════════════════ */
+function renderSetup() {
+  document.getElementById('setup-title').textContent = s().setupTitle;
+  document.getElementById('setup-sub').textContent   = s().setupSub;
+  document.getElementById('lbl-numteams').textContent = s().numTeams;
+  document.getElementById('btn-start').textContent   = s().startRace;
+  renderTeamInputs();
+}
+
+function selectNumTeams(n) {
+  numTeams = n;
+  document.querySelectorAll('.num-btn').forEach(b => {
+    b.classList.toggle('sel', +b.dataset.n === n);
+  });
+  renderTeamInputs();
+}
+
+function renderTeamInputs() {
+  const c = document.getElementById('setup-team-inputs');
+  c.innerHTML = '';
+  for (let i = 0; i < numTeams; i++) {
+    const cfg = TEAMS_CFG[i];
+    const row = document.createElement('div');
+    row.className = 'team-row';
+    row.style.setProperty('--team-border', cfg.border);
+    row.style.borderColor = cfg.border;
+    row.innerHTML = `
+      <span class="team-icon-big">${cfg.icon}</span>
+      <input class="team-input" id="tinput-${i}"
+        type="text" maxlength="18"
+        placeholder="${esc(s().placeholder[i])}"
+        aria-label="${esc(s().teamName(i))}">`;
+    c.appendChild(row);
+  }
+}
+
+function startGame() {
+  G.teams = [];
+  for (let i = 0; i < numTeams; i++) {
+    const inp = document.getElementById(`tinput-${i}`);
+    const raw = inp ? inp.value.trim() : '';
+    const cfg = TEAMS_CFG[i];
+    G.teams.push({
+      name: raw || s().placeholder[i],
+      icon: cfg.icon,
+      color: cfg.color,
+      border: cfg.border,
+      pts: 0,
+    });
+  }
+  G.round = 1; G.teamIdx = 0;
+  G.usedIds = []; G.phase = 'drawing';
+  G.challenge = null; G.timedOut = false;
+  if (G.timerInt) { clearInterval(G.timerInt); G.timerInt = null; }
+
+  showScreen('s-game');
+  showRoundOverlay(G.round, () => renderGame());
+}
+
+/* ════════════════════════════════════════════════
+   GAME SCREEN RENDER
+════════════════════════════════════════════════ */
+function setTeamCSSVars(team) {
+  document.documentElement.style.setProperty('--team', team.color);
+  document.documentElement.style.setProperty('--team-s', team.border);
+}
+
+function renderGame() {
+  const team = G.teams[G.teamIdx];
+  setTeamCSSVars(team);
+
+  // Header
+  document.getElementById('g-round').textContent = s().roundLabel(G.round, G.maxRounds);
+  renderMiniScores();
+
+  // Team banner
+  document.getElementById('g-team-banner').innerHTML = `
+    <div class="team-banner" style="border-color:${team.border};color:${team.color}">
+      <span class="tb-icon">${team.icon}</span>
+      <span class="tb-name">${esc(team.name)}</span>
+      <span class="tb-turn">${s().yourTurn}</span>
+    </div>`;
+
+  renderPhase();
+}
+
+function renderMiniScores() {
+  document.getElementById('g-scores').innerHTML = G.teams.map(t =>
+    `<span class="score-pill" style="color:${t.color};border-color:${t.border}">${t.icon} ${t.pts}</span>`
+  ).join('');
+}
+
+function renderPhase() {
+  const wrap = document.getElementById('g-card-wrap');
+  const timerWrap = document.getElementById('g-timer-wrap');
+  const actions = document.getElementById('g-actions');
+  const ch = G.challenge;
+
+  if (G.phase === 'drawing') {
+    timerWrap.style.display = 'none';
+    wrap.style.display = 'block';
+    document.getElementById('g-card').className = 'c-card closed';
+    document.getElementById('g-card').innerHTML = `
+      <div class="card-qmarks">❓❓❓</div>
+      <div class="card-hint" style="font-size:1.2rem;color:#94a3b8;margin-top:8px">
+        ${esc(s().drawBtn.replace('🎴 ',''))}
+      </div>`;
+    actions.innerHTML = `
+      <button class="btn btn-gold" onclick="drawChallenge()">${s().drawBtn}</button>`;
+
+  } else if (G.phase === 'ready') {
+    timerWrap.style.display = 'none';
+    wrap.style.display = 'block';
+    document.getElementById('g-card').className = 'c-card';
+    document.getElementById('g-card').innerHTML = cardContent(ch);
+    actions.innerHTML = `
+      <button class="btn btn-gold" onclick="startTimer()">${s().startTimer}</button>`;
+
+  } else if (G.phase === 'timing') {
+    wrap.style.display = 'block';
+    document.getElementById('g-card').className = 'c-card';
+    document.getElementById('g-card').innerHTML = cardContent(ch);
+    timerWrap.style.display = 'block';
+    updateTimerDisplay();
+    renderJudgeButtons(actions, false);
+
+  } else if (G.phase === 'done') {
+    wrap.style.display = 'none';
+    timerWrap.style.display = 'none';
+    if (G.timedOut) {
+      actions.innerHTML = `
+        <div class="time-up-banner">${s().timeUp}</div>
+        <div style="text-align:center;font-size:1rem;color:#94a3b8;margin-bottom:8px">${s().judgeQ}</div>
+        <div class="judge-row">
+          <button class="btn btn-green" onclick="judgeResult(true)">${s().success}</button>
+          <button class="btn btn-red"   onclick="judgeResult(false)">${s().fail}</button>
+        </div>`;
+    } else {
+      renderJudgeButtons(actions, true);
+    }
+  }
+}
+
+function cardContent(ch) {
+  const str = ch[lang] || ch.he;
+  return `
+    <div class="c-cat">${s().catName[ch.cat]}</div>
+    <span class="c-emoji">${ch.e}</span>
+    <div class="c-title">${esc(str.t)}</div>
+    <div class="c-desc">${esc(str.d)}</div>
+    <div class="c-time">${s().timerHint(ch.sec)}</div>`;
+}
+
+function renderJudgeButtons(actions, showQ) {
+  actions.innerHTML = `
+    ${showQ ? `<div style="text-align:center;font-size:1rem;color:#94a3b8;margin-bottom:4px">${s().judgeQ}</div>` : ''}
+    <div class="judge-row">
+      <button class="btn btn-green" onclick="judgeResult(true)">${s().success}</button>
+      <button class="btn btn-red"   onclick="judgeResult(false)">${s().fail}</button>
+    </div>`;
+}
+
+/* ════════════════════════════════════════════════
+   CHALLENGE CARD FLIP
+════════════════════════════════════════════════ */
+function drawChallenge() {
+  SFX.draw();
+  const ch = pickChallenge();
+  G.usedIds.push(ch.id);
+  const card = document.getElementById('g-card');
+  card.classList.add('flipping');
+
+  setTimeout(() => {
+    G.challenge = ch;
+    G.phase = 'ready';
+    card.className = 'c-card';
+    card.innerHTML = cardContent(ch);
+    document.getElementById('g-actions').innerHTML = `
+      <button class="btn btn-gold" onclick="startTimer()">${s().startTimer}</button>`;
+    document.getElementById('g-timer-wrap').style.display = 'none';
+  }, 375);
+}
+
+/* ════════════════════════════════════════════════
+   TIMER
+════════════════════════════════════════════════ */
+function startTimer() {
+  G.timeTotal = G.challenge.sec;
+  G.timeLeft  = G.challenge.sec;
+  G.timerStartLeft = G.challenge.sec;
+  G.timedOut  = false;
+  G.phase     = 'timing';
+  document.getElementById('g-timer-wrap').style.display = 'block';
+  document.getElementById('g-actions').innerHTML = '';
+  updateTimerDisplay();
+
+  G.timerInt = setInterval(() => {
+    G.timeLeft--;
+    updateTimerDisplay();
+    if (G.timeLeft > 0 && G.timeLeft <= 5) SFX.urgent();
+    else if (G.timeLeft > 0) SFX.tick();
+    if (G.timeLeft <= 0) {
+      clearInterval(G.timerInt); G.timerInt = null;
+      SFX.timeUp();
+      G.timedOut = true;
+      G.phase = 'done';
+      renderPhase();
+    }
+  }, 1000);
+}
+
+function updateTimerDisplay() {
+  const el  = document.getElementById('timer-num');
+  const bar = document.getElementById('timer-bar');
+  const lbl = document.getElementById('timer-label');
+  const pct = G.timeLeft / G.timeTotal;
+
+  el.textContent = G.timeLeft;
+  bar.style.width = (pct * 100) + '%';
+
+  el.classList.remove('yellow','red','urgent');
+  if (pct <= .25) {
+    el.classList.add('red');
+    bar.style.background = 'var(--red)';
+    if (G.timeLeft <= 5) el.classList.add('urgent');
+  } else if (pct <= .5) {
+    el.classList.add('yellow');
+    bar.style.background = '#eab308';
+  } else {
+    bar.style.background = 'var(--green)';
+  }
+  lbl.textContent = s().timeLeft;
+}
+
+/* ════════════════════════════════════════════════
+   JUDGING & SCORING
+════════════════════════════════════════════════ */
+function judgeResult(success) {
+  if (G.timerInt) { clearInterval(G.timerInt); G.timerInt = null; }
+
+  let pts = 0, bonus = false;
+  if (success) {
+    pts = 10;
+    if (!G.timedOut && G.timeLeft > G.timeTotal * .5) { pts += 5; bonus = true; }
+    SFX.success();
+  } else {
+    SFX.fail();
+  }
+
+  G.teams[G.teamIdx].pts += pts;
+
+  showResultOverlay(pts, bonus, success, () => advanceGame());
+}
+
+function advanceGame() {
+  const lastTeam = G.teamIdx === G.teams.length - 1;
+
+  if (lastTeam) {
+    if (G.round >= G.maxRounds) {
+      showScreen('s-leaderboard');
+      renderLeaderboard(true);
+    } else {
+      showScreen('s-leaderboard');
+      renderLeaderboard(false);
+    }
+  } else {
+    G.teamIdx++;
+    G.phase = 'drawing';
+    G.challenge = null;
+    G.timedOut  = false;
+    fadeGame(() => renderGame());
+  }
+}
+
+function fadeGame(cb) {
+  const el = document.getElementById('s-game');
+  el.style.transition = 'opacity .35s';
+  el.style.opacity = '0';
+  setTimeout(() => { cb(); el.style.opacity = '1'; }, 350);
+}
+
+/* ════════════════════════════════════════════════
+   LEADERBOARD SCREEN
+════════════════════════════════════════════════ */
+function renderLeaderboard(isFinal = false) {
+  document.getElementById('lb-title').textContent = s().lb;
+  document.getElementById('lb-sub').textContent   = s().afterRound(G.round);
+
+  const sorted = [...G.teams].sort((a,b) => b.pts - a.pts);
+  const list = document.getElementById('lb-list');
+  list.innerHTML = '';
+  sorted.forEach((t, i) => {
+    const row = document.createElement('div');
+    row.className = 'lb-row ' + (i < 3 ? `rank${i+1}` : '');
+    row.innerHTML = `
+      <span class="lb-medal">${s().medals[i]}</span>
+      <span class="lb-icon">${t.icon}</span>
+      <span class="lb-name">${esc(t.name)}</span>
+      <span class="lb-pts" style="color:${t.color}">${t.pts} ${s().pts}</span>`;
+    list.appendChild(row);
+  });
+
+  const btn = document.getElementById('lb-btn');
+  if (isFinal) {
+    btn.textContent = s().finalBtn;
+    btn.onclick = () => showWinner();
+  } else {
+    btn.textContent = s().nextRound;
+    btn.onclick = () => nextRound();
+  }
+}
+
+function nextRound() {
+  G.round++;
+  G.teamIdx = 0;
+  G.phase   = 'drawing';
+  G.challenge = null;
+  G.timedOut  = false;
+  showScreen('s-game');
+  showRoundOverlay(G.round, () => renderGame());
+}
+
+/* ════════════════════════════════════════════════
+   WINNER SCREEN
+════════════════════════════════════════════════ */
+function showWinner() {
+  const sorted = [...G.teams].sort((a,b) => b.pts - a.pts);
+  const top = sorted[0];
+  const tied = sorted.filter(t => t.pts === top.pts);
+
+  document.getElementById('win-label').textContent = tied.length > 1 ? s().tieLabel : s().winLabel;
+  document.getElementById('win-icon').textContent  = tied.length > 1
+    ? tied.map(t=>t.icon).join(' ')
+    : top.icon;
+  document.getElementById('win-name').textContent  = tied.length > 1
+    ? tied.map(t=>t.name).join(' + ')
+    : top.name;
+  document.getElementById('win-pts').textContent   = s().winWith(top.name, top.pts);
+  document.getElementById('btn-again').textContent = s().playAgain;
+
+  const lb = document.getElementById('win-lb');
+  lb.innerHTML = '';
+  sorted.forEach((t, i) => {
+    const row = document.createElement('div');
+    row.className = 'lb-row ' + (i < 3 ? `rank${i+1}` : '');
+    row.innerHTML = `
+      <span class="lb-medal">${s().medals[i]}</span>
+      <span class="lb-icon">${t.icon}</span>
+      <span class="lb-name">${esc(t.name)}</span>
+      <span class="lb-pts" style="color:${t.color}">${t.pts} ${s().pts}</span>`;
+    lb.appendChild(row);
+  });
+
+  showScreen('s-winner');
+  renderWinner();
+  SFX.winner();
+  launchConfetti();
+}
+
+function renderWinner() {
+  document.getElementById('btn-again').textContent = s().playAgain;
+}
+
+function resetGame() {
+  stopConfetti();
+  numTeams = 2;
+  document.querySelectorAll('.num-btn').forEach(b => {
+    b.classList.toggle('sel', +b.dataset.n === 2);
+  });
+  showScreen('s-setup');
+  renderSetup();
+}
+
+/* ════════════════════════════════════════════════
+   OVERLAYS
+════════════════════════════════════════════════ */
+function showRoundOverlay(round, cb) {
+  const ov = document.getElementById('o-round');
+  document.getElementById('o-round-num').textContent = s().roundStarts(round);
+  document.getElementById('o-round-sub').textContent  = s().begins;
+  ov.classList.add('show');
+  SFX.roundStart();
+  setTimeout(() => { ov.classList.remove('show'); setTimeout(cb, 200); }, 1900);
+}
+
+function showResultOverlay(pts, bonus, success, cb) {
+  const ov = document.getElementById('o-result');
+  document.getElementById('o-pts').textContent      = success ? s().gotPts(pts) : '0 ' + s().pts;
+  document.getElementById('o-pts-sub').textContent  = success ? '' : s().gotZero;
+  document.getElementById('o-pts-bonus').textContent = bonus ? s().speedBonus : '';
+  ov.classList.add('show');
+  setTimeout(() => { ov.classList.remove('show'); setTimeout(cb, 200); }, 1800);
+}
+
+/* ════════════════════════════════════════════════
+   CONFETTI
+════════════════════════════════════════════════ */
+const cnv = document.getElementById('confetti-canvas');
+const cx  = cnv.getContext('2d');
+let parts = [], confAnim = null;
+const COLS = ['#FFD700','#FF6B35','#4CC9F0','#C77DFF','#52B788','#FF2D55','#ffffff'];
+
+function launchConfetti() {
+  cnv.width = window.innerWidth; cnv.height = window.innerHeight;
+  parts = Array.from({length:200}, () => ({
+    x: Math.random()*cnv.width, y: Math.random()*-cnv.height*.7,
+    w: Math.random()*12+4, h: Math.random()*6+3,
+    col: COLS[Math.floor(Math.random()*COLS.length)],
+    vy: Math.random()*3+2, vx: (Math.random()-.5)*2,
+    rot: Math.random()*360, rs: (Math.random()-.5)*7,
+  }));
+  animConf();
+}
+
+function animConf() {
+  cx.clearRect(0,0,cnv.width,cnv.height);
+  let alive = false;
+  parts.forEach(p => {
+    p.y+=p.vy; p.x+=p.vx; p.rot+=p.rs;
+    if(p.y<cnv.height+20) alive=true;
+    cx.save();
+    cx.translate(p.x,p.y); cx.rotate(p.rot*Math.PI/180);
+    cx.fillStyle=p.col; cx.fillRect(-p.w/2,-p.h/2,p.w,p.h);
+    cx.restore();
+  });
+  if(alive) confAnim=requestAnimationFrame(animConf);
+  else stopConfetti();
+}
+
+function stopConfetti() {
+  if(confAnim){cancelAnimationFrame(confAnim);confAnim=null;}
+  cx.clearRect(0,0,cnv.width,cnv.height);
+}
+
+/* ════════════════════════════════════════════════
+   INIT
+════════════════════════════════════════════════ */
+document.documentElement.lang = lang;
+document.documentElement.dir  = lang === 'he' ? 'rtl' : 'ltr';
+
+selectNumTeams(2);
+renderSetup();
+
+// Prevent double-tap zoom on iOS
+document.addEventListener('touchend', e => {
+  if(e.timeStamp - (document._lt||0) < 300) e.preventDefault();
+  document._lt = e.timeStamp;
+}, {passive:false});
+</script>
+</body>
+</html>
