@@ -60,6 +60,12 @@ const PROJECTS = [
     icon: "🦁"
   },
   {
+    title: "MinecraftDraw",
+    description: "Learn to draw Minecraft mobs and blocks step-by-step using the grid method. Covers hostile mobs, passive mobs, and iconic blocks.",
+    url: "./minecraft-draw/",
+    icon: "⛏️"
+  },
+  {
     title: "FlagDraw",
     description: "Learn to draw flags from around the world using the grid method. Covers Europe, Americas, Asia, Africa and Oceania.",
     url: "./flag-draw/",
