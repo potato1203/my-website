@@ -66,6 +66,12 @@ const PROJECTS = [
     icon: "⛏️"
   },
   {
+    title: "SonicDraw",
+    description: "Learn to draw Sonic the Hedgehog characters, badniks and items step-by-step using the grid method. Features Sonic, Tails, Knuckles, Shadow, Eggman and many more.",
+    url: "./sonic-draw/",
+    icon: "💨"
+  },
+  {
     title: "MarioDraw",
     description: "Learn to draw Super Mario characters, enemies, power-ups and objects step-by-step using the grid method. Features Mario, Luigi, Bowser, Yoshi, Goomba and many more.",
     url: "./mario-draw/",
