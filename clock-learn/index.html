@@ -1,0 +1,1632 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Learn the Clock</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        :root {
+            --c1: #6c63ff; --c2: #3f3d56;
+            --c1-faint: #f0eeff; --c1-light: #d0caf6;
+            --c1-lighter: #e8e4ff; --c1-bubble: #c4b8f8;
+            --c1-ring: #ede9ff; --c1-done: #a89eff;
+        }
+        [data-theme="mario"]   { --c1:#e52222; --c2:#1a56b0; --c1-faint:#fff0f0; --c1-light:#f9a8a8; --c1-lighter:#fde8e8; --c1-bubble:#f87171; --c1-ring:#fde8e8; --c1-done:#f9a8a8; }
+        [data-theme="pikachu"] { --c1:#d4a000; --c2:#1e1e4a; --c1-faint:#fffae0; --c1-light:#fde68a; --c1-lighter:#fef3c7; --c1-bubble:#fbbf24; --c1-ring:#fef3c7; --c1-done:#fcd34d; }
+        [data-theme="dora"]    { --c1:#7c3aed; --c2:#be185d; --c1-faint:#f5f3ff; --c1-light:#c4b5fd; --c1-lighter:#ede9fe; --c1-bubble:#a78bfa; --c1-ring:#ede9fe; --c1-done:#c4b5fd; }
+        [data-theme="sonic"]   { --c1:#1e40af; --c2:#b45309; --c1-faint:#eff6ff; --c1-light:#93c5fd; --c1-lighter:#dbeafe; --c1-bubble:#60a5fa; --c1-ring:#dbeafe; --c1-done:#93c5fd; }
+        [data-theme="peppa"]   { --c1:#db2777; --c2:#7c3aed; --c1-faint:#fdf2f8; --c1-light:#f9a8d4; --c1-lighter:#fce7f3; --c1-bubble:#f472b6; --c1-ring:#fce7f3; --c1-done:#f9a8d4; }
+        [data-theme="mickey"]  { --c1:#dc2626; --c2:#1c1917; --c1-faint:#fff5f5; --c1-light:#fca5a5; --c1-lighter:#fee2e2; --c1-bubble:#f87171; --c1-ring:#fee2e2; --c1-done:#fca5a5; }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, sans-serif;
+            background: linear-gradient(135deg, var(--c1) 0%, var(--c2) 100%);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px;
+            gap: 14px;
+        }
+
+        h1 {
+            color: #fff;
+            font-size: 2.1rem;
+            text-shadow: 0 2px 8px rgba(0,0,0,0.3);
+        }
+
+        /* Language toggle */
+        .lang-toggle {
+            display: flex;
+            background: rgba(255,255,255,0.15);
+            border-radius: 30px;
+            padding: 4px;
+            gap: 4px;
+        }
+        .lang-btn {
+            padding: 6px 18px;
+            border: none;
+            border-radius: 26px;
+            font-size: 0.95rem;
+            cursor: pointer;
+            font-weight: 700;
+            transition: all 0.25s;
+            color: rgba(255,255,255,0.75);
+            background: transparent;
+        }
+        .lang-btn.active {
+            background: #fff;
+            color: var(--c1);
+            box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+        }
+
+        /* Tabs */
+        .tabs {
+            display: flex;
+            background: rgba(255,255,255,0.15);
+            border-radius: 30px;
+            padding: 4px;
+            gap: 4px;
+        }
+        .tab {
+            padding: 8px 22px;
+            border: none;
+            border-radius: 26px;
+            font-size: 0.95rem;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.25s;
+            color: rgba(255,255,255,0.75);
+            background: transparent;
+        }
+        .tab.active {
+            background: #fff;
+            color: var(--c1);
+            box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+        }
+
+        /* Score bar */
+        .score-bar {
+            color: rgba(255,255,255,0.9);
+            font-size: 1.05rem;
+            display: flex;
+            gap: 16px;
+        }
+        .score-bar span {
+            background: rgba(255,255,255,0.2);
+            padding: 4px 14px;
+            border-radius: 20px;
+            font-weight: bold;
+        }
+
+        /* Card */
+        .card {
+            background: #fff;
+            border-radius: 28px;
+            padding: 24px 22px;
+            box-shadow: 0 12px 50px rgba(0,0,0,0.25);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 16px;
+            width: 100%;
+            max-width: 430px;
+        }
+
+        /* ── LEARN MODE ── */
+        #learnArea { display: flex; flex-direction: column; align-items: center; gap: 14px; width: 100%; }
+
+        .step-indicator {
+            font-size: 0.82rem;
+            font-weight: 700;
+            color: #aaa;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+        }
+
+        .step-dots {
+            display: flex;
+            gap: 7px;
+        }
+        .step-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: #e0deff;
+            transition: background 0.3s;
+        }
+        .step-dot.active { background: var(--c1); }
+        .step-dot.done   { background: var(--c1-done); }
+
+        .learn-title {
+            font-size: 1.35rem;
+            font-weight: 800;
+            color: #3f3d56;
+            text-align: center;
+        }
+
+        .learn-body {
+            font-size: 1rem;
+            color: #555;
+            text-align: center;
+            line-height: 1.7;
+            white-space: pre-line;
+        }
+
+        .learn-nav {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            width: 100%;
+            justify-content: space-between;
+        }
+
+        .nav-btn {
+            padding: 10px 22px;
+            border-radius: 25px;
+            border: 2px solid var(--c1-light);
+            background: #fff;
+            color: var(--c1);
+            font-size: 0.95rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .nav-btn:hover { background: var(--c1-faint); }
+        .nav-btn:disabled { opacity: 0.3; cursor: default; }
+
+        .start-quiz-btn {
+            padding: 11px 28px;
+            background: linear-gradient(135deg, var(--c1), var(--c2));
+            color: #fff;
+            border: none;
+            border-radius: 25px;
+            font-size: 1rem;
+            font-weight: 700;
+            cursor: pointer;
+            box-shadow: 0 4px 18px rgba(0,0,0,0.22);
+            transition: transform 0.2s;
+        }
+        .start-quiz-btn:hover { transform: scale(1.05); }
+
+        /* ── QUIZ MODE ── */
+        #quizArea  { display: none; flex-direction: column; align-items: center; gap: 14px; width: 100%; }
+
+        .difficulty {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            justify-content: center;
+        }
+        .diff-btn {
+            padding: 5px 14px;
+            border-radius: 20px;
+            border: 2px solid var(--c1-light);
+            background: #fff;
+            color: var(--c1);
+            font-size: 0.82rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .diff-btn.active { background: var(--c1); color: #fff; border-color: var(--c1); }
+
+        .question {
+            font-size: 1.2rem;
+            font-weight: 700;
+            color: #333;
+            text-align: center;
+        }
+
+        .choices {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            width: 100%;
+        }
+        .choice-btn {
+            padding: 15px 10px;
+            font-size: 1.3rem;
+            font-weight: 700;
+            border: 3px solid var(--c1-lighter);
+            border-radius: 16px;
+            background: #fff;
+            color: #333;
+            cursor: pointer;
+            transition: all 0.18s;
+            letter-spacing: 1px;
+        }
+        .choice-btn:hover:not(:disabled) {
+            border-color: var(--c1);
+            background: var(--c1-faint);
+            transform: translateY(-2px);
+        }
+        .choice-btn:disabled { cursor: default; }
+        .choice-btn.correct { border-color: #22c55e; background: #dcfce7; color: #15803d; }
+        .choice-btn.wrong   { border-color: #ef4444; background: #fee2e2; color: #b91c1c; }
+
+        /* ── CHARACTER STAGE (learn + quiz) ── */
+        .char-stage {
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 0;
+        }
+
+        /* Speech bubble — tail points down toward the character */
+        .char-bubble {
+            background: #fff;
+            border: 2.5px solid var(--c1-bubble);
+            border-radius: 20px;
+            padding: 14px 18px;
+            width: 100%;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.07);
+            position: relative;
+            animation: bubblePop 0.35s cubic-bezier(0.34,1.56,0.64,1);
+        }
+        .char-bubble::after {
+            content: '';
+            position: absolute;
+            bottom: -15px;
+            left: 50%;
+            transform: translateX(-50%);
+            border: 8px solid transparent;
+            border-top-color: var(--c1-bubble);
+        }
+        .char-bubble::before {
+            content: '';
+            position: absolute;
+            bottom: -11px;
+            left: 50%;
+            transform: translateX(-50%);
+            border: 7px solid transparent;
+            border-top-color: #fff;
+            z-index: 1;
+        }
+        @keyframes bubblePop {
+            0%   { transform: scale(0.8) translateY(6px); opacity: 0; }
+            100% { transform: scale(1)   translateY(0);   opacity: 1; }
+        }
+
+        /* The sprite — floating idle, overridden by bounce/shake */
+        .char-sprite {
+            margin-top: 2px;
+            display: inline-flex;
+            align-items: flex-end;
+            justify-content: center;
+            min-height: 90px;
+            animation: charFloat 3s ease-in-out infinite;
+            filter: drop-shadow(0 8px 16px rgba(0,0,0,0.22));
+            cursor: default;
+            user-select: none;
+        }
+        .char-sprite img {
+            height: 140px;
+            width: auto;
+            object-fit: contain;
+            display: block;
+        }
+        .char-sprite .char-emoji-fb { font-size: 4.5rem; line-height: 1; }
+        @keyframes charFloat {
+            0%,100% { transform: translateY(0px) rotate(0deg); }
+            50%     { transform: translateY(-10px) rotate(2deg); }
+        }
+        .char-sprite.bounce { animation: charBounce 0.7s cubic-bezier(0.34,1.56,0.64,1); }
+        @keyframes charBounce {
+            0%   { transform: scale(1)   rotate(0deg);   }
+            20%  { transform: scale(1.5) rotate(-15deg); }
+            50%  { transform: scale(0.85) rotate(10deg); }
+            75%  { transform: scale(1.2) rotate(-5deg);  }
+            100% { transform: scale(1)   rotate(0deg);   }
+        }
+        .char-sprite.shake { animation: charShake 0.55s ease-in-out; }
+        @keyframes charShake {
+            0%,100% { transform: translateX(0) rotate(0deg);     }
+            15%     { transform: translateX(-10px) rotate(-8deg); }
+            30%     { transform: translateX(10px)  rotate(8deg);  }
+            50%     { transform: translateX(-8px)  rotate(-5deg); }
+            70%     { transform: translateX(8px)   rotate(5deg);  }
+            85%     { transform: translateX(-3px)  rotate(-2deg); }
+        }
+
+        /* Quiz result bubble (correct / wrong) */
+        .quiz-char-stage {
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 0;
+            animation: fadeSlideIn 0.3s ease;
+        }
+        @keyframes fadeSlideIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to   { opacity: 1; transform: translateY(0);    }
+        }
+        .quiz-bubble {
+            width: 100%;
+            padding: 16px 20px;
+            border-radius: 20px;
+            border: 3px solid;
+            font-size: 1.35rem;
+            font-weight: 800;
+            text-align: center;
+            position: relative;
+        }
+        .quiz-bubble::after {
+            content: '';
+            position: absolute;
+            bottom: -15px;
+            left: 50%;
+            transform: translateX(-50%);
+            border: 8px solid transparent;
+        }
+        .quiz-bubble.correct { background: #dcfce7; border-color: #22c55e; color: #15803d; }
+        .quiz-bubble.correct::after { border-top-color: #22c55e; }
+        .quiz-bubble.wrong   { background: #fee2e2; border-color: #ef4444; color: #b91c1c; }
+        .quiz-bubble.wrong::after   { border-top-color: #ef4444; }
+
+        /* Particles */
+        .particle {
+            position: fixed;
+            pointer-events: none;
+            z-index: 9999;
+            animation: particleFly var(--dur, 1s) ease-out forwards;
+        }
+        @keyframes particleFly {
+            0%   { transform: translate(0,0) scale(1) rotate(0deg); opacity: 1; }
+            100% { transform: translate(var(--dx),var(--dy)) scale(0.15) rotate(var(--dr)); opacity: 0; }
+        }
+
+        /* Explanation box */
+        .explanation {
+            display: none;
+            background: var(--c1-faint);
+            border: 2px solid var(--c1-light);
+            border-radius: 16px;
+            padding: 14px 16px;
+            width: 100%;
+            font-size: 0.92rem;
+            color: #3f3d56;
+            line-height: 1.8;
+        }
+        .explanation.show { display: block; }
+        .explanation strong { color: var(--c1); }
+        .explanation .expl-title {
+            font-weight: 800;
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: #888;
+            margin-bottom: 6px;
+        }
+
+        .next-btn {
+            padding: 11px 38px;
+            background: linear-gradient(135deg, var(--c1), var(--c2));
+            color: #fff;
+            border: none;
+            border-radius: 30px;
+            font-size: 1rem;
+            font-weight: 700;
+            cursor: pointer;
+            box-shadow: 0 4px 18px rgba(0,0,0,0.22);
+            transition: transform 0.2s;
+        }
+        .next-btn:hover { transform: scale(1.05); }
+
+        /* ── FREE PLAY ── */
+        #freeplayArea { display: none; flex-direction: column; align-items: center; gap: 12px; width: 100%; }
+        .digital-time {
+            font-size: 2.8rem;
+            font-weight: 800;
+            color: var(--c1);
+            font-variant-numeric: tabular-nums;
+            letter-spacing: 4px;
+        }
+        .freeplay-hint { color: #999; font-size: 0.9rem; text-align: center; }
+
+        canvas { display: block; touch-action: none; }
+        canvas.interactive { cursor: grab; }
+        canvas.interactive:active { cursor: grabbing; }
+
+        html[dir="rtl"] body { font-family: 'Segoe UI', 'Arial Hebrew', Tahoma, sans-serif; }
+        html[dir="rtl"] .learn-body { text-align: right; }
+
+        /* Character picker in add-user form */
+        .char-pick-row {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+        .char-pick-card {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 3px;
+            cursor: pointer;
+            padding: 8px 10px;
+            border-radius: 14px;
+            border: 3px solid rgba(255,255,255,0.2);
+            transition: all 0.18s;
+            background: rgba(255,255,255,0.08);
+        }
+        .char-pick-card:hover { background: rgba(255,255,255,0.18); }
+        .char-pick-card.selected { border-color: #fff; background: rgba(255,255,255,0.22); }
+        .char-pick-img   { height: 56px; width: 56px; object-fit: contain; display: block; }
+        .char-pick-label { color: rgba(255,255,255,0.85); font-size: 0.68rem; font-weight: 700; text-align: center; margin-top: 2px; }
+
+        /* (old char-say removed — replaced by .char-stage above) */
+
+        /* Character tag on user cards in picker */
+        .user-card-char { color: rgba(255,255,255,0.7); font-size: 0.8rem; text-align: center; }
+        .user-card-char-img { height: 44px; width: 44px; object-fit: contain; display: block; }
+
+        /* ── USER PICKER ── */
+        #userPicker {
+            position: fixed;
+            inset: 0;
+            background: linear-gradient(135deg, var(--c1) 0%, var(--c2) 100%);
+            z-index: 100;
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 30px 20px;
+            gap: 22px;
+            overflow-y: auto;
+        }
+        .picker-title {
+            color: #fff;
+            font-size: 2rem;
+            font-weight: 800;
+            text-shadow: 0 2px 8px rgba(0,0,0,0.3);
+            text-align: center;
+        }
+        .user-grid {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 18px;
+            justify-content: center;
+            max-width: 480px;
+        }
+        .user-card {
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 7px;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+        .user-card:hover { transform: scale(1.06); }
+        .user-avatar {
+            width: 82px;
+            height: 82px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2.1rem;
+            font-weight: 900;
+            color: #fff;
+            box-shadow: 0 4px 18px rgba(0,0,0,0.25);
+            border: 4px solid rgba(255,255,255,0.35);
+            transition: border-color 0.2s;
+        }
+        .user-card:hover .user-avatar { border-color: rgba(255,255,255,0.75); }
+        .user-card-name {
+            color: #fff;
+            font-weight: 700;
+            font-size: 0.95rem;
+            text-align: center;
+            max-width: 86px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+        .user-card-score {
+            color: rgba(255,255,255,0.65);
+            font-size: 0.78rem;
+            text-align: center;
+        }
+        .user-delete-btn {
+            position: absolute;
+            top: -4px;
+            right: -4px;
+            width: 22px;
+            height: 22px;
+            border-radius: 50%;
+            background: #ef4444;
+            color: #fff;
+            border: 2px solid #fff;
+            font-size: 0.75rem;
+            font-weight: 900;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+            transition: opacity 0.18s;
+        }
+        .user-card:hover .user-delete-btn { opacity: 1; }
+        .add-user-card .user-avatar {
+            background: rgba(255,255,255,0.15);
+            border: 4px dashed rgba(255,255,255,0.45);
+            font-size: 2.4rem;
+            color: rgba(255,255,255,0.75);
+        }
+        /* Add-user form */
+        .add-user-form {
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            gap: 14px;
+            background: rgba(255,255,255,0.12);
+            border-radius: 24px;
+            padding: 24px 28px;
+            width: 100%;
+            max-width: 340px;
+        }
+        .add-user-form.show { display: flex; }
+        .add-user-form input {
+            width: 100%;
+            padding: 13px 16px;
+            border-radius: 16px;
+            border: 2px solid rgba(255,255,255,0.3);
+            background: rgba(255,255,255,0.92);
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: #333;
+            text-align: center;
+            outline: none;
+        }
+        .add-user-form input:focus { border-color: #fff; }
+        .color-row {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+        .color-dot {
+            width: 34px;
+            height: 34px;
+            border-radius: 50%;
+            cursor: pointer;
+            border: 3px solid transparent;
+            transition: border-color 0.18s, transform 0.18s;
+        }
+        .color-dot.selected { border-color: #fff; transform: scale(1.2); }
+        .picker-confirm-btn {
+            padding: 11px 32px;
+            background: #fff;
+            color: var(--c1);
+            border: none;
+            border-radius: 25px;
+            font-size: 1rem;
+            font-weight: 800;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+        .picker-confirm-btn:hover { transform: scale(1.05); }
+        .picker-cancel-btn {
+            background: transparent;
+            border: none;
+            color: rgba(255,255,255,0.6);
+            font-size: 0.9rem;
+            cursor: pointer;
+            font-weight: 600;
+        }
+        /* User chip in header */
+        .user-chip {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            background: rgba(255,255,255,0.15);
+            border-radius: 30px;
+            padding: 5px 14px 5px 5px;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        .user-chip:hover { background: rgba(255,255,255,0.26); }
+        .chip-avatar {
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 900;
+            font-size: 0.95rem;
+            color: #fff;
+        }
+        .chip-name   { color: rgba(255,255,255,0.95); font-weight: 700; font-size: 0.9rem; }
+        .chip-switch { color: rgba(255,255,255,0.55); font-size: 0.75rem; font-weight: 600; }
+    </style>
+</head>
+<body>
+
+<!-- ── USER PICKER ── -->
+<div id="userPicker">
+    <div class="picker-title" id="pickerTitle">Who's playing?</div>
+    <div class="user-grid" id="userGrid"></div>
+    <div class="add-user-form" id="addUserForm">
+        <input type="text" id="newUserName" maxlength="20" placeholder="Your name..." />
+        <div class="color-row" id="colorRow"></div>
+        <div class="char-pick-row" id="charPickRow"></div>
+        <button class="picker-confirm-btn" id="confirmAddBtn" onclick="confirmAddUser()">Let's go!</button>
+        <button class="picker-cancel-btn" id="cancelAddBtn" onclick="hideAddForm()">Cancel</button>
+    </div>
+</div>
+
+<div class="lang-toggle">
+    <button class="lang-btn active" id="langEn" onclick="setLang('en')">English</button>
+    <button class="lang-btn"        id="langHe" onclick="setLang('he')">עברית</button>
+</div>
+
+<h1 id="title">Learn the Clock</h1>
+
+<div class="user-chip" id="userChip" style="display:none" onclick="showUserPicker()">
+    <div class="chip-avatar" id="chipAvatar"></div>
+    <span class="chip-name"   id="chipName"></span>
+    <span class="chip-switch" id="chipSwitch">Switch</span>
+</div>
+
+<div class="tabs">
+    <button class="tab active" id="tabLearn"    onclick="setMode('learn')">Learn</button>
+    <button class="tab"        id="tabQuiz"     onclick="setMode('quiz')">Quiz</button>
+    <button class="tab"        id="tabFreeplay" onclick="setMode('freeplay')">Free Play</button>
+</div>
+
+<div class="score-bar" id="scoreBar" style="display:none">
+    <span id="scoreLabel">Score: <span id="score">0</span></span>
+    <span id="streakLabel">Streak: <span id="streak">0</span> ⭐</span>
+</div>
+
+<div class="card">
+
+    <!-- ── LEARN ── -->
+    <div id="learnArea">
+        <div class="step-dots" id="stepDots"></div>
+        <canvas id="clock" width="280" height="280"></canvas>
+        <div class="learn-title" id="learnTitle"></div>
+        <div class="char-stage">
+            <div class="char-bubble">
+                <div class="learn-body" id="learnBody"></div>
+            </div>
+            <div class="char-sprite" id="charFace">🍄</div>
+        </div>
+        <div class="learn-nav">
+            <button class="nav-btn" id="prevBtn" onclick="goStep(-1)">← Prev</button>
+            <button class="nav-btn" id="nextStepBtn" onclick="goStep(1)">Next →</button>
+            <button class="start-quiz-btn" id="startQuizBtn" onclick="setMode('quiz')" style="display:none">Start Quiz!</button>
+        </div>
+    </div>
+
+    <!-- ── QUIZ ── -->
+    <div id="quizArea">
+        <div class="difficulty" id="diffRow">
+            <button class="diff-btn active" data-diff="hour"     onclick="setDifficulty('hour',    this)">Hours</button>
+            <button class="diff-btn"        data-diff="halfhour" onclick="setDifficulty('halfhour',this)">Half Hours</button>
+            <button class="diff-btn"        data-diff="fivemin"  onclick="setDifficulty('fivemin', this)">5 Minutes</button>
+            <button class="diff-btn"        data-diff="any"      onclick="setDifficulty('any',     this)">Any Time</button>
+        </div>
+        <div class="question" id="questionText">What time does the clock show?</div>
+        <div class="choices" id="choices"></div>
+        <div class="quiz-char-stage" id="quizCharStage" style="display:none">
+            <div class="quiz-bubble" id="quizBubble"><span id="feedback"></span></div>
+            <div class="char-sprite" id="quizCharSprite">🍄</div>
+        </div>
+        <div class="explanation" id="explanation"></div>
+        <button class="next-btn" id="nextBtn" onclick="nextQuestion()" style="display:none">Next →</button>
+    </div>
+
+    <!-- ── FREE PLAY ── -->
+    <div id="freeplayArea">
+        <div class="digital-time" id="digitalTime">12:00</div>
+        <div class="freeplay-hint" id="freeplayHint">Drag the clock hands to change the time</div>
+    </div>
+
+</div>
+
+<script>
+// ── Translations ─────────────────────────────────────────────────────────────
+const T = {
+    en: {
+        title:       'Learn the Clock',
+        score:       'Score',
+        streak:      'Streak',
+        learn:       'Learn',
+        quiz:        'Quiz',
+        freeplay:    'Free Play',
+        prev:        '← Prev',
+        nextStep:    'Next →',
+        startQuiz:   'Start Quiz!',
+        question:    'What time does the clock show?',
+        nextQ:       'Next →',
+        hint:        'Drag the clock hands to change the time',
+        wrongMsg:    c => `The answer was ${c}`,
+        correct:     ['Great job!', 'Correct! 🎉', 'Awesome!', 'You got it!', 'Nailed it!'],
+        explTitle:   'How to read this time:',
+        explHour:    (h, m) => m === 0
+            ? `Short hand → ${h} → Hour = ${h}`
+            : `Short hand → between ${h} and ${h % 12 + 1} → Hour = ${h}`,
+        explMin:     (m) => {
+            if (m === 0) return `Long hand → 12 → Minutes = 00`;
+            if (m % 5 === 0) return `Long hand → ${m/5} (×5 = ${m}) → Minutes = ${pad(m)}`;
+            const lo = Math.floor(m/5), hi = lo + 1;
+            return `Long hand between ${lo} and ${hi} → Minutes = ${pad(m)}`;
+        },
+        explTime:    (h, m) => `Time = ${h}:${pad(m)}`,
+        diff: { hour:'Hours', halfhour:'Half Hours', fivemin:'5 Minutes', any:'Any Time' },
+        whoPlaying:      "Who's playing?",
+        addUser:         'Add player',
+        switchUser:      'Switch',
+        namePlaceholder: 'Your name...',
+        letsGo:          "Let's go!",
+        cancel:          'Cancel',
+    },
+    he: {
+        title:       'ללמוד שעון',
+        score:       'ניקוד',
+        streak:      'רצף',
+        learn:       'שיעור',
+        quiz:        'חידון',
+        freeplay:    'משחק חופשי',
+        prev:        'הקודם →',
+        nextStep:    '← הבא',
+        startQuiz:   '!התחל חידון',
+        question:    'מה השעה שמראה השעון?',
+        nextQ:       '← הבא',
+        hint:        'גרור את מחוגי השעון לשינוי השעה',
+        wrongMsg:    c => `התשובה הנכונה הייתה ${c}`,
+        correct:     ['כל הכבוד!', 'נכון! 🎉', 'מצוין!', 'בול!', 'מושלם!'],
+        explTitle:   ':איך לקרוא את השעה',
+        explHour:    (h, m) => m === 0
+            ? `מחוג קצר ← ${h} ← שעה = ${h}`
+            : `מחוג קצר ← בין ${h} ל-${h % 12 + 1} ← שעה = ${h}`,
+        explMin:     (m) => {
+            if (m === 0) return `מחוג ארוך ← 12 ← דקות = 00`;
+            if (m % 5 === 0) return `מחוג ארוך ← ${m/5} (×5 = ${m}) ← דקות = ${pad(m)}`;
+            const lo = Math.floor(m/5), hi = lo + 1;
+            return `מחוג ארוך בין ${lo} ל-${hi} ← דקות = ${pad(m)}`;
+        },
+        explTime:    (h, m) => `השעה = ${h}:${pad(m)}`,
+        diff: { hour:'שעות', halfhour:'חצי שעות', fivemin:'5 דקות', any:'כל זמן' },
+        whoPlaying:      'מי משחק?',
+        addUser:         'הוסף שחקן',
+        switchUser:      'החלף',
+        namePlaceholder: 'השם שלך...',
+        letsGo:          '!בואו נתחיל',
+        cancel:          'ביטול',
+    },
+};
+
+// ── Learn steps ───────────────────────────────────────────────────────────────
+const STEPS = [
+    {
+        h: 3, m: 0, extra: 'labelBoth',
+        en: {
+            title: 'The Two Hands',
+            body:  'A clock has two hands.\n\n⚫ SHORT hand = shows the HOUR\n🟣 LONG hand = shows the MINUTES\n\nLook at which hand is shorter and which is longer.',
+        },
+        he: {
+            title: 'שתי המחוגים',
+            body:  'לשעון יש שתי מחוגים.\n\n⚫ מחוג קצר = מראה את השעה\n🟣 מחוג ארוך = מראה את הדקות\n\nשים לב מי קצר ומי ארוך.',
+        },
+    },
+    {
+        h: 9, m: 0, extra: 'glowHour',
+        en: {
+            title: 'Reading the Hour',
+            body:  'Look at the SHORT (dark) hand.\nIt points to a number — that\'s the hour.\n\nHere it points to 9\n→ The hour is 9.',
+        },
+        he: {
+            title: 'קריאת השעות',
+            body:  'הסתכל על המחוג הקצר (הכהה).\nהוא מצביע על מספר — זו השעה.\n\nכאן הוא מצביע על 9\n← השעה היא 9.',
+        },
+    },
+    {
+        h: 3, m: 0, extra: 'glowMinute',
+        en: {
+            title: 'Reading the Minutes',
+            body:  'Look at the LONG (purple) hand.\n\nWhen it points to 12 → :00 (zero minutes)\nWhen it points to 6 → :30 (thirty minutes)\n\nHere it points to 12 → :00.',
+        },
+        he: {
+            title: 'קריאת הדקות',
+            body:  'הסתכל על המחוג הארוך (הסגול).\n\nכשהוא מצביע על 12 ← :00 (אפס דקות)\nכשהוא מצביע על 6 ← :30 (שלושים דקות)\n\nכאן הוא מצביע על 12 ← :00.',
+        },
+    },
+    {
+        h: 3, m: 0, extra: 'minuteRing',
+        en: {
+            title: 'Counting Minutes by 5',
+            body:  'Each number the long hand passes = 5 more minutes.\n\n12→:00 · 1→:05 · 2→:10 · 3→:15\n4→:20 · 5→:25 · 6→:30 · 7→:35\n8→:40 · 9→:45 · 10→:50 · 11→:55',
+        },
+        he: {
+            title: 'ספירת דקות בקפיצות של 5',
+            body:  'כל מספר שהמחוג הארוך עובר = עוד 5 דקות.\n\n12←:00 · 1←:05 · 2←:10 · 3←:15\n4←:20 · 5←:25 · 6←:30 · 7←:35\n8←:40 · 9←:45 · 10←:50 · 11←:55',
+        },
+    },
+    {
+        h: 3, m: 30, extra: 'labelBoth',
+        en: {
+            title: 'Let\'s Read 3:30 Together',
+            body:  '⚫ Short hand → between 3 and 4\n   → The hour is 3\n\n🟣 Long hand → points to 6\n   → 6 × 5 = 30 minutes\n\n✅ The time is 3:30!',
+        },
+        he: {
+            title: 'בואו נקרא ביחד 3:30',
+            body:  '⚫ מחוג קצר ← בין 3 ל-4\n   ← השעה היא 3\n\n🟣 מחוג ארוך ← מצביע על 6\n   ← 6 × 5 = 30 דקות\n\n!השעה היא 3:30 ✅',
+        },
+    },
+];
+
+// ── Users ─────────────────────────────────────────────────────────────────────
+const COLORS = ['#ff6b6b','#ff922b','#ffd43b','#51cf66','#339af0','#cc5de8','#f06595','#20c997'];
+
+const CHARACTERS = [
+    { id: 'mario',   emoji: '🍄', img: 'https://mario.wiki.gallery/images/thumb/0/0d/MarioAlternateJamboreeRender.png/400px-MarioAlternateJamboreeRender.png',
+      name: { en: 'Mario',   he: 'מריו'    }, msgs: { en: ["Wahoo! Let's-a go!", 'Mamma mia! Correct!', 'Yahoo! You got it!', 'Superb!'],                    he: ['!יאהו, בואו ללכת', 'מאמה מיה! נכון!', 'מצוין! עשית זאת!', '!יופי'] } },
+    { id: 'pikachu', emoji: '⚡', img: 'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/25.png',
+      name: { en: 'Pikachu', he: "פיקאצ'ו" }, msgs: { en: ['Pika pika! Correct!', 'Shocking good!', 'Sparktacular!', 'Electrifying!'],                       he: ['!פיקה פיקה! נכון', 'מבריק!', 'חשמלי!', 'מדהים!'] } },
+    { id: 'dora',    emoji: '🎒', img: 'https://upload.wikimedia.org/wikipedia/commons/3/3d/Dora-Boots-LQ.png',
+      name: { en: 'Dora',    he: 'דורה'    }, msgs: { en: ['We did it!', 'Muy bien! Excellent!', 'Fantástico!', 'Excelente!'],                                he: ['!עשינו את זה', 'מצוין מאוד!', 'פנטסטיקו!', 'כל הכבוד!'] } },
+    { id: 'sonic',   emoji: '🦔', img: 'https://upload.wikimedia.org/wikipedia/en/9/91/SuperSonic.png',
+      name: { en: 'Sonic',   he: 'סוניק'   }, msgs: { en: ['Way past cool!', 'Supersonic speed!', 'Gotta go fast — and right!', 'Too easy!'],                he: ['!מעבר לקריר', 'מהירות-על!', 'גוטה גו פאסט ונכון!', 'קל מדי!'] } },
+    { id: 'peppa',   emoji: '🐷', img: 'https://upload.wikimedia.org/wikipedia/en/thumb/b/bf/Peppa_Bicycles.png/400px-Peppa_Bicycles.png',
+      name: { en: 'Peppa',   he: 'פפה'     }, msgs: { en: ['Oink! Brilliant!', 'Oink oink! Well done!', 'Snort — you did it!', 'Daddy Pig says correct!'],   he: ['!אויינק! מצוין', 'אויינק אויינק! כל הכבוד!', 'נהדר!', '!פפה גאה בך'] } },
+    { id: 'mickey',  emoji: '🐭', img: 'https://upload.wikimedia.org/wikipedia/commons/thumb/4/4f/Mickey_Mouse_%28poster_version%29.svg/400px-Mickey_Mouse_%28poster_version%29.svg.png',
+      name: { en: 'Mickey',  he: 'מיקי'    }, msgs: { en: ['Oh boy! Correct!', 'Hot dog! You got it!', "Ha-ha! That's right!", "Gee, that's swell!"],        he: ['!הוי הוי! נכון', 'חם כלב! עשית זאת!', 'הה-הה! נכון!', 'וואו, נהדר!'] } },
+];
+
+const CHAR_PARTICLES = {
+    mario:   ['🍄','⭐','🌟','🪙','✨','💫','🍄','⭐'],
+    pikachu: ['⚡','✨','💛','⭐','🌟','⚡','💫','✨'],
+    dora:    ['⭐','🌟','✨','💜','🗺️','⭐','💫','🌟'],
+    sonic:   ['💨','⭐','✨','💙','🌟','💨','⭐','✨'],
+    peppa:   ['🐷','⭐','💕','✨','🌸','🌟','💕','⭐'],
+    mickey:  ['⭐','❤️','✨','🌟','🎵','⭐','💫','✨'],
+};
+const WRONG_PARTICLES = ['❓','💭','😅','❓','💭'];
+
+let pickerColor = COLORS[0];
+let pickerChar  = CHARACTERS[0].id;
+
+function setCharSprite(el, char) {
+    el.innerHTML = '';
+    const img = document.createElement('img');
+    img.src = char.img;
+    img.alt = char.emoji;
+    img.onerror = () => {
+        el.innerHTML = `<span class="char-emoji-fb">${char.emoji}</span>`;
+    };
+    el.appendChild(img);
+}
+
+function animateChar(el, cls) {
+    el.classList.remove('bounce', 'shake');
+    void el.offsetWidth; // force reflow to restart animation
+    el.classList.add(cls);
+    el.addEventListener('animationend', () => el.classList.remove(cls), { once: true });
+}
+
+function spawnParticles(anchorEl, correct, charId) {
+    const rect = anchorEl.getBoundingClientRect();
+    const cx   = rect.left + rect.width  / 2;
+    const cy   = rect.top  + rect.height / 2;
+    const pool = correct ? (CHAR_PARTICLES[charId] || CHAR_PARTICLES.mario) : WRONG_PARTICLES;
+    pool.forEach((p, i) => {
+        const el  = document.createElement('div');
+        el.className   = 'particle';
+        el.textContent = p;
+        const angle  = (Math.random() * 2 * Math.PI);
+        const dist   = 80 + Math.random() * 100;
+        const dx     = Math.cos(angle) * dist;
+        const dy     = Math.sin(angle) * dist - (correct ? 60 : 20);
+        const dr     = (Math.random() - 0.5) * 360;
+        const dur    = 0.7 + Math.random() * 0.5;
+        const size   = correct ? (1.2 + Math.random() * 0.8) : 1.0;
+        el.style.cssText = `
+            left:${cx}px; top:${cy}px; font-size:${size}rem;
+            --dx:${dx}px; --dy:${dy}px; --dr:${dr}deg; --dur:${dur}s;
+            animation-delay:${i * 55}ms;
+        `;
+        document.body.appendChild(el);
+        setTimeout(() => el.remove(), (dur + i * 0.055 + 0.1) * 1000);
+    });
+}
+
+function getUserChar() {
+    const user = getActiveUser();
+    const id   = user?.charId;
+    return CHARACTERS.find(c => c.id === id) || CHARACTERS[0];
+}
+
+function loadData()  { return JSON.parse(localStorage.getItem('clockUsers') || '{"users":[],"activeId":null}'); }
+function saveData(d) { localStorage.setItem('clockUsers', JSON.stringify(d)); }
+function getActiveUser() {
+    const d = loadData();
+    return d.users.find(u => u.id === d.activeId) || null;
+}
+
+function selectUser(id) {
+    const d = loadData();
+    d.activeId = id;
+    saveData(d);
+    const u = d.users.find(u => u.id === id);
+    score = u.score; streak = 0;
+    applyTheme(u.charId);
+    hideUserPicker();
+    updateUserChip();
+    setMode('quiz');
+}
+
+function addUser(name, color, charId) {
+    const d  = loadData();
+    const id = 'u' + Date.now();
+    d.users.push({ id, name, color, charId: charId || CHARACTERS[0].id, score: 0, bestStreak: 0 });
+    d.activeId = id;
+    saveData(d);
+    score = 0; streak = 0;
+    applyTheme(charId || CHARACTERS[0].id);
+    hideUserPicker();
+    updateUserChip();
+    setMode('learn');
+}
+
+function deleteUser(id, e) {
+    e.stopPropagation();
+    const d = loadData();
+    d.users = d.users.filter(u => u.id !== id);
+    if (d.activeId === id) d.activeId = d.users[0]?.id ?? null;
+    saveData(d);
+    renderUserPicker();
+}
+
+function saveUserScore() {
+    const d = loadData();
+    const u = d.users.find(u => u.id === d.activeId);
+    if (!u) return;
+    u.score = score;
+    if (streak > (u.bestStreak || 0)) u.bestStreak = streak;
+    saveData(d);
+}
+
+function showUserPicker() {
+    renderUserPicker();
+    document.getElementById('userPicker').style.display = 'flex';
+}
+
+function hideUserPicker() {
+    hideAddForm();
+    document.getElementById('userPicker').style.display = 'none';
+}
+
+function renderUserPicker() {
+    const tl   = T[lang];
+    const data = loadData();
+    document.getElementById('pickerTitle').textContent = tl.whoPlaying;
+    hideAddForm();
+
+    const grid = document.getElementById('userGrid');
+    grid.innerHTML = '';
+
+    data.users.forEach(user => {
+        const card = document.createElement('div');
+        card.className = 'user-card';
+        const ch = CHARACTERS.find(c => c.id === user.charId) || CHARACTERS[0];
+        card.innerHTML = `
+            <button class="user-delete-btn">×</button>
+            <div class="user-avatar" style="background:${user.color}">${user.name[0].toUpperCase()}</div>
+            <div class="user-card-name">${user.name}</div>
+            <img class="user-card-char-img" src="${ch.img}" alt="${ch.emoji}"
+                 onerror="this.outerHTML='<div class=\'user-card-char\'>${ch.emoji} ${ch.name[lang]}</div>'" />
+            <div class="user-card-score">${tl.score}: ${user.score}</div>
+        `;
+        card.querySelector('.user-avatar').onclick     = () => selectUser(user.id);
+        card.querySelector('.user-card-name').onclick  = () => selectUser(user.id);
+        card.querySelector('.user-card-score').onclick = () => selectUser(user.id);
+        card.querySelector('.user-delete-btn').onclick = (e) => deleteUser(user.id, e);
+        grid.appendChild(card);
+    });
+
+    const addCard = document.createElement('div');
+    addCard.className = 'user-card add-user-card';
+    addCard.innerHTML = `
+        <div class="user-avatar">+</div>
+        <div class="user-card-name">${tl.addUser}</div>
+    `;
+    addCard.onclick = showAddForm;
+    grid.appendChild(addCard);
+}
+
+function showAddForm() {
+    const tl = T[lang];
+    document.getElementById('addUserForm').classList.add('show');
+    document.getElementById('userGrid').style.display = 'none';
+    document.getElementById('newUserName').value       = '';
+    document.getElementById('newUserName').placeholder = tl.namePlaceholder;
+    document.getElementById('confirmAddBtn').textContent = tl.letsGo;
+    document.getElementById('cancelAddBtn').textContent  = tl.cancel;
+    pickerColor = COLORS[0];
+    pickerChar  = CHARACTERS[0].id;
+    renderColorPicker();
+    renderCharPicker();
+    setTimeout(() => document.getElementById('newUserName').focus(), 50);
+}
+
+function hideAddForm() {
+    document.getElementById('addUserForm').classList.remove('show');
+    document.getElementById('userGrid').style.display = 'flex';
+}
+
+function renderCharPicker() {
+    const row = document.getElementById('charPickRow');
+    row.innerHTML = '';
+    CHARACTERS.forEach(ch => {
+        const card = document.createElement('div');
+        card.className = 'char-pick-card' + (ch.id === pickerChar ? ' selected' : '');
+        const img = document.createElement('img');
+        img.src   = ch.img;
+        img.alt   = ch.emoji;
+        img.className = 'char-pick-img';
+        img.onerror = () => { img.outerHTML = `<span style="font-size:2rem">${ch.emoji}</span>`; };
+        const label = document.createElement('div');
+        label.className   = 'char-pick-label';
+        label.textContent = ch.name[lang];
+        card.appendChild(img);
+        card.appendChild(label);
+        card.onclick = () => { pickerChar = ch.id; renderCharPicker(); };
+        row.appendChild(card);
+    });
+}
+
+function renderColorPicker() {
+    const row = document.getElementById('colorRow');
+    row.innerHTML = '';
+    COLORS.forEach(c => {
+        const dot = document.createElement('div');
+        dot.className = 'color-dot' + (c === pickerColor ? ' selected' : '');
+        dot.style.background = c;
+        dot.onclick = () => { pickerColor = c; renderColorPicker(); };
+        row.appendChild(dot);
+    });
+}
+
+function confirmAddUser() {
+    const name = document.getElementById('newUserName').value.trim();
+    if (!name) { document.getElementById('newUserName').focus(); return; }
+    addUser(name, pickerColor, pickerChar);
+}
+
+document.addEventListener('keydown', e => {
+    if (e.key === 'Enter' && document.getElementById('addUserForm').classList.contains('show')) {
+        confirmAddUser();
+    }
+});
+
+function updateUserChip() {
+    const user = getActiveUser();
+    const chip = document.getElementById('userChip');
+    if (!user) { chip.style.display = 'none'; return; }
+    chip.style.display = 'flex';
+    const av = document.getElementById('chipAvatar');
+    av.style.background = user.color;
+    av.textContent = user.name[0].toUpperCase();
+    document.getElementById('chipName').textContent   = user.name;
+    document.getElementById('chipSwitch').textContent = T[lang].switchUser;
+}
+
+// ── State ─────────────────────────────────────────────────────────────────────
+let lang       = 'en';
+let mode       = 'learn';
+let learnStep  = 0;
+let difficulty = 'hour';
+let currentH   = 3;
+let currentM   = 0;
+let score      = 0;
+let streak     = 0;
+let answered   = false;
+let dragging   = false;
+let dragTarget = 'minute';
+
+// ── Themes ────────────────────────────────────────────────────────────────────
+const THEMES = {
+    mario:   { c1:'#e52222', c2:'#1a56b0', c1Light:'#f9a8a8', c1Ring:'#fde8e8' },
+    pikachu: { c1:'#d4a000', c2:'#1e1e4a', c1Light:'#fde68a', c1Ring:'#fef3c7' },
+    dora:    { c1:'#7c3aed', c2:'#be185d', c1Light:'#c4b5fd', c1Ring:'#ede9fe' },
+    sonic:   { c1:'#1e40af', c2:'#b45309', c1Light:'#93c5fd', c1Ring:'#dbeafe' },
+    peppa:   { c1:'#db2777', c2:'#7c3aed', c1Light:'#f9a8d4', c1Ring:'#fce7f3' },
+    mickey:  { c1:'#dc2626', c2:'#1c1917', c1Light:'#fca5a5', c1Ring:'#fee2e2' },
+};
+const DEFAULT_THEME = { c1:'#6c63ff', c2:'#3f3d56', c1Light:'#d0caf6', c1Ring:'#ede9ff' };
+let tc = { ...DEFAULT_THEME };
+
+function hexToRgba(hex, alpha) {
+    const r = parseInt(hex.slice(1,3), 16);
+    const g = parseInt(hex.slice(3,5), 16);
+    const b = parseInt(hex.slice(5,7), 16);
+    return `rgba(${r},${g},${b},${alpha})`;
+}
+
+function applyTheme(charId) {
+    tc = { ...(THEMES[charId] || DEFAULT_THEME) };
+    document.documentElement.setAttribute('data-theme', charId || '');
+}
+
+// ── Canvas ────────────────────────────────────────────────────────────────────
+const canvas = document.getElementById('clock');
+const ctx    = canvas.getContext('2d');
+const CX = canvas.width  / 2;
+const CY = canvas.height / 2;
+const R  = 118;
+
+function pad(n) { return String(n).padStart(2, '0'); }
+function timeStr(h, m) { return `${h}:${pad(m)}`; }
+
+// ── Drawing ───────────────────────────────────────────────────────────────────
+function drawClock(h, m, extra) {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+    // Face
+    ctx.save();
+    ctx.shadowColor = hexToRgba(tc.c1, 0.15);
+    ctx.shadowBlur  = 20;
+    ctx.beginPath();
+    ctx.arc(CX, CY, R, 0, Math.PI * 2);
+    ctx.fillStyle = '#faf9ff';
+    ctx.fill();
+    ctx.restore();
+
+    // Rim
+    ctx.beginPath();
+    ctx.arc(CX, CY, R, 0, Math.PI * 2);
+    ctx.strokeStyle = tc.c1;
+    ctx.lineWidth   = 7;
+    ctx.stroke();
+
+    // Tick marks
+    for (let i = 0; i < 60; i++) {
+        const ang  = (i / 60) * Math.PI * 2 - Math.PI / 2;
+        const isHr = i % 5 === 0;
+        const len  = isHr ? 11 : 5;
+        ctx.beginPath();
+        ctx.moveTo(CX + Math.cos(ang) * (R - len), CY + Math.sin(ang) * (R - len));
+        ctx.lineTo(CX + Math.cos(ang) * R,         CY + Math.sin(ang) * R);
+        ctx.strokeStyle = isHr ? '#bbb' : '#e0e0e0';
+        ctx.lineWidth   = isHr ? 2 : 1;
+        ctx.stroke();
+    }
+
+    // Extra: minute ring numbers (drawn before hour numbers so they're behind)
+    if (extra === 'minuteRing') {
+        for (let i = 0; i < 12; i++) {
+            const ang   = (i / 12) * Math.PI * 2 - Math.PI / 2;
+            const x     = CX + Math.cos(ang) * (R - 30);
+            const y     = CY + Math.sin(ang) * (R - 30);
+            const label = i === 0 ? '00' : pad(i * 5);
+            // Pill background
+            ctx.save();
+            ctx.fillStyle = tc.c1Ring;
+            roundRect(ctx, x - 13, y - 10, 26, 20, 6);
+            ctx.fill();
+            ctx.font         = 'bold 11px Segoe UI';
+            ctx.textAlign    = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillStyle    = tc.c1;
+            ctx.fillText(label, x, y);
+            ctx.restore();
+        }
+        // Hour numbers drawn at outer ring
+        ctx.font         = 'bold 16px Segoe UI';
+        ctx.textAlign    = 'center';
+        ctx.textBaseline = 'middle';
+        for (let i = 1; i <= 12; i++) {
+            const ang = (i / 12) * Math.PI * 2 - Math.PI / 2;
+            ctx.fillStyle = '#999';
+            ctx.fillText(i, CX + Math.cos(ang) * (R - 14), CY + Math.sin(ang) * (R - 14));
+        }
+    } else {
+        // Normal hour numbers
+        ctx.font         = 'bold 17px Segoe UI';
+        ctx.textAlign    = 'center';
+        ctx.textBaseline = 'middle';
+        for (let i = 1; i <= 12; i++) {
+            const ang = (i / 12) * Math.PI * 2 - Math.PI / 2;
+            ctx.fillStyle = '#222';
+            ctx.fillText(i, CX + Math.cos(ang) * (R - 22), CY + Math.sin(ang) * (R - 22));
+        }
+    }
+
+    const hAng = ((h % 12) / 12 + m / 720) * Math.PI * 2 - Math.PI / 2;
+    const mAng = (m / 60) * Math.PI * 2 - Math.PI / 2;
+
+    // Dim / highlight hands based on extra
+    if (extra === 'glowHour') {
+        drawHand(mAng, R * 0.78, 5, tc.c1Light); // dim minute
+        drawHand(hAng, R * 0.52, 10, '#ff6b35', true); // glow hour
+    } else if (extra === 'glowMinute') {
+        drawHand(hAng, R * 0.52, 9, '#ccc');    // dim hour
+        drawHand(mAng, R * 0.78, 6, tc.c1, true); // glow minute
+    } else {
+        drawHand(hAng, R * 0.52, 9, tc.c2);
+        drawHand(mAng, R * 0.78, 5, tc.c1);
+    }
+
+    // Center cap
+    ctx.beginPath();
+    ctx.arc(CX, CY, 9, 0, Math.PI * 2);
+    ctx.fillStyle = tc.c2;
+    ctx.fill();
+    ctx.beginPath();
+    ctx.arc(CX, CY, 5, 0, Math.PI * 2);
+    ctx.fillStyle = tc.c1;
+    ctx.fill();
+
+    // Labels on top
+    if (extra === 'labelBoth') {
+        drawHandLabel(hAng, R * 0.52, lang === 'he' ? 'שעה' : 'HOUR', tc.c2);
+        drawHandLabel(mAng, R * 0.78, lang === 'he' ? 'דקות' : 'MIN',  tc.c1);
+    } else if (extra === 'glowHour') {
+        drawHandLabel(hAng, R * 0.52, lang === 'he' ? 'שעה' : 'HOUR', '#ff6b35');
+    } else if (extra === 'glowMinute') {
+        drawHandLabel(mAng, R * 0.78, lang === 'he' ? 'דקות' : 'MIN',  tc.c1);
+    }
+}
+
+function drawHand(angle, len, width, color, glow) {
+    ctx.save();
+    if (glow) {
+        ctx.shadowColor = color;
+        ctx.shadowBlur  = 14;
+    }
+    ctx.lineCap     = 'round';
+    ctx.strokeStyle = color;
+    ctx.lineWidth   = width;
+    ctx.beginPath();
+    ctx.moveTo(CX, CY);
+    ctx.lineTo(CX + Math.cos(angle) * len, CY + Math.sin(angle) * len);
+    ctx.stroke();
+    ctx.lineWidth = width * 0.65;
+    ctx.beginPath();
+    ctx.moveTo(CX, CY);
+    ctx.lineTo(CX - Math.cos(angle) * 14, CY - Math.sin(angle) * 14);
+    ctx.stroke();
+    ctx.restore();
+}
+
+function drawHandLabel(angle, len, text, color) {
+    const tipX = CX + Math.cos(angle) * len;
+    const tipY = CY + Math.sin(angle) * len;
+
+    // Push label outward from tip, clamped inside canvas
+    const pushDist = 24;
+    let lx = tipX + Math.cos(angle) * pushDist;
+    let ly = tipY + Math.sin(angle) * pushDist;
+
+    ctx.save();
+    ctx.font = 'bold 12px Segoe UI';
+    const tw = ctx.measureText(text).width;
+    const pw = tw + 12, ph = 20;
+    lx = Math.max(pw / 2 + 4, Math.min(canvas.width  - pw / 2 - 4, lx));
+    ly = Math.max(ph / 2 + 4, Math.min(canvas.height - ph / 2 - 4, ly));
+
+    // Pill
+    ctx.fillStyle = color;
+    roundRect(ctx, lx - pw / 2, ly - ph / 2, pw, ph, 6);
+    ctx.fill();
+    // Text
+    ctx.textAlign    = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillStyle    = '#fff';
+    ctx.fillText(text, lx, ly);
+    ctx.restore();
+}
+
+function roundRect(ctx, x, y, w, h, r) {
+    ctx.beginPath();
+    ctx.moveTo(x + r, y);
+    ctx.lineTo(x + w - r, y);
+    ctx.quadraticCurveTo(x + w, y, x + w, y + r);
+    ctx.lineTo(x + w, y + h - r);
+    ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
+    ctx.lineTo(x + r, y + h);
+    ctx.quadraticCurveTo(x, y + h, x, y + h - r);
+    ctx.lineTo(x, y + r);
+    ctx.quadraticCurveTo(x, y, x + r, y);
+    ctx.closePath();
+}
+
+// ── Learn mode ────────────────────────────────────────────────────────────────
+function showLearnStep(n) {
+    learnStep = Math.max(0, Math.min(STEPS.length - 1, n));
+    const step = STEPS[learnStep];
+    const s    = step[lang];
+
+    drawClock(step.h, step.m, step.extra);
+
+    const char = getUserChar();
+    const charEl = document.getElementById('charFace');
+    setCharSprite(charEl, char);
+    animateChar(charEl, 'bounce');
+    document.getElementById('learnTitle').textContent = s.title;
+    document.getElementById('learnBody').textContent  = s.body;
+
+    // Dots
+    const dots = document.getElementById('stepDots');
+    dots.innerHTML = '';
+    STEPS.forEach((_, i) => {
+        const d = document.createElement('div');
+        d.className = 'step-dot' + (i === learnStep ? ' active' : i < learnStep ? ' done' : '');
+        dots.appendChild(d);
+    });
+
+    const isLast = learnStep === STEPS.length - 1;
+    document.getElementById('prevBtn').disabled                  = learnStep === 0;
+    document.getElementById('nextStepBtn').style.display         = isLast ? 'none' : 'inline-block';
+    document.getElementById('startQuizBtn').style.display        = isLast ? 'inline-block' : 'none';
+
+    // Update nav button text for language
+    document.getElementById('prevBtn').textContent     = T[lang].prev;
+    document.getElementById('nextStepBtn').textContent = T[lang].nextStep;
+    document.getElementById('startQuizBtn').textContent= T[lang].startQuiz;
+}
+
+function goStep(dir) { showLearnStep(learnStep + dir); }
+
+// ── Quiz mode ─────────────────────────────────────────────────────────────────
+function generateTime() {
+    const h = Math.floor(Math.random() * 12) + 1;
+    if (difficulty === 'hour')     return { h, m: 0 };
+    if (difficulty === 'halfhour') return { h, m: Math.random() < 0.5 ? 0 : 30 };
+    if (difficulty === 'fivemin')  return { h, m: Math.floor(Math.random() * 12) * 5 };
+    return { h, m: Math.floor(Math.random() * 60) };
+}
+
+function buildChoices(correctH, correctM) {
+    const correct = timeStr(correctH, correctM);
+    const set = new Set([correct]);
+    while (set.size < 4) {
+        const t = generateTime();
+        set.add(timeStr(t.h, t.m));
+    }
+    return [...set].sort(() => Math.random() - 0.5);
+}
+
+function nextQuestion() {
+    answered = false;
+    document.getElementById('quizCharStage').style.display = 'none';
+    document.getElementById('explanation').className        = 'explanation';
+    document.getElementById('nextBtn').style.display        = 'none';
+
+    const time = generateTime();
+    currentH = time.h;
+    currentM = time.m;
+    drawClock(currentH, currentM);
+
+    const choicesEl = document.getElementById('choices');
+    choicesEl.innerHTML = '';
+    buildChoices(currentH, currentM).forEach(c => {
+        const btn = document.createElement('button');
+        btn.className   = 'choice-btn';
+        btn.textContent = c;
+        btn.onclick     = () => checkAnswer(c, btn);
+        choicesEl.appendChild(btn);
+    });
+}
+
+function checkAnswer(chosen, btn) {
+    if (answered) return;
+    answered = true;
+    const correct = timeStr(currentH, currentM);
+
+    const char      = getUserChar();
+    const spriteEl  = document.getElementById('quizCharSprite');
+    const bubbleEl  = document.getElementById('quizBubble');
+    const stageEl   = document.getElementById('quizCharStage');
+    setCharSprite(spriteEl, char);
+
+    if (chosen === correct) {
+        score++; streak++;
+        btn.classList.add('correct');
+        const msgs = char.msgs[lang];
+        document.getElementById('feedback').textContent = msgs[Math.floor(Math.random() * msgs.length)];
+        bubbleEl.className = 'quiz-bubble correct';
+        stageEl.style.display = 'flex';
+        animateChar(spriteEl, 'bounce');
+        spawnParticles(spriteEl, true, char.id);
+    } else {
+        streak = 0;
+        btn.classList.add('wrong');
+        document.querySelectorAll('.choice-btn').forEach(b => {
+            if (b.textContent === correct) b.classList.add('correct');
+        });
+        document.getElementById('feedback').textContent = T[lang].wrongMsg(correct);
+        bubbleEl.className = 'quiz-bubble wrong';
+        stageEl.style.display = 'flex';
+        animateChar(spriteEl, 'shake');
+        spawnParticles(spriteEl, false, char.id);
+    }
+
+    document.querySelectorAll('.choice-btn').forEach(b => b.disabled = true);
+    document.getElementById('score').textContent  = score;
+    document.getElementById('streak').textContent = streak;
+    saveUserScore();
+
+    // Show explanation and annotated clock
+    showExplanation();
+    drawClock(currentH, currentM, 'labelBoth');
+    document.getElementById('nextBtn').style.display = 'block';
+}
+
+function showExplanation() {
+    const tl  = T[lang];
+    const box = document.getElementById('explanation');
+    const h1  = tl.explHour(currentH, currentM);
+    const m1  = tl.explMin(currentM);
+    const t1  = tl.explTime(currentH, currentM);
+
+    box.innerHTML =
+        `<div class="expl-title">${tl.explTitle}</div>` +
+        `<div>⚫ ${h1}</div>` +
+        `<div>🟣 ${m1}</div>` +
+        `<div><strong>${t1}</strong></div>`;
+    box.className = 'explanation show';
+}
+
+// ── Free Play ─────────────────────────────────────────────────────────────────
+function pointerAngle(e) {
+    const rect   = canvas.getBoundingClientRect();
+    const scaleX = canvas.width  / rect.width;
+    const scaleY = canvas.height / rect.height;
+    const cx     = e.clientX ?? e.touches[0].clientX;
+    const cy     = e.clientY ?? e.touches[0].clientY;
+    return Math.atan2((cy - rect.top) * scaleY - CY, (cx - rect.left) * scaleX - CX);
+}
+
+function angleDiff(a, b) {
+    let d = Math.abs(a - b);
+    if (d > Math.PI) d = Math.PI * 2 - d;
+    return d;
+}
+
+function onDragStart(e) {
+    if (mode !== 'freeplay') return;
+    e.preventDefault();
+    const ang  = pointerAngle(e);
+    const hAng = ((currentH % 12) / 12 + currentM / 720) * Math.PI * 2 - Math.PI / 2;
+    const mAng = (currentM / 60) * Math.PI * 2 - Math.PI / 2;
+    dragTarget = angleDiff(ang, mAng) <= angleDiff(ang, hAng) ? 'minute' : 'hour';
+    dragging = true;
+}
+
+function onDragMove(e) {
+    if (!dragging || mode !== 'freeplay') return;
+    e.preventDefault();
+    const raw        = pointerAngle(e) + Math.PI / 2;
+    const normalized = ((raw / (Math.PI * 2)) % 1 + 1) % 1;
+    if (dragTarget === 'minute') {
+        currentM = Math.round(normalized * 60) % 60;
+    } else {
+        currentH = Math.round(normalized * 12) % 12 || 12;
+    }
+    drawClock(currentH, currentM);
+    document.getElementById('digitalTime').textContent = timeStr(currentH, currentM);
+}
+
+function onDragEnd() { dragging = false; }
+
+canvas.addEventListener('mousedown',  onDragStart);
+canvas.addEventListener('mousemove',  onDragMove);
+canvas.addEventListener('mouseup',    onDragEnd);
+canvas.addEventListener('mouseleave', onDragEnd);
+canvas.addEventListener('touchstart', onDragStart, { passive: false });
+canvas.addEventListener('touchmove',  onDragMove,  { passive: false });
+canvas.addEventListener('touchend',   onDragEnd);
+
+// ── Mode / Difficulty / Language ──────────────────────────────────────────────
+function setMode(m) {
+    mode = m;
+    ['learn','quiz','freeplay'].forEach(id => {
+        document.getElementById('tab' + id.charAt(0).toUpperCase() + id.slice(1))
+            .classList.toggle('active', id === m);
+        const areaId = id + 'Area';
+        const el = document.getElementById(areaId);
+        if (el) el.style.display = (id === m) ? 'flex' : 'none';
+    });
+
+    // Move canvas into the correct area
+    const areas = { learn: 'learnArea', quiz: 'quizArea', freeplay: 'freeplayArea' };
+    const targetArea = document.getElementById(areas[m]);
+    const canvasParent = canvas.parentNode;
+    // Insert canvas as second child of the target area (after dots for learn, after diffRow for quiz, before digital for freeplay)
+    if (canvasParent !== targetArea) {
+        if (m === 'learn') {
+            const dots = document.getElementById('stepDots');
+            targetArea.insertBefore(canvas, dots.nextSibling);
+        } else if (m === 'quiz') {
+            const diffRow = document.getElementById('diffRow');
+            targetArea.insertBefore(canvas, diffRow.nextSibling);
+        } else {
+            targetArea.insertBefore(canvas, targetArea.firstChild);
+        }
+    }
+
+    canvas.classList.toggle('interactive', m === 'freeplay');
+    document.getElementById('scoreBar').style.display = m === 'quiz' ? 'flex' : 'none';
+
+    if (m === 'learn') {
+        showLearnStep(learnStep);
+    } else if (m === 'quiz') {
+        nextQuestion();
+    } else {
+        currentH = 3; currentM = 0;
+        drawClock(currentH, currentM);
+        document.getElementById('digitalTime').textContent = timeStr(currentH, currentM);
+    }
+}
+
+function setDifficulty(d, btn) {
+    difficulty = d;
+    document.querySelectorAll('.diff-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    nextQuestion();
+}
+
+function setLang(l) {
+    lang = l;
+    const isHe = l === 'he';
+    document.documentElement.setAttribute('lang', l);
+    document.documentElement.setAttribute('dir',  isHe ? 'rtl' : 'ltr');
+
+    document.getElementById('langEn').classList.toggle('active', !isHe);
+    document.getElementById('langHe').classList.toggle('active',  isHe);
+
+    const tl = T[lang];
+    document.getElementById('title').textContent       = tl.title;
+    document.getElementById('tabLearn').textContent    = tl.learn;
+    document.getElementById('tabQuiz').textContent     = tl.quiz;
+    document.getElementById('tabFreeplay').textContent = tl.freeplay;
+    document.getElementById('questionText').textContent= tl.question;
+    document.getElementById('nextBtn').textContent     = tl.nextQ;
+    document.getElementById('freeplayHint').textContent= tl.hint;
+    document.getElementById('scoreLabel').innerHTML    = `${tl.score}: <span id="score">${score}</span>`;
+    document.getElementById('streakLabel').innerHTML   = `${tl.streak}: <span id="streak">${streak}</span> ⭐`;
+
+    document.querySelectorAll('.diff-btn').forEach(b => {
+        b.textContent = tl.diff[b.dataset.diff];
+    });
+
+    // Re-render current mode
+    if (mode === 'learn') showLearnStep(learnStep);
+    else if (mode === 'quiz' && answered) {
+        // Re-translate the "wrong" bubble text if needed
+        const bubble = document.getElementById('quizBubble');
+        if (bubble.classList.contains('wrong')) {
+            document.getElementById('feedback').textContent = T[lang].wrongMsg(timeStr(currentH, currentM));
+        }
+        showExplanation();
+    }
+    updateUserChip();
+    if (document.getElementById('userPicker').style.display === 'flex') {
+        if (document.getElementById('addUserForm').classList.contains('show')) {
+            document.getElementById('newUserName').placeholder = T[lang].namePlaceholder;
+            document.getElementById('confirmAddBtn').textContent = T[lang].letsGo;
+            document.getElementById('cancelAddBtn').textContent  = T[lang].cancel;
+            renderCharPicker();
+        } else {
+            renderUserPicker();
+        }
+    }
+}
+
+// ── Init ──────────────────────────────────────────────────────────────────────
+const _initUser = getActiveUser();
+if (_initUser) applyTheme(_initUser.charId);
+showUserPicker();
+</script>
+</body>
+</html>

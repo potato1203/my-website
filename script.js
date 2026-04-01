@@ -90,6 +90,12 @@ const PROJECTS = [
     icon: "🌍"
   },
   {
+    title: "Learn the Clock",
+    description: "Interactive clock-reading app for kids. Practice telling time with a visual analog clock, multiple themes (Mario, Pikachu, Sonic, Peppa Pig), and progressive difficulty levels.",
+    url: "./clock-learn/",
+    icon: "🕐"
+  },
+  {
     title: "המירוץ למיליון יום הולדת לעמית",
     description: "משחק תחרות לצוותים! 2–4 צוותים מתחרים באתגרים ביתיים מצחיקים, עם טיימר, שופט, לוח תוצאות וחגיגת ניצחון. בעברית ואנגלית.",
     url: "./hamertaz/",
