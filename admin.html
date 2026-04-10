@@ -1,0 +1,510 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>מנהל — ממתקים ואוכל בסטייל</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Heebo:wght@300;400;700;800;900&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --blue: #1a2b8a;
+      --teal: #2aadad;
+      --yellow: #f5c842;
+      --red: #e03030;
+      --green: #1eaa5c;
+      --bg: #f5f0e8;
+      --white: #ffffff;
+      --dark: #111111;
+      --gray: #666;
+    }
+
+    body {
+      font-family: 'Heebo', sans-serif;
+      background: var(--bg);
+      color: var(--dark);
+      min-height: 100vh;
+    }
+
+    /* ── LOGIN ── */
+    #login-screen {
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: var(--blue);
+      padding: 2rem;
+    }
+
+    .login-box {
+      background: var(--white);
+      border-radius: 20px;
+      padding: 2.5rem 2rem;
+      width: 100%;
+      max-width: 360px;
+      text-align: center;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+    }
+
+    .login-logo {
+      width: 120px;
+      border-radius: 10px;
+      margin-bottom: 1.2rem;
+    }
+
+    .login-box h1 {
+      font-size: 1.4rem;
+      font-weight: 900;
+      margin-bottom: 0.3rem;
+    }
+
+    .login-box p {
+      font-size: 0.85rem;
+      color: var(--gray);
+      margin-bottom: 1.8rem;
+    }
+
+    .login-field {
+      margin-bottom: 1rem;
+      text-align: right;
+    }
+
+    .login-field label {
+      display: block;
+      font-size: 0.8rem;
+      font-weight: 800;
+      margin-bottom: 0.35rem;
+    }
+
+    .login-field input {
+      width: 100%;
+      padding: 0.75rem 1rem;
+      border: 2px solid #ddd;
+      border-radius: 10px;
+      font-family: 'Heebo', sans-serif;
+      font-size: 0.95rem;
+      outline: none;
+      transition: border-color 0.2s;
+      text-align: right;
+    }
+
+    .login-field input:focus { border-color: var(--teal); }
+
+    .login-btn {
+      width: 100%;
+      padding: 0.85rem;
+      background: var(--blue);
+      color: var(--white);
+      border: none;
+      border-radius: 10px;
+      font-family: 'Heebo', sans-serif;
+      font-size: 1rem;
+      font-weight: 800;
+      cursor: pointer;
+      transition: background 0.2s;
+      margin-top: 0.3rem;
+    }
+    .login-btn:hover { background: #2d44cc; }
+
+    .login-error {
+      display: none;
+      margin-top: 0.8rem;
+      font-size: 0.85rem;
+      color: var(--red);
+      font-weight: 700;
+    }
+
+    /* ── ADMIN PANEL ── */
+    #admin-panel { display: none; }
+
+    .admin-nav {
+      background: var(--blue);
+      border-bottom: 3px solid var(--yellow);
+      padding: 0 5%;
+      height: 64px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .admin-nav-logo {
+      display: flex;
+      align-items: center;
+      gap: 0.8rem;
+    }
+
+    .admin-nav-logo img {
+      height: 44px;
+      border-radius: 6px;
+    }
+
+    .admin-nav-title {
+      font-size: 0.95rem;
+      font-weight: 800;
+      color: var(--yellow);
+    }
+
+    .admin-nav-actions {
+      display: flex;
+      gap: 0.8rem;
+      align-items: center;
+    }
+
+    .btn {
+      display: inline-block;
+      padding: 0.5rem 1.1rem;
+      border-radius: 8px;
+      font-size: 0.85rem;
+      font-weight: 800;
+      cursor: pointer;
+      border: none;
+      font-family: 'Heebo', sans-serif;
+      transition: opacity 0.2s;
+      text-decoration: none;
+    }
+    .btn:hover { opacity: 0.85; }
+    .btn-yellow { background: var(--yellow); color: var(--blue); }
+    .btn-red    { background: var(--red); color: var(--white); }
+    .btn-ghost  { background: rgba(255,255,255,0.1); color: var(--white); }
+
+    .admin-body { padding: 2.5rem 5%; max-width: 900px; margin: 0 auto; }
+
+    .admin-stats {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 1rem;
+      margin-bottom: 2.5rem;
+    }
+
+    .stat-card {
+      background: var(--white);
+      border-radius: 14px;
+      padding: 1.2rem 1.4rem;
+      text-align: center;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.06);
+    }
+
+    .stat-card .stat-num {
+      font-size: 2.2rem;
+      font-weight: 900;
+      color: var(--blue);
+      line-height: 1;
+      margin-bottom: 0.3rem;
+    }
+
+    .stat-card .stat-label {
+      font-size: 0.8rem;
+      color: var(--gray);
+      font-weight: 600;
+    }
+
+    .orders-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 1.2rem;
+    }
+
+    .orders-header h2 {
+      font-size: 1.3rem;
+      font-weight: 900;
+    }
+
+    #orders-list { display: flex; flex-direction: column; gap: 1rem; }
+
+    .order-card {
+      background: var(--white);
+      border-radius: 14px;
+      padding: 1.3rem 1.5rem;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.06);
+      border-right: 4px solid var(--teal);
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 1rem;
+      align-items: start;
+      transition: opacity 0.3s;
+    }
+
+    .order-card.done {
+      border-right-color: var(--green);
+      opacity: 0.55;
+    }
+
+    .order-card-name {
+      font-size: 1rem;
+      font-weight: 900;
+      margin-bottom: 0.3rem;
+    }
+
+    .order-card-text {
+      font-size: 0.9rem;
+      color: var(--dark);
+      line-height: 1.6;
+      white-space: pre-wrap;
+    }
+
+    .order-card-phone {
+      font-size: 0.82rem;
+      color: var(--teal);
+      font-weight: 700;
+      margin-bottom: 0.3rem;
+      direction: ltr;
+      text-align: right;
+    }
+    .order-card-time {
+      font-size: 0.75rem;
+      color: var(--gray);
+      margin-top: 0.5rem;
+    }
+
+    .order-card-actions {
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+      flex-shrink: 0;
+    }
+
+    .btn-done {
+      background: var(--green);
+      color: var(--white);
+      font-size: 0.78rem;
+      padding: 0.4rem 0.8rem;
+      border-radius: 6px;
+      border: none;
+      font-family: 'Heebo', sans-serif;
+      font-weight: 800;
+      cursor: pointer;
+      white-space: nowrap;
+    }
+
+    .btn-delete {
+      background: rgba(224,48,48,0.1);
+      color: var(--red);
+      font-size: 0.78rem;
+      padding: 0.4rem 0.8rem;
+      border-radius: 6px;
+      border: none;
+      font-family: 'Heebo', sans-serif;
+      font-weight: 800;
+      cursor: pointer;
+      white-space: nowrap;
+    }
+
+    .empty-state {
+      text-align: center;
+      padding: 4rem 2rem;
+      color: var(--gray);
+    }
+    .empty-state .empty-icon { font-size: 3.5rem; margin-bottom: 1rem; }
+    .empty-state p { font-size: 1rem; }
+
+    @media (max-width: 600px) {
+      .admin-stats { grid-template-columns: 1fr 1fr; }
+      .order-card { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- LOGIN -->
+  <div id="login-screen">
+    <div class="login-box">
+      <img src="./logo.png" alt="לוגו" class="login-logo">
+      <h1>כניסת מנהל</h1>
+      <p>הכנס סיסמה כדי לצפות בהזמנות</p>
+      <form id="login-form">
+        <div class="login-field">
+          <label>סיסמה</label>
+          <input type="password" id="password-input" placeholder="••••••••" autocomplete="current-password">
+        </div>
+        <button type="submit" class="login-btn">🤘 כניסה</button>
+        <div class="login-error" id="login-error">סיסמה שגויה. נסה שוב.</div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ADMIN PANEL -->
+  <div id="admin-panel">
+    <nav class="admin-nav">
+      <div class="admin-nav-logo">
+        <img src="./logo.png" alt="לוגו">
+        <span class="admin-nav-title">לוח מנהל</span>
+      </div>
+      <div class="admin-nav-actions">
+        <a href="./index.html" class="btn btn-ghost">← חזור לאתר</a>
+        <button class="btn btn-red" id="logout-btn">יציאה</button>
+      </div>
+    </nav>
+
+    <div class="admin-body">
+      <div class="admin-stats">
+        <div class="stat-card">
+          <div class="stat-num" id="stat-total">0</div>
+          <div class="stat-label">סה״כ הזמנות</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-num" id="stat-pending">0</div>
+          <div class="stat-label">ממתינות</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-num" id="stat-done">0</div>
+          <div class="stat-label">הושלמו</div>
+        </div>
+      </div>
+
+      <div class="orders-header">
+        <h2>📋 הזמנות</h2>
+        <button class="btn btn-red" id="clear-all-btn">מחק הכל</button>
+      </div>
+
+      <div id="orders-list"></div>
+    </div>
+  </div>
+
+  <script>
+    const PASSWORD = 'liam1203';
+
+    // ── EmailJS הגדרות ──
+    const EMAILJS_PUBLIC_KEY  = 'uXJuR-q1I_YcA6qvW';
+    const EMAILJS_SERVICE_ID  = 'service_potato9';
+    const EMAILJS_TEMPLATE_ID = 'template_6gzy6wr';
+
+    emailjs.init({ publicKey: EMAILJS_PUBLIC_KEY });
+
+    function isLoggedIn() {
+      return sessionStorage.getItem('admin') === '1';
+    }
+
+    function showPanel() {
+      document.getElementById('login-screen').style.display = 'none';
+      document.getElementById('admin-panel').style.display = 'block';
+      renderOrders();
+    }
+
+    if (isLoggedIn()) showPanel();
+
+    document.getElementById('login-form').addEventListener('submit', e => {
+      e.preventDefault();
+      if (document.getElementById('password-input').value === PASSWORD) {
+        sessionStorage.setItem('admin', '1');
+        showPanel();
+      } else {
+        document.getElementById('login-error').style.display = 'block';
+      }
+    });
+
+    document.getElementById('logout-btn').addEventListener('click', () => {
+      sessionStorage.removeItem('admin');
+      location.reload();
+    });
+
+    document.getElementById('clear-all-btn').addEventListener('click', () => {
+      if (confirm('למחוק את כל ההזמנות?')) {
+        localStorage.removeItem('orders');
+        renderOrders();
+      }
+    });
+
+    function getOrders() {
+      return JSON.parse(localStorage.getItem('orders') || '[]');
+    }
+
+    function saveOrders(orders) {
+      localStorage.setItem('orders', JSON.stringify(orders));
+    }
+
+    function renderOrders() {
+      const orders = getOrders();
+      const list = document.getElementById('orders-list');
+
+      const total   = orders.length;
+      const done    = orders.filter(o => o.done).length;
+      const pending = total - done;
+
+      document.getElementById('stat-total').textContent   = total;
+      document.getElementById('stat-pending').textContent = pending;
+      document.getElementById('stat-done').textContent    = done;
+
+      if (orders.length === 0) {
+        list.innerHTML = `
+          <div class="empty-state">
+            <div class="empty-icon">🍔</div>
+            <p>אין הזמנות עדיין. בקרוב יגיעו!</p>
+          </div>`;
+        return;
+      }
+
+      list.innerHTML = [...orders].reverse().map((order, i) => {
+        const realIndex = orders.length - 1 - i;
+        return `
+          <div class="order-card ${order.done ? 'done' : ''}" id="card-${realIndex}">
+            <div>
+              <div class="order-card-name">🤘 ${escapeHtml(order.name)}</div>
+              ${order.email ? `<div class="order-card-phone">✉️ ${escapeHtml(order.email)}</div>` : ''}
+              <div class="order-card-text">${escapeHtml(order.text)}</div>
+              <div class="order-card-time">${order.time}</div>
+            </div>
+            <div class="order-card-actions">
+              <button class="btn-done" onclick="markDone(${realIndex})">${order.done ? '↩ בטל' : '✓ הושלם'}</button>
+              <button class="btn-delete" onclick="deleteOrder(${realIndex})">🗑 מחק</button>
+            </div>
+          </div>`;
+      }).join('');
+    }
+
+    function markDone(index) {
+      const orders = getOrders();
+      if (!orders[index].done) {
+        orders[index].done = true;
+        saveOrders(orders);
+        renderOrders();
+        const order = orders[index];
+        if (order.email) {
+          emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_TEMPLATE_ID, {
+            to_name:  order.name,
+            to_email: order.email,
+            order_text: order.text
+          }).then(() => {
+            showToast('✅ אימייל נשלח ל-' + order.name);
+          }).catch(err => {
+            console.error('EmailJS error:', err);
+            showToast('⚠️ שגיאה: ' + (err.text || JSON.stringify(err)));
+          });
+        } else {
+          showToast('⚠️ אין אימייל להזמנה הזו');
+        }
+      } else {
+        orders[index].done = false;
+        saveOrders(orders);
+        renderOrders();
+      }
+    }
+
+    function showToast(msg) {
+      const t = document.createElement('div');
+      t.textContent = msg;
+      t.style.cssText = 'position:fixed;bottom:2rem;left:50%;transform:translateX(-50%);background:#222;color:#fff;padding:0.7rem 1.4rem;border-radius:100px;font-size:0.9rem;font-weight:700;z-index:9999;font-family:Heebo,sans-serif;';
+      document.body.appendChild(t);
+      setTimeout(() => t.remove(), 3500);
+    }
+
+    function deleteOrder(index) {
+      const orders = getOrders();
+      orders.splice(index, 1);
+      saveOrders(orders);
+      renderOrders();
+    }
+
+    function escapeHtml(str) {
+      return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+    }
+
+    // Auto-refresh every 10 seconds
+    setInterval(() => { if (isLoggedIn()) renderOrders(); }, 10000);
+  </script>
+</body>
+</html>
