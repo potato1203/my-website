@@ -24,6 +24,12 @@
 
 const PROJECTS = [
   {
+    title: "יוצר הדמויות",
+    description: "בנו דמות דמיונית משלכם! בחרו גזע, מקצוע, יישור מוסרי, כוחות מיוחדים, עצבו את המראה ורשמו סיפור רקע. מסתיים בכרטיס דמות מלא להדפסה.",
+    url: "./character-creator/",
+    icon: "✨"
+  },
+  {
     title: "GoalDraw",
     description: "Learn to draw football club logos step-by-step using the grid method. Covers Premier League, La Liga, Bundesliga, Serie A, Ligue 1 and more.",
     url: "./goal-draw/",
