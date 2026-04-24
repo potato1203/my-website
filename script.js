@@ -27,7 +27,8 @@ const PROJECTS = [
     title: "המבורגר מרקוב 🍔",
     description: "מסעדת המבורגרים החגיגית! גרסת יום הולדת מיוחדת לליאם — תפריט חגיגי, קיר ברכות, קונפטי, ומנות בלעדיות.",
     url: "./markov-burger/",
-    icon: "🍔"
+    icon: "🍔",
+    password: "1203169"
   },
   {
     title: "יוצר הדמויות",
@@ -131,12 +132,16 @@ function createCard(project) {
     mediaHTML = `<div class="card-placeholder"><span>${icon}</span></div>`;
   }
 
+  const linkHTML = project.password
+    ? `<button class="card-link" onclick="openProtected('${project.url}','${project.password}')">Visit Site</button>`
+    : `<a class="card-link" href="${project.url}" target="_blank" rel="noopener noreferrer">Visit Site</a>`;
+
   card.innerHTML = `
     ${mediaHTML}
     <div class="card-body">
       <h3 class="card-title">${project.title}</h3>
       <p class="card-desc">${project.description}</p>
-      <a class="card-link" href="${project.url}" target="_blank" rel="noopener noreferrer">Visit Site</a>
+      ${linkHTML}
     </div>
   `;
 
@@ -155,6 +160,15 @@ function renderProjects() {
   const fragment = document.createDocumentFragment();
   PROJECTS.forEach(project => fragment.appendChild(createCard(project)));
   grid.appendChild(fragment);
+}
+
+function openProtected(url, password) {
+  const input = prompt('🔒 הכנס קוד גישה:');
+  if (input === password) {
+    window.open(url, '_blank');
+  } else if (input !== null) {
+    alert('קוד שגוי ❌');
+  }
 }
 
 // Set footer year
