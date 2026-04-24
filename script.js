@@ -26,7 +26,7 @@ const PROJECTS = [
   {
     title: "המבורגר מרקוב 🍔",
     description: "מסעדת המבורגרים החגיגית! גרסת יום הולדת מיוחדת לליאם — תפריט חגיגי, קיר ברכות, קונפטי, ומנות בלעדיות.",
-    url: "./markov-burger/",
+    url: "https://liam-markov.com/markov-burger/",
     icon: "🍔",
     password: "1203169"
   },
