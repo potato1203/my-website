@@ -460,6 +460,15 @@ class GameScene extends Phaser.Scene {
   // ─── DAMAGE ──────────────────────────────────────────────────────────────────
 
   _hitBot(bot, dmg, fromX, fromY) {
+    // CLIENT: forward hit to HOST who is authoritative for bot HP
+    if (window.PAWER_NET?.connected && !window.PAWER_NET.isHost) {
+      const i = this.bots.indexOf(bot);
+      if (i >= 0) window.PAWER_NET.send({ t: 'bot_hit', i, dmg, fx: fromX, fy: fromY });
+      // Show visual only
+      this._popNumber(bot.sprite.x, bot.sprite.y - 40, dmg, '#ff6666');
+      this.tweens.add({ targets: bot.sprite, alpha: 0.3, duration: 80, yoyo: true });
+      return;
+    }
     bot.hp = Math.max(0, bot.hp - dmg);
     this._popNumber(bot.sprite.x, bot.sprite.y - 40, dmg, '#ff6666');
 
@@ -495,6 +504,11 @@ class GameScene extends Phaser.Scene {
     bot.sprite.setActive(false).setVisible(false);
     this._burstEffect(bot.sprite.x, bot.sprite.y, bot.color);
     this._flashText(`${bot.name} הובס!`, '#ffdd00', 800);
+    // Sync kill to peer
+    if (window.PAWER_NET?.connected) {
+      const i = this.bots.indexOf(bot);
+      if (i >= 0) window.PAWER_NET.send({ t: 'bot_die', i });
+    }
     if (this.bots.every(b => !b.alive)) this._endGame(true);
   }
 
@@ -528,6 +542,37 @@ class GameScene extends Phaser.Scene {
   // ─── AI ──────────────────────────────────────────────────────────────────────
 
   _updateBots(delta) {
+    // CLIENT: no pathfinding — positions come from HOST; only check attacks on local player
+    if (window.PAWER_NET?.connected && !window.PAWER_NET.isHost) {
+      this.bots.forEach(bot => {
+        if (!bot.alive) return;
+        bot.atkCd = Math.max(0, bot.atkCd - delta);
+        if (bot.atkCd > 0) return;
+        const dx   = this.player.sprite.x - bot.sprite.x;
+        const dy   = this.player.sprite.y - bot.sprite.y;
+        const dist = Math.hypot(dx, dy);
+        const isRanged  = bot.charKey === 'fik' || bot.charKey === 'dim';
+        const atkRange  = isRanged ? 190 : bot.charKey === 'bigo' ? 100 : 65;
+        if (dist < atkRange) {
+          bot.atkCd = bot.atkCdBase;
+          if (isRanged) {
+            const nd   = dist || 1;
+            const opts = bot.charKey === 'dim'
+              ? { speed: 640, color: 0xccccdd, gcolor: 0xffffff, radius: 5, maxDist: 270, splatColor: 0xaaaacc, hitRadius: 24 }
+              : {};
+            this._spawnProjectile(bot.sprite.x, bot.sprite.y, dx / nd, dy / nd, bot.atkDmg, false, bot, opts);
+          } else if (bot.charKey === 'bigo') {
+            this._hitPlayer(bot.atkDmg);
+            this._showHammerSpin(bot.sprite.x, bot.sprite.y, 100);
+          } else {
+            this._hitPlayer(bot.atkDmg);
+            this._showBotAtk(bot, this.player.sprite.x, this.player.sprite.y);
+          }
+        }
+      });
+      return;
+    }
+
     this.bots.forEach(bot => {
       if (!bot.alive) return;
       bot.atkCd    = Math.max(0, bot.atkCd - delta);
@@ -875,23 +920,59 @@ class GameScene extends Phaser.Scene {
     const sendHello = () => {
       if (helloSent) return;
       helloSent = true;
-      net.send({ t: 'hello', name: myName, ck: myCk });
+      const msg = { t: 'hello', name: myName, ck: myCk };
+      // HOST includes bot configuration so client mirrors same bots
+      if (net.isHost) {
+        msg.bots_cfg = this.bots.map(b => ({
+          ck: b.charKey, name: b.name, color: b.color,
+          atkDmg: b.atkDmg, atkCdBase: b.atkCdBase,
+        }));
+      }
+      net.send(msg);
     };
     sendHello();
 
     net.on('hello', msg => {
-      sendHello(); // reply in case they connected after us
-      if (this.remote) return; // already set up
-      const ck = msg.ck || 'nix';
-      const sprite = this.add.image(400, 400, ck).setDepth(5).setAlpha(0.88);
-      sprite.setScale(80 / sprite.height);
-      const nameText = this.add.text(0, 0, msg.name || 'חבר', {
-        fontSize: '13px', color: '#aaffaa',
-        fontFamily: 'Arial', fontStyle: 'bold',
-        stroke: '#000033', strokeThickness: 3,
-      }).setOrigin(0.5, 1).setDepth(12);
-      const hpGfx = this.add.graphics().setDepth(11);
-      this.remote = { sprite, nameText, hpGfx, hp: 3000, maxHp: 3000, x: 400, y: 400 };
+      sendHello();
+      if (!this.remote) {
+        const ck = msg.ck || 'nix';
+        const sprite = this.add.image(400, 400, ck).setDepth(5).setAlpha(0.88);
+        sprite.setScale(80 / sprite.height);
+        const nameText = this.add.text(0, 0, msg.name || 'חבר', {
+          fontSize: '13px', color: '#aaffaa',
+          fontFamily: 'Arial', fontStyle: 'bold',
+          stroke: '#000033', strokeThickness: 3,
+        }).setOrigin(0.5, 1).setDepth(12);
+        const hpGfx = this.add.graphics().setDepth(11);
+        this.remote = { sprite, nameText, hpGfx, hp: 3000, maxHp: 3000, x: 400, y: 400 };
+      }
+      // CLIENT: sync bot appearance to match host
+      if (!net.isHost && msg.bots_cfg) this._syncBotConfig(msg.bots_cfg);
+    });
+
+    // CLIENT receives bot positions/HP from HOST every tick
+    net.on('bots_state', msg => {
+      if (net.isHost) return;
+      msg.d.forEach((d, i) => {
+        const bot = this.bots[i];
+        if (!bot) return;
+        bot.sprite.setPosition(d.x, d.y).setFlipX(d.fx);
+        bot.hp = d.hp;
+        if (!d.alive && bot.alive) this._killBot(bot);
+      });
+    });
+
+    // Both sides: receive kill event and kill locally if still alive
+    net.on('bot_die', msg => {
+      const bot = this.bots[msg.i];
+      if (bot && bot.alive) this._killBot(bot);
+    });
+
+    // HOST: apply damage sent by CLIENT
+    net.on('bot_hit', msg => {
+      if (!net.isHost) return;
+      const bot = this.bots[msg.i];
+      if (bot && bot.alive) this._hitBot(bot, msg.dmg, msg.fx, msg.fy);
     });
 
     net.on('pos', msg => {
@@ -904,7 +985,6 @@ class GameScene extends Phaser.Scene {
     });
 
     net.on('atk', msg => {
-      if (!msg.ax && !msg.ay) return;
       if (msg.kind === 'sword') this._showSwing(msg.x, msg.y, msg.ax, msg.ay, 90, Math.PI * 0.72);
       else if (msg.kind === 'hammer') this._showHammerSpin(msg.x, msg.y, 115);
       else if (msg.kind === 'slime') this._spawnProjectile(msg.x, msg.y, msg.ax, msg.ay, 0, true, null);
@@ -918,8 +998,24 @@ class GameScene extends Phaser.Scene {
     });
 
     this.events.once('shutdown', () => {
-      ['hello', 'pos', 'atk', 'disconnect', 'connect'].forEach(t => net.off(t));
+      ['hello', 'pos', 'atk', 'bots_state', 'bot_die', 'bot_hit', 'disconnect', 'connect'].forEach(t => net.off(t));
       this._destroyRemote();
+    });
+  }
+
+  // Sync bot charKeys/names/colors on CLIENT to match HOST
+  _syncBotConfig(cfg) {
+    cfg.forEach((c, i) => {
+      const bot = this.bots[i];
+      if (!bot) return;
+      bot.charKey   = c.ck;
+      bot.name      = c.name;
+      bot.color     = c.color;
+      bot.atkDmg    = c.atkDmg;
+      bot.atkCdBase = c.atkCdBase;
+      bot.atkCd     = 0;
+      bot.sprite.setTexture(c.ck).setScale(70 / bot.sprite.height);
+      if (this.botNameTxts[i]) this.botNameTxts[i].setText(c.name);
     });
   }
 
@@ -932,8 +1028,16 @@ class GameScene extends Phaser.Scene {
   }
 
   _mpSendPos() {
+    const net = window.PAWER_NET;
     const p = this.player.sprite;
-    window.PAWER_NET.send({ t: 'pos', x: p.x, y: p.y, fx: p.flipX, hp: this.player.hp });
+    net.send({ t: 'pos', x: p.x, y: p.y, fx: p.flipX, hp: this.player.hp });
+    // HOST also syncs all bot state so CLIENT sees same positions/HP
+    if (net.isHost) {
+      net.send({ t: 'bots_state', d: this.bots.map(b => ({
+        x: b.sprite.x, y: b.sprite.y, fx: b.sprite.flipX,
+        hp: b.hp, alive: b.alive,
+      }))});
+    }
   }
 
   _mpSendAtk(kind, ax, ay) {
