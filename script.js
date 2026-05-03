@@ -24,6 +24,13 @@
 
 const PROJECTS = [
   {
+    title: "PAWER 🐾",
+    description: "אפליקציית PAWER — כנס ותגלה מה יש בפנים.",
+    url: "./pawer/",
+    icon: "🐾",
+    password: "1203169"
+  },
+  {
     title: "המבורגר מרקוב 🍔",
     description: "מסעדת המבורגרים החגיגית! גרסת יום הולדת מיוחדת לליאם — תפריט חגיגי, קיר ברכות, קונפטי, ומנות בלעדיות.",
     url: "https://liam-markov.com/markov-burger/",
