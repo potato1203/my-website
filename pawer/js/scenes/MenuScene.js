@@ -566,6 +566,7 @@ class MenuScene extends Phaser.Scene {
 
     const closeAll = () => {
       net.off('connect');
+      net.off('ready');
       pool.forEach(o => o.destroy());
       if (codeInput && document.body.contains(codeInput)) document.body.removeChild(codeInput);
       codeInput = null;
@@ -624,14 +625,39 @@ class MenuScene extends Phaser.Scene {
     }).setOrigin(0.5).setDepth(82);
     pool.push(statusTxt);
 
-    // Play button (hidden until connected)
-    const playBtn = this._settingsBtn(w / 2, h / 2 + 115, '▶  שחק יחד!', '#116611', 82);
-    pool.push(playBtn);
-    playBtn.setVisible(false);
-    playBtn.on('pointerdown', () => {
-      closeAll();
-      this.cameras.main.fade(350, 0, 0, 0);
-      this.time.delayedCall(350, () => this.scene.start('GameScene'));
+    // ── Ready state ──
+    let myReady = false, peerReady = false;
+
+    const myStatusTxt = this.add.text(w / 2 - 70, h / 2 + 108, 'אתה: ⏳', {
+      fontSize: '15px', color: '#aaaaaa', fontFamily: 'Arial', fontStyle: 'bold',
+    }).setOrigin(0.5).setDepth(82).setVisible(false);
+    pool.push(myStatusTxt);
+
+    const peerStatusTxt = this.add.text(w / 2 + 70, h / 2 + 108, 'חבר: ⏳', {
+      fontSize: '15px', color: '#aaaaaa', fontFamily: 'Arial', fontStyle: 'bold',
+    }).setOrigin(0.5).setDepth(82).setVisible(false);
+    pool.push(peerStatusTxt);
+
+    const checkBothReady = () => {
+      if (!myReady || !peerReady) return;
+      statusTxt.setText('🚀 מתחיל...').setStyle({ color: '#ffdd00' });
+      this.time.delayedCall(900, () => {
+        closeAll();
+        this.cameras.main.fade(350, 0, 0, 0);
+        this.time.delayedCall(350, () => this.scene.start('GameScene'));
+      });
+    };
+
+    const readyBtn = this._settingsBtn(w / 2, h / 2 + 140, '✅  מוכן!', '#116611', 82);
+    pool.push(readyBtn);
+    readyBtn.setVisible(false);
+    readyBtn.on('pointerdown', () => {
+      if (myReady) return;
+      myReady = true;
+      readyBtn.setAlpha(0.5).disableInteractive();
+      myStatusTxt.setText('אתה: ✅').setStyle({ color: '#44ff88' });
+      net.send({ t: 'ready' });
+      checkBothReady();
     });
 
     // Connect button
@@ -639,12 +665,20 @@ class MenuScene extends Phaser.Scene {
     pool.push(connectBtn);
 
     const onConnected = () => {
-      statusTxt.setText('✅ מחובר!').setStyle({ color: '#44ff88' });
+      statusTxt.setText('✅ מחובר! — לחץ מוכן כשמוכן').setStyle({ color: '#44ff88' });
       connectBtn.setVisible(false);
-      playBtn.setVisible(true);
+      myStatusTxt.setVisible(true);
+      peerStatusTxt.setVisible(true);
+      readyBtn.setVisible(true);
       if (codeInput && document.body.contains(codeInput)) document.body.removeChild(codeInput);
       codeInput = null;
     };
+
+    net.on('ready', () => {
+      peerReady = true;
+      peerStatusTxt.setText('חבר: ✅').setStyle({ color: '#44ff88' });
+      checkBothReady();
+    });
 
     connectBtn.on('pointerdown', () => {
       const code = codeInput ? codeInput.value.trim().toUpperCase() : '';
