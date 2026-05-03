@@ -21,6 +21,10 @@ class GameScene extends Phaser.Scene {
 
     this.swordGfx = this.add.graphics().setDepth(8);
     this.slimes   = [];   // active slime projectiles
+    this._mpTick  = 0;
+    this.remote   = null; // remote player state
+
+    if (window.PAWER_NET?.connected) this._initMultiplayer();
 
     // Username label above player (world-space)
     const playerName = window.PAWER_SAVE.getName() || 'שחקן';
@@ -289,6 +293,7 @@ class GameScene extends Phaser.Scene {
     });
 
     this._showSwing(p.x, p.y, ax, ay, RANGE, ARC);
+    if (window.PAWER_NET?.connected) this._mpSendAtk('sword', ax, ay);
   }
 
   _doSlimeAttack() {
@@ -297,6 +302,7 @@ class GameScene extends Phaser.Scene {
     this.player.facing = { x: ax, y: ay };
     this.player.atkCd = 700;
     this._spawnProjectile(p.x, p.y, ax, ay, 380, true, null);
+    if (window.PAWER_NET?.connected) this._mpSendAtk('slime', ax, ay);
   }
 
   _doHammerAttack() {
@@ -309,6 +315,7 @@ class GameScene extends Phaser.Scene {
         this._hitBot(bot, 520);
     });
     this._showHammerSpin(p.x, p.y, RANGE);
+    if (window.PAWER_NET?.connected) this._mpSendAtk('hammer', 0, 0);
   }
 
   _showHammerSpin(px, py, range) {
@@ -331,6 +338,7 @@ class GameScene extends Phaser.Scene {
     this.player.atkCd = 480;
     this._spawnProjectile(p.x, p.y, ax, ay, 310, true, null,
       { speed: 640, color: 0xccccdd, gcolor: 0xffffff, radius: 5, maxDist: 270, splatColor: 0xaaaacc });
+    if (window.PAWER_NET?.connected) this._mpSendAtk('dagger', ax, ay);
   }
 
   _spawnProjectile(fromX, fromY, ax, ay, dmg, isPlayerSlime, ownerBot, opts = {}) {
@@ -700,6 +708,12 @@ class GameScene extends Phaser.Scene {
       p.sprite.x,
       p.sprite.y - p.sprite.displayHeight / 2 - 6
     );
+
+    // Multiplayer position sync (~20fps)
+    if (window.PAWER_NET?.connected) {
+      this._mpTick += delta;
+      if (this._mpTick >= 50) { this._mpTick = 0; this._mpSendPos(); }
+    }
   }
 
   // ─── HUD UPDATE ──────────────────────────────────────────────────────────────
@@ -730,6 +744,17 @@ class GameScene extends Phaser.Scene {
     // Enemy counter
     const alive = this.bots.filter(b => b.alive).length;
     this.enemyCountTxt.setText(`👾 ${alive} / ${this.bots.length}`);
+
+    // Remote player HP bar (world space)
+    if (this.remote) {
+      const r = this.remote;
+      r.hpGfx.clear();
+      const BW = 70, bsx = r.x, bsy = r.y - 50;
+      r.hpGfx.fillStyle(0x000000, 0.6);
+      r.hpGfx.fillRoundedRect(bsx - BW / 2 - 1, bsy - 7, BW + 2, 14, 4);
+      r.hpGfx.fillStyle(0x44ff44, 1);
+      r.hpGfx.fillRoundedRect(bsx - BW / 2, bsy - 6, BW * Math.max(0, r.hp / r.maxHp), 12, 3);
+    }
 
     // Bot bars (world space, above their sprites)
     this.bots.forEach((bot, i) => {
@@ -838,6 +863,83 @@ class GameScene extends Phaser.Scene {
   }
 
   // ─── MAIN LOOP ───────────────────────────────────────────────────────────────
+
+  // ─── MULTIPLAYER ─────────────────────────────────────────────────────────────
+
+  _initMultiplayer() {
+    const net = window.PAWER_NET;
+    const myName = window.PAWER_SAVE.getName() || 'שחקן';
+    const myCk   = window.PAWER_SAVE.getChar();
+    let helloSent = false;
+
+    const sendHello = () => {
+      if (helloSent) return;
+      helloSent = true;
+      net.send({ t: 'hello', name: myName, ck: myCk });
+    };
+    sendHello();
+
+    net.on('hello', msg => {
+      sendHello(); // reply in case they connected after us
+      if (this.remote) return; // already set up
+      const ck = msg.ck || 'nix';
+      const sprite = this.add.image(400, 400, ck).setDepth(5).setAlpha(0.88);
+      sprite.setScale(80 / sprite.height);
+      const nameText = this.add.text(0, 0, msg.name || 'חבר', {
+        fontSize: '13px', color: '#aaffaa',
+        fontFamily: 'Arial', fontStyle: 'bold',
+        stroke: '#000033', strokeThickness: 3,
+      }).setOrigin(0.5, 1).setDepth(12);
+      const hpGfx = this.add.graphics().setDepth(11);
+      this.remote = { sprite, nameText, hpGfx, hp: 3000, maxHp: 3000, x: 400, y: 400 };
+    });
+
+    net.on('pos', msg => {
+      if (!this.remote) return;
+      this.remote.x  = msg.x;
+      this.remote.y  = msg.y;
+      this.remote.hp = msg.hp ?? this.remote.hp;
+      this.remote.sprite.setPosition(msg.x, msg.y).setFlipX(!!msg.fx);
+      this.remote.nameText.setPosition(msg.x, msg.y - this.remote.sprite.displayHeight / 2 - 6);
+    });
+
+    net.on('atk', msg => {
+      if (!msg.ax && !msg.ay) return;
+      if (msg.kind === 'sword') this._showSwing(msg.x, msg.y, msg.ax, msg.ay, 90, Math.PI * 0.72);
+      else if (msg.kind === 'hammer') this._showHammerSpin(msg.x, msg.y, 115);
+      else if (msg.kind === 'slime') this._spawnProjectile(msg.x, msg.y, msg.ax, msg.ay, 0, true, null);
+      else if (msg.kind === 'dagger') this._spawnProjectile(msg.x, msg.y, msg.ax, msg.ay, 0, true, null,
+        { speed: 640, color: 0xccccdd, gcolor: 0xffffff, radius: 5, maxDist: 270, splatColor: 0xaaaacc, hitRadius: 24 });
+    });
+
+    net.on('disconnect', () => {
+      this._flashText('החבר התנתק 😢', '#ff6666', 2200);
+      this._destroyRemote();
+    });
+
+    this.events.once('shutdown', () => {
+      ['hello', 'pos', 'atk', 'disconnect', 'connect'].forEach(t => net.off(t));
+      this._destroyRemote();
+    });
+  }
+
+  _destroyRemote() {
+    if (!this.remote) return;
+    this.remote.sprite.destroy();
+    this.remote.nameText.destroy();
+    this.remote.hpGfx.destroy();
+    this.remote = null;
+  }
+
+  _mpSendPos() {
+    const p = this.player.sprite;
+    window.PAWER_NET.send({ t: 'pos', x: p.x, y: p.y, fx: p.flipX, hp: this.player.hp });
+  }
+
+  _mpSendAtk(kind, ax, ay) {
+    const p = this.player.sprite;
+    window.PAWER_NET.send({ t: 'atk', kind, x: p.x, y: p.y, ax, ay });
+  }
 
   _clearSlimes() {
     this.slimes.forEach(s => { s.circle.destroy(); s.glow.destroy(); });

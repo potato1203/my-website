@@ -83,3 +83,6 @@ const gameConfig = {
 };
 
 window.PAWER_GAME = new Phaser.Game(gameConfig);
+
+// Initialize peer connection early so ID is ready by the time MenuScene loads
+window.PAWER_NET.init(id => console.log('[NET] ready:', id));

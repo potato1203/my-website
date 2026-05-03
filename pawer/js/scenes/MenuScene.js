@@ -9,7 +9,8 @@ class MenuScene extends Phaser.Scene {
     this._addCharacter(w, h);
     this._addTrophyCounter(w, h);
     this._addPlayButton(w, h);
-    this._addSettingsButton(w, h);
+    const settingsBtn = this._addSettingsButton(w, h);
+    this._addMultiplayerButton(w, h, settingsBtn);
     this.cameras.main.fadeIn(500);
   }
 
@@ -521,6 +522,154 @@ class MenuScene extends Phaser.Scene {
     });
   }
 
+  // ─── MULTIPLAYER ─────────────────────────────────────────────────────────────
+
+  _addMultiplayerButton(w, h, settingsBtn) {
+    const x = 16 + settingsBtn.width + 10;
+    const btn = this.add.text(x, h - 16, '👥', { fontSize: '28px' })
+      .setOrigin(0, 1).setInteractive({ useHandCursor: true }).setAlpha(0.7);
+    btn.on('pointerover', () => btn.setAlpha(1));
+    btn.on('pointerout',  () => btn.setAlpha(0.7));
+    btn.on('pointerdown', () => this._openMultiplayerPanel(w, h));
+
+    // Green dot when already connected
+    if (window.PAWER_NET.connected) {
+      this.add.circle(x + btn.width - 4, h - 16 - btn.height + 4, 6, 0x44ff44).setOrigin(0.5);
+    }
+  }
+
+  _openMultiplayerPanel(w, h) {
+    const net = window.PAWER_NET;
+    const pool = [];
+    let codeInput = null;
+
+    const backdrop = this.add.rectangle(w / 2, h / 2, w, h, 0x000011, 0.82)
+      .setDepth(80).setInteractive();
+    pool.push(backdrop);
+
+    const panelW = Math.min(w * 0.92, 460);
+    const panelH = 370;
+    pool.push(this.add.rectangle(w / 2, h / 2, panelW, panelH, 0x080f1e, 1)
+      .setDepth(81).setStrokeStyle(2, 0x3366aa));
+
+    pool.push(this.add.text(w / 2, h / 2 - panelH / 2 + 28, '👥  שחק עם חבר', {
+      fontSize: '21px', color: '#ffffff',
+      fontFamily: 'Arial Black, Arial', fontStyle: 'bold',
+    }).setOrigin(0.5).setDepth(82));
+
+    pool.push(this.add.rectangle(w / 2, h / 2 - panelH / 2 + 50, panelW - 40, 1, 0x334466).setDepth(82));
+
+    const closeBtn = this.add.text(w / 2 + panelW / 2 - 14, h / 2 - panelH / 2 + 20, '✕', {
+      fontSize: '20px', color: '#aabbcc', fontFamily: 'Arial', fontStyle: 'bold',
+    }).setOrigin(1, 0.5).setDepth(83).setInteractive({ useHandCursor: true });
+    pool.push(closeBtn);
+
+    const closeAll = () => {
+      net.off('connect');
+      pool.forEach(o => o.destroy());
+      if (codeInput && document.body.contains(codeInput)) document.body.removeChild(codeInput);
+      codeInput = null;
+    };
+    closeBtn.on('pointerover', () => closeBtn.setStyle({ color: '#ffffff' }));
+    closeBtn.on('pointerout',  () => closeBtn.setStyle({ color: '#aabbcc' }));
+    closeBtn.on('pointerdown', closeAll);
+    backdrop.on('pointerdown', closeAll);
+
+    // ── My ID ──
+    pool.push(this.add.text(w / 2, h / 2 - 128, 'הקוד שלך:', {
+      fontSize: '13px', color: '#aaccee', fontFamily: 'Arial',
+    }).setOrigin(0.5).setDepth(82));
+
+    const myIdTxt = this.add.text(w / 2, h / 2 - 102, net.myId || '...', {
+      fontSize: '30px', color: '#ffdd00',
+      fontFamily: 'Arial Black, Arial', fontStyle: 'bold',
+      stroke: '#000000', strokeThickness: 3,
+    }).setOrigin(0.5).setDepth(82);
+    pool.push(myIdTxt);
+
+    if (!net.myId) {
+      const poll = this.time.addEvent({ delay: 300, repeat: 20, callback: () => {
+        if (net.myId) { myIdTxt.setText(net.myId); poll.remove(); }
+      }});
+      pool.push({ destroy: () => poll.remove() });
+    }
+
+    const copyBtn = this._settingsBtn(w / 2, h / 2 - 68, '📋 העתק קוד', '#113366', 82);
+    pool.push(copyBtn);
+    copyBtn.on('pointerdown', () => {
+      if (!net.myId) return;
+      navigator.clipboard?.writeText(net.myId).catch(() => {});
+      copyBtn.setText('✅ הועתק!');
+      this.time.delayedCall(1600, () => { if (copyBtn.active) copyBtn.setText('📋 העתק קוד'); });
+    });
+
+    // ── Friend code input ──
+    pool.push(this.add.text(w / 2, h / 2 - 20, 'קוד של חבר:', {
+      fontSize: '13px', color: '#aaccee', fontFamily: 'Arial',
+    }).setOrigin(0.5).setDepth(82));
+
+    codeInput = this._makeHTMLInput(w, h, h / 2 + 10);
+    codeInput.maxLength = 6;
+    codeInput.placeholder = 'PXXXXX';
+    Object.assign(codeInput.style, {
+      textTransform: 'uppercase',
+      letterSpacing: '6px',
+      fontSize: '22px',
+    });
+
+    // Status
+    const statusTxt = this.add.text(w / 2, h / 2 + 70, '', {
+      fontSize: '15px', color: '#88ff88', fontFamily: 'Arial', fontStyle: 'bold',
+      stroke: '#000000', strokeThickness: 2,
+    }).setOrigin(0.5).setDepth(82);
+    pool.push(statusTxt);
+
+    // Play button (hidden until connected)
+    const playBtn = this._settingsBtn(w / 2, h / 2 + 115, '▶  שחק יחד!', '#116611', 82);
+    pool.push(playBtn);
+    playBtn.setVisible(false);
+    playBtn.on('pointerdown', () => {
+      closeAll();
+      this.cameras.main.fade(350, 0, 0, 0);
+      this.time.delayedCall(350, () => this.scene.start('GameScene'));
+    });
+
+    // Connect button
+    const connectBtn = this._settingsBtn(w / 2, h / 2 + 115, '🔗 התחבר', '#225599', 82);
+    pool.push(connectBtn);
+
+    const onConnected = () => {
+      statusTxt.setText('✅ מחובר!').setStyle({ color: '#44ff88' });
+      connectBtn.setVisible(false);
+      playBtn.setVisible(true);
+      if (codeInput && document.body.contains(codeInput)) document.body.removeChild(codeInput);
+      codeInput = null;
+    };
+
+    connectBtn.on('pointerdown', () => {
+      const code = codeInput ? codeInput.value.trim().toUpperCase() : '';
+      if (code.length < 6) {
+        statusTxt.setText('⚠️ הזן קוד בן 6 תווים').setStyle({ color: '#ff6666' });
+        return;
+      }
+      statusTxt.setText('🔄 מתחבר...').setStyle({ color: '#ffdd00' });
+      connectBtn.setAlpha(0.4).disableInteractive();
+      net.connect(code,
+        () => onConnected(),
+        () => {
+          statusTxt.setText('❌ לא ניתן להתחבר — בדוק את הקוד').setStyle({ color: '#ff6666' });
+          connectBtn.setAlpha(1).setInteractive({ useHandCursor: true });
+        }
+      );
+    });
+
+    // Someone connected to us while panel is open
+    net.on('connect', onConnected);
+
+    // If already connected, skip to connected state immediately
+    if (net.connected) onConnected();
+  }
+
   // ─── RANK PROGRESS OVERLAY ───────────────────────────────────────────────────
 
   _openRankProgress(w, h, charDef, charT) {
@@ -643,6 +792,7 @@ class MenuScene extends Phaser.Scene {
     btn.on('pointerover', () => btn.setAlpha(1));
     btn.on('pointerout',  () => btn.setAlpha(0.7));
     btn.on('pointerdown', () => this._openSettings(w, h));
+    return btn;
   }
 
   _openSettings(w, h) {

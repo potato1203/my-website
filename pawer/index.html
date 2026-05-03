@@ -3,6 +3,9 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+  <meta http-equiv="Pragma" content="no-cache">
+  <meta http-equiv="Expires" content="0">
   <title>PAWER</title>
   <style>
     *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
@@ -19,16 +22,61 @@
       align-items: center;
     }
     #game-container canvas { display: block; }
+
+    /* ── Rotate overlay ── */
+    #rotate-msg {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: #0d0d1a;
+      z-index: 9999;
+      color: #ffffff;
+      font-family: Arial, sans-serif;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      text-align: center;
+      gap: 18px;
+    }
+    #rotate-msg .phone-icon {
+      font-size: 72px;
+      display: inline-block;
+      animation: rotate-hint 1.6s ease-in-out infinite;
+    }
+    #rotate-msg h2 { font-size: clamp(20px, 5vw, 28px); font-weight: bold; }
+    #rotate-msg p  { font-size: clamp(13px, 3vw, 17px); opacity: 0.65; }
+    @keyframes rotate-hint {
+      0%  { transform: rotate(0deg);  }
+      35% { transform: rotate(90deg); }
+      65% { transform: rotate(90deg); }
+      100%{ transform: rotate(0deg);  }
+    }
+    @media (orientation: portrait) and (hover: none) {
+      #rotate-msg     { display: flex; }
+      #game-container { display: none; }
+    }
   </style>
 </head>
 <body>
+  <div id="rotate-msg">
+    <span class="phone-icon">📱</span>
+    <h2>סובב את המכשיר</h2>
+    <p>PAWER עובד בצורה הטובה ביותר במצב לרוחב</p>
+  </div>
+
   <div id="game-container"></div>
+
+  <script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/phaser@3.60.0/dist/phaser.min.js"></script>
-  <script src="js/ui/MobileControls.js"></script>
-  <script src="js/scenes/PreloadScene.js"></script>
-  <script src="js/scenes/SetupScene.js"></script>
-  <script src="js/scenes/MenuScene.js"></script>
-  <script src="js/scenes/GameScene.js"></script>
-  <script src="js/main.js"></script>
+  <script src="js/network/Network.js?v=1"></script>
+  <script src="js/ui/MobileControls.js?v=1"></script>
+  <script src="js/scenes/PreloadScene.js?v=1"></script>
+  <script src="js/scenes/SetupScene.js?v=1"></script>
+  <script src="js/scenes/MenuScene.js?v=1"></script>
+  <script src="js/scenes/GameScene.js?v=1"></script>
+  <script src="js/main.js?v=1"></script>
+  <script>
+    if (screen.orientation?.lock) screen.orientation.lock('landscape').catch(() => {});
+  </script>
 </body>
 </html>
