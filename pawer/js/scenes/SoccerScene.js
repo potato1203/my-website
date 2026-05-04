@@ -80,7 +80,7 @@ class SoccerScene extends Phaser.Scene {
 
   _createBumpers(W, H) {
     const R   = 38;
-    const OFF = 270; // distance from field corner (128)
+    const OFF = 50; // distance from field corner (128)
     const positions = [
       { x: 128 + OFF, y: 128 + OFF },
       { x: W - 128 - OFF, y: 128 + OFF },
