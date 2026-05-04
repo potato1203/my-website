@@ -20,6 +20,7 @@ class SoccerScene extends Phaser.Scene {
     this.physics.world.setBounds(0, 0, W, H);
 
     this._createField(W, H);
+    this._createBumpers(W, H);
     this._createPlayer(W, H);
     this._createSoccerBots(W, H);
     this._createBallSprite();
@@ -73,6 +74,92 @@ class SoccerScene extends Phaser.Scene {
     half.fillRect(0, 0, W / 2, H);
     half.fillStyle(0xff2244, 0.06);
     half.fillRect(W / 2, 0, W / 2, H);
+  }
+
+  // ─── BUMPERS ─────────────────────────────────────────────────────────────────
+
+  _createBumpers(W, H) {
+    const R   = 38;
+    const OFF = 270; // distance from field corner (128)
+    const positions = [
+      { x: 128 + OFF, y: 128 + OFF },
+      { x: W - 128 - OFF, y: 128 + OFF },
+      { x: 128 + OFF, y: H - 128 - OFF },
+      { x: W - 128 - OFF, y: H - 128 - OFF },
+    ];
+
+    this.bumpers = positions.map(pos => {
+      const gfx = this.add.graphics().setDepth(3);
+      this._drawBumperGfx(gfx, R);
+      gfx.setPosition(pos.x, pos.y);
+
+      // Spring coil icon
+      const icon = this.add.text(pos.x, pos.y, '🌀', {
+        fontSize: '22px',
+      }).setOrigin(0.5).setDepth(4);
+
+      return { x: pos.x, y: pos.y, r: R, gfx, icon, cooldown: 0 };
+    });
+  }
+
+  _drawBumperGfx(gfx, r) {
+    gfx.clear();
+    // Outer glow ring
+    gfx.lineStyle(6, 0xff9900, 0.45);
+    gfx.strokeCircle(0, 0, r + 8);
+    // Main circle fill
+    gfx.fillStyle(0x221100, 0.88);
+    gfx.fillCircle(0, 0, r);
+    // Thick orange border
+    gfx.lineStyle(5, 0xffcc00, 1);
+    gfx.strokeCircle(0, 0, r);
+    // Inner ring
+    gfx.lineStyle(2, 0xff8800, 0.7);
+    gfx.strokeCircle(0, 0, r * 0.58);
+    // Center dot
+    gfx.fillStyle(0xffcc00, 1);
+    gfx.fillCircle(0, 0, 6);
+  }
+
+  _activateBumper(bumper) {
+    bumper.cooldown = 280;
+
+    // Spring-out animation: quick expand then snap back
+    bumper.gfx.setScale(1);
+    this.tweens.add({
+      targets: bumper.gfx,
+      scaleX: 1.7, scaleY: 1.7,
+      duration: 55, ease: 'Expo.easeOut',
+      onComplete: () => {
+        this.tweens.add({
+          targets: bumper.gfx,
+          scaleX: 1, scaleY: 1,
+          duration: 200, ease: 'Elastic.easeOut',
+        });
+      },
+    });
+
+    // Icon spin
+    this.tweens.add({
+      targets: bumper.icon, angle: bumper.icon.angle + 360,
+      duration: 350, ease: 'Expo.easeOut',
+    });
+
+    // Particle burst
+    for (let i = 0; i < 8; i++) {
+      const angle = (i / 8) * Math.PI * 2;
+      const c = this.add.circle(bumper.x, bumper.y, 5 + Math.random() * 4, 0xffcc00, 0.9).setDepth(8);
+      this.tweens.add({
+        targets: c,
+        x: bumper.x + Math.cos(angle) * 65,
+        y: bumper.y + Math.sin(angle) * 65,
+        alpha: 0, scaleX: 0.15, scaleY: 0.15,
+        duration: 320, ease: 'Expo.easeOut',
+        onComplete: () => c.destroy(),
+      });
+    }
+
+    this.cameras.main.flash(70, 255, 180, 0, true);
   }
 
   // ─── PLAYER ──────────────────────────────────────────────────────────────────
@@ -518,6 +605,25 @@ class SoccerScene extends Phaser.Scene {
       if (inGoalY) { if (b.x > W - 30) { this._scoreGoal(0); return; } b.vx *= 0.94; }
       else { b.x = W - 128; b.vx = -Math.abs(b.vx) * 0.78; }
     }
+
+    // ── Bumper collisions ─────────────────────────────────────────────────────
+    this.bumpers.forEach(bumper => {
+      if (bumper.cooldown > 0) { bumper.cooldown -= delta; return; }
+      const dist = Math.hypot(b.x - bumper.x, b.y - bumper.y);
+      if (dist < bumper.r + b.r) {
+        const nd = dist || 1;
+        const nx = (b.x - bumper.x) / nd;
+        const ny = (b.y - bumper.y) / nd;
+        // Launch ball away at high speed
+        b.vx = nx * 560;
+        b.vy = ny * 560;
+        // Separate to prevent sticking
+        b.x = bumper.x + nx * (bumper.r + b.r + 3);
+        b.y = bumper.y + ny * (bumper.r + b.r + 3);
+        this._activateBumper(bumper);
+      }
+    });
+
     this.ballShadow.setPosition(b.x + 5, b.y + 5);
     this.ballSprite.setPosition(b.x, b.y);
     this.ballInner.setPosition(b.x, b.y);
