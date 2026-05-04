@@ -77,7 +77,7 @@ const gameConfig = {
     default: 'arcade',
     arcade: { gravity: { y: 0 }, debug: false },
   },
-  scene: [PreloadScene, SetupScene, MenuScene, GameScene, SoccerScene],
+  scene: [PreloadScene, IntroScene, SetupScene, MenuScene, GameScene, SoccerScene],
   scale: { mode: Phaser.Scale.RESIZE, autoCenter: Phaser.Scale.CENTER_BOTH },
   input: { activePointers: 4 },
 };
