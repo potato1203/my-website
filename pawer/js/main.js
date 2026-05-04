@@ -65,7 +65,7 @@ const isMobile =
   /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) ||
   ('ontouchstart' in window) || navigator.maxTouchPoints > 0;
 
-window.PAWER_CONFIG = { isMobile, worldWidth: 1920, worldHeight: 1920 };
+window.PAWER_CONFIG = { isMobile, worldWidth: 1920, worldHeight: 1920, mode: 'battle' };
 
 const gameConfig = {
   type: Phaser.AUTO,
@@ -77,7 +77,7 @@ const gameConfig = {
     default: 'arcade',
     arcade: { gravity: { y: 0 }, debug: false },
   },
-  scene: [PreloadScene, SetupScene, MenuScene, GameScene],
+  scene: [PreloadScene, SetupScene, MenuScene, GameScene, SoccerScene],
   scale: { mode: Phaser.Scale.RESIZE, autoCenter: Phaser.Scale.CENTER_BOTH },
   input: { activePointers: 4 },
 };

@@ -139,6 +139,30 @@ class MenuScene extends Phaser.Scene {
   // ─── PLAY BUTTON ─────────────────────────────────────────────────────────────
 
   _addPlayButton(w, h) {
+    if (!window.PAWER_CONFIG.mode) window.PAWER_CONFIG.mode = 'battle';
+
+    const MODES = [
+      { key: 'battle', label: '⚔️  קרב פאוור', bg: '#883300' },
+      { key: 'soccer', label: '⚽  כדור פאוור', bg: '#115522' },
+    ];
+    let modeIdx = MODES.findIndex(m => m.key === window.PAWER_CONFIG.mode);
+    if (modeIdx < 0) modeIdx = 0;
+
+    const modeBtn = this.add.text(w - 24, h - 70, MODES[modeIdx].label, {
+      fontSize: '14px', color: '#ffffff',
+      fontFamily: 'Arial', fontStyle: 'bold',
+      backgroundColor: MODES[modeIdx].bg, padding: { x: 13, y: 7 },
+    }).setOrigin(1, 1).setInteractive({ useHandCursor: true });
+
+    modeBtn.on('pointerdown', () => {
+      modeIdx = (modeIdx + 1) % MODES.length;
+      const m = MODES[modeIdx];
+      modeBtn.setText(m.label).setStyle({ backgroundColor: m.bg });
+      window.PAWER_CONFIG.mode = m.key;
+    });
+    modeBtn.on('pointerover', () => modeBtn.setAlpha(0.8));
+    modeBtn.on('pointerout',  () => modeBtn.setAlpha(1));
+
     const btn = this.add.text(w - 24, h - 24, '▶  שחק', {
       fontSize: '26px', color: '#ffffff',
       fontFamily: 'Arial Black, Arial', fontStyle: 'bold',
@@ -149,15 +173,10 @@ class MenuScene extends Phaser.Scene {
     btn.on('pointerover', () => btn.setStyle({ backgroundColor: '#ee5500' }));
     btn.on('pointerout',  () => btn.setStyle({ backgroundColor: '#cc4400' }));
     btn.on('pointerdown', () => {
+      const scene = window.PAWER_CONFIG.mode === 'soccer' ? 'SoccerScene' : 'GameScene';
       this.cameras.main.fade(350, 0, 0, 0);
-      this.time.delayedCall(350, () => this.scene.start('GameScene'));
+      this.time.delayedCall(350, () => this.scene.start(scene));
     });
-
-    const { isMobile } = window.PAWER_CONFIG;
-    const hint = isMobile ? 'ג׳ויסטיק: תנועה  |  ⚔️: תקיפה' : 'WASD: תנועה  |  Space / לחיצה: תקיפה';
-    this.add.text(w - 24, h - 74, hint, {
-      fontSize: '11px', color: '#cce4ff', fontFamily: 'Arial',
-    }).setOrigin(1, 1);
   }
 
   // ─── CHARACTER SELECTION OVERLAY ─────────────────────────────────────────────
