@@ -14,7 +14,7 @@ window.PAWER_CHARS = [
   { key: 'fik',  name: 'פיק',  desc: '🗡️ לוחם מהיר', sub: 'חמקמק ומסוכן',   rarity: 'נחושת', cost: 10 },
   { key: 'bigo', name: 'ביגו', desc: '🪓 לוחם כבד',  sub: 'חזק ועמיד',       rarity: 'נחושת', cost: 20 },
   { key: 'dim',  name: 'דים',  desc: '🗡️ לוחם ברזל', sub: 'קשוח ומסוכן',     rarity: 'ברזל',  cost: 50 },
-  { key: 'coch', name: "קוץ'", desc: '⚔️ לוחם ברזל', sub: 'אגרסיבי ועז',     rarity: 'ברזל',  cost: 60 },
+  { key: 'coch', name: "קוץ'", desc: '⚔️ לוחם זהב',  sub: 'אגרסיבי ועז',     rarity: 'זהב',   cost: 60 },
 ];
 
 // ─── Save / progression ───────────────────────────────────────────────────────
