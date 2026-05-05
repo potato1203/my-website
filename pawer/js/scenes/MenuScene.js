@@ -221,7 +221,7 @@ class MenuScene extends Phaser.Scene {
     const PAD       = 18;
     const COL_GAP   = 14;
     const ROW_GAP   = 12;
-    const COLS      = 2;
+    const COLS      = 3;
     const cardW     = (panelW - PAD * 2 - COL_GAP) / COLS;
     const cardH     = 240;
     const scrollTop = h / 2 - panelH / 2 + HEADER;
