@@ -816,7 +816,7 @@ class SoccerScene extends Phaser.Scene {
         const ey = enemy.isPlayer ? this.player.sprite.y : enemy.bot.sprite.y;
         const dist = Math.hypot(ex - bot.sprite.x, ey - bot.sprite.y);
         const isRanged = bot.charKey === 'fik' || bot.charKey === 'dim';
-        const atkRange = isRanged ? 190 : bot.charKey === 'bigo' ? 100 : bot.charKey === 'coch' ? 80 : 65;
+        const atkRange = isRanged ? 190 : bot.charKey === 'bigo' ? 100 : bot.charKey === 'coch' ? 200 : 65;
 
         if (dist < atkRange) {
           bot.atkCd = bot.atkCdBase;
@@ -833,7 +833,7 @@ class SoccerScene extends Phaser.Scene {
           } else if (bot.charKey === 'coch') {
             if (enemy.isPlayer) this._hitPlayer(bot.atkDmg);
             else this._hitBot(enemy.bot, bot.atkDmg, bot.sprite.x, bot.sprite.y);
-            this._showCochDash(bot.sprite.x, bot.sprite.y, dx / nd, dy / nd, Math.min(dist, 80));
+            this._showCochDash(bot.sprite.x, bot.sprite.y, dx / nd, dy / nd, Math.min(dist, 200));
           } else {
             if (enemy.isPlayer) this._hitPlayer(bot.atkDmg);
             else this._hitBot(enemy.bot, bot.atkDmg, bot.sprite.x, bot.sprite.y);

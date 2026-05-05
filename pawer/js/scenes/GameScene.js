@@ -656,7 +656,7 @@ class GameScene extends Phaser.Scene {
         const dy   = this.player.sprite.y - bot.sprite.y;
         const dist = Math.hypot(dx, dy);
         const isRanged  = bot.charKey === 'fik' || bot.charKey === 'dim';
-        const atkRange  = isRanged ? 190 : bot.charKey === 'bigo' ? 100 : bot.charKey === 'coch' ? 80 : 65;
+        const atkRange  = isRanged ? 190 : bot.charKey === 'bigo' ? 100 : bot.charKey === 'coch' ? 200 : 65;
         if (dist < atkRange) {
           bot.atkCd = bot.atkCdBase;
           const nd = dist || 1;
@@ -670,7 +670,7 @@ class GameScene extends Phaser.Scene {
             this._showHammerSpin(bot.sprite.x, bot.sprite.y, 100);
           } else if (bot.charKey === 'coch') {
             this._hitPlayer(bot.atkDmg);
-            this._showCochDash(bot.sprite.x, bot.sprite.y, dx / nd, dy / nd, Math.min(dist, 80));
+            this._showCochDash(bot.sprite.x, bot.sprite.y, dx / nd, dy / nd, Math.min(dist, 200));
           } else {
             this._hitPlayer(bot.atkDmg);
             this._showBotAtk(bot, this.player.sprite.x, this.player.sprite.y);
@@ -709,7 +709,7 @@ class GameScene extends Phaser.Scene {
       const isRanged  = bot.charKey === 'fik' || bot.charKey === 'dim';
       const isAoE     = bot.charKey === 'bigo';
       const isCoch    = bot.charKey === 'coch';
-      const atkRange  = isRanged ? 190 : isAoE ? 100 : isCoch ? 80 : 65;
+      const atkRange  = isRanged ? 190 : isAoE ? 100 : isCoch ? 200 : 65;
       const stopRange = isRanged ? 110 : atkRange;
 
       if (dist < atkRange) {
@@ -734,7 +734,7 @@ class GameScene extends Phaser.Scene {
           } else if (isCoch) {
             if (target.isPlayer) this._hitPlayer(bot.atkDmg);
             else this._botHitBot(target.bot, bot, bot.atkDmg);
-            this._showCochDash(bot.sprite.x, bot.sprite.y, dx / nd, dy / nd, Math.min(dist, 80));
+            this._showCochDash(bot.sprite.x, bot.sprite.y, dx / nd, dy / nd, Math.min(dist, 200));
           } else if (target.isPlayer) {
             this._hitPlayer(bot.atkDmg);
             this._showBotAtk(bot, target.x, target.y);
