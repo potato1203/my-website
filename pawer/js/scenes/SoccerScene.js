@@ -298,7 +298,7 @@ class SoccerScene extends Phaser.Scene {
     }).setOrigin(0.5).setScrollFactor(0).setDepth(101);
 
     const charDef  = window.PAWER_CHARS.find(c => c.key === this.player.charKey);
-    const icon     = { nix: '⚔️', fik: '💚', bigo: '🪓', dim: '🗡️' }[this.player.charKey] || '⚔️';
+    const icon     = { nix: '⚔️', fik: '💚', bigo: '🪓', dim: '🗡️', coch: '⚡' }[this.player.charKey] || '⚔️';
     this.nixLabel  = this.add.text(0, 0, `${charDef?.name || ''} ${icon}`, {
       fontSize: '14px', color: '#ffffff', fontFamily: 'Arial', fontStyle: 'bold',
     }).setScrollFactor(0).setDepth(101).setOrigin(0.5, 1);
@@ -345,6 +345,7 @@ class SoccerScene extends Phaser.Scene {
     if      (ck === 'fik')  this._doSlimeAttack();
     else if (ck === 'bigo') this._doHammerAttack();
     else if (ck === 'dim')  this._doDaggerAttack();
+    else if (ck === 'coch') this._doCochAttack();
     else                    this._doSwordAttack();
   }
 
@@ -406,6 +407,59 @@ class SoccerScene extends Phaser.Scene {
     this.player.atkCd  = 480;
     this._spawnProjectile(p.x, p.y, ax, ay, 310, 0,
       { speed: 640, color: 0xccccdd, gcolor: 0xffffff, radius: 5, maxDist: 270, splatColor: 0xaaaacc, hitRadius: 24 });
+  }
+
+  _doCochAttack() {
+    const p = this.player.sprite;
+    const { ax, ay } = this._getAimDir();
+    this.player.facing = { x: ax, y: ay };
+    this.player.atkCd  = 620;
+
+    const DASH_DIST = 200;
+    const hitBots = new Set();
+    for (let i = 1; i <= 10; i++) {
+      const tx = p.x + ax * DASH_DIST * (i / 10);
+      const ty = p.y + ay * DASH_DIST * (i / 10);
+      this.bots.forEach(bot => {
+        if (!bot.alive || bot.team === 0 || hitBots.has(bot)) return;
+        if (Math.hypot(bot.sprite.x - tx, bot.sprite.y - ty) < 54) {
+          hitBots.add(bot);
+          this._hitBot(bot, 460, tx, ty);
+        }
+      });
+      this._tryKickBall(tx, ty, ax * 500, ay * 500, 40);
+    }
+
+    this._showCochDash(p.x, p.y, ax, ay, DASH_DIST);
+  }
+
+  _showCochDash(px, py, ax, ay, dist) {
+    const g = this.add.graphics().setDepth(8);
+    const perp = { x: -ay, y: ax };
+
+    g.lineStyle(5, 0xff4400, 0.8);
+    g.lineBetween(px, py, px + ax * dist, py + ay * dist);
+
+    const numSpikes = 6;
+    for (let i = 0; i < numSpikes; i++) {
+      const t  = (i + 0.5) / numSpikes;
+      const cx = px + ax * dist * t;
+      const cy = py + ay * dist * t;
+      const sl = 18 + (i % 2) * 8;
+      g.lineStyle(3, 0xff6600, 0.95);
+      g.lineBetween(cx + perp.x * sl, cy + perp.y * sl, cx - perp.x * sl, cy - perp.y * sl);
+      g.fillStyle(0xffaa00, 1);
+      g.fillCircle(cx + perp.x * sl, cy + perp.y * sl, 4);
+      g.fillCircle(cx - perp.x * sl, cy - perp.y * sl, 4);
+    }
+
+    g.fillStyle(0xff2200, 0.65);
+    g.fillCircle(px + ax * dist, py + ay * dist, 13);
+
+    this.tweens.add({
+      targets: g, alpha: 0, duration: 370,
+      onComplete: () => g.destroy(),
+    });
   }
 
   // ownerTeam 0 = blue (hits team 1); ownerTeam 1 = red (hits player + team 0)
@@ -725,7 +779,7 @@ class SoccerScene extends Phaser.Scene {
         const ey = enemy.isPlayer ? this.player.sprite.y : enemy.bot.sprite.y;
         const dist = Math.hypot(ex - bot.sprite.x, ey - bot.sprite.y);
         const isRanged = bot.charKey === 'fik' || bot.charKey === 'dim';
-        const atkRange = isRanged ? 190 : bot.charKey === 'bigo' ? 100 : 65;
+        const atkRange = isRanged ? 190 : bot.charKey === 'bigo' ? 100 : bot.charKey === 'coch' ? 80 : 65;
 
         if (dist < atkRange) {
           bot.atkCd = bot.atkCdBase;
@@ -739,6 +793,10 @@ class SoccerScene extends Phaser.Scene {
             if (enemy.isPlayer) this._hitPlayer(bot.atkDmg);
             else this._hitBot(enemy.bot, bot.atkDmg, bot.sprite.x, bot.sprite.y);
             this._showHammerSpin(bot.sprite.x, bot.sprite.y, 100);
+          } else if (bot.charKey === 'coch') {
+            if (enemy.isPlayer) this._hitPlayer(bot.atkDmg);
+            else this._hitBot(enemy.bot, bot.atkDmg, bot.sprite.x, bot.sprite.y);
+            this._showCochDash(bot.sprite.x, bot.sprite.y, dx / nd, dy / nd, Math.min(dist, 80));
           } else {
             if (enemy.isPlayer) this._hitPlayer(bot.atkDmg);
             else this._hitBot(enemy.bot, bot.atkDmg, bot.sprite.x, bot.sprite.y);

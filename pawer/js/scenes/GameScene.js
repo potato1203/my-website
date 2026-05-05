@@ -223,7 +223,7 @@ class GameScene extends Phaser.Scene {
     this.hudGfx = this.add.graphics().setScrollFactor(0).setDepth(100);
     const charKey = window.PAWER_SAVE.getChar();
     const charDef = window.PAWER_CHARS.find(c => c.key === charKey);
-    const weaponIcon = { nix: '⚔️', fik: '💚', bigo: '🪓', dim: '🗡️' }[charKey] || '⚔️';
+    const weaponIcon = { nix: '⚔️', fik: '💚', bigo: '🪓', dim: '🗡️', coch: '⚡' }[charKey] || '⚔️';
     const hudLabel = charDef ? `${charDef.name}  ${weaponIcon}` : `${charKey.toUpperCase()}  ${weaponIcon}`;
     this.nixLabel = this.add.text(0, 0, hudLabel, {
       fontSize: '14px', color: '#ffffff', fontFamily: 'Arial', fontStyle: 'bold',
@@ -253,6 +253,7 @@ class GameScene extends Phaser.Scene {
     if      (charKey === 'fik')  this._doSlimeAttack();
     else if (charKey === 'bigo') this._doHammerAttack();
     else if (charKey === 'dim')  this._doDaggerAttack();
+    else if (charKey === 'coch') this._doCochAttack();
     else                         this._doSwordAttack();
   }
 
@@ -339,6 +340,59 @@ class GameScene extends Phaser.Scene {
     this._spawnProjectile(p.x, p.y, ax, ay, 310, true, null,
       { speed: 640, color: 0xccccdd, gcolor: 0xffffff, radius: 5, maxDist: 270, splatColor: 0xaaaacc });
     if (window.PAWER_NET?.connected) this._mpSendAtk('dagger', ax, ay);
+  }
+
+  _doCochAttack() {
+    const p = this.player.sprite;
+    const { ax, ay } = this._getAimDir();
+    this.player.facing = { x: ax, y: ay };
+    this.player.atkCd = 620;
+
+    const DASH_DIST = 200;
+    const hitBots = new Set();
+    for (let i = 1; i <= 10; i++) {
+      const tx = p.x + ax * DASH_DIST * (i / 10);
+      const ty = p.y + ay * DASH_DIST * (i / 10);
+      this.bots.forEach(bot => {
+        if (!bot.alive || hitBots.has(bot)) return;
+        if (Math.hypot(bot.sprite.x - tx, bot.sprite.y - ty) < 54) {
+          hitBots.add(bot);
+          this._hitBot(bot, 460, tx, ty);
+        }
+      });
+    }
+
+    this._showCochDash(p.x, p.y, ax, ay, DASH_DIST);
+    if (window.PAWER_NET?.connected) this._mpSendAtk('coch', ax, ay);
+  }
+
+  _showCochDash(px, py, ax, ay, dist) {
+    const g = this.add.graphics().setDepth(8);
+    const perp = { x: -ay, y: ax };
+
+    g.lineStyle(5, 0xff4400, 0.8);
+    g.lineBetween(px, py, px + ax * dist, py + ay * dist);
+
+    const numSpikes = 6;
+    for (let i = 0; i < numSpikes; i++) {
+      const t  = (i + 0.5) / numSpikes;
+      const cx = px + ax * dist * t;
+      const cy = py + ay * dist * t;
+      const sl = 18 + (i % 2) * 8;
+      g.lineStyle(3, 0xff6600, 0.95);
+      g.lineBetween(cx + perp.x * sl, cy + perp.y * sl, cx - perp.x * sl, cy - perp.y * sl);
+      g.fillStyle(0xffaa00, 1);
+      g.fillCircle(cx + perp.x * sl, cy + perp.y * sl, 4);
+      g.fillCircle(cx - perp.x * sl, cy - perp.y * sl, 4);
+    }
+
+    g.fillStyle(0xff2200, 0.65);
+    g.fillCircle(px + ax * dist, py + ay * dist, 13);
+
+    this.tweens.add({
+      targets: g, alpha: 0, duration: 370,
+      onComplete: () => g.destroy(),
+    });
   }
 
   _spawnProjectile(fromX, fromY, ax, ay, dmg, isPlayerSlime, ownerBot, opts = {}) {
@@ -556,11 +610,11 @@ class GameScene extends Phaser.Scene {
         const dy   = this.player.sprite.y - bot.sprite.y;
         const dist = Math.hypot(dx, dy);
         const isRanged  = bot.charKey === 'fik' || bot.charKey === 'dim';
-        const atkRange  = isRanged ? 190 : bot.charKey === 'bigo' ? 100 : 65;
+        const atkRange  = isRanged ? 190 : bot.charKey === 'bigo' ? 100 : bot.charKey === 'coch' ? 80 : 65;
         if (dist < atkRange) {
           bot.atkCd = bot.atkCdBase;
+          const nd = dist || 1;
           if (isRanged) {
-            const nd   = dist || 1;
             const opts = bot.charKey === 'dim'
               ? { speed: 640, color: 0xccccdd, gcolor: 0xffffff, radius: 5, maxDist: 270, splatColor: 0xaaaacc, hitRadius: 24 }
               : {};
@@ -568,6 +622,9 @@ class GameScene extends Phaser.Scene {
           } else if (bot.charKey === 'bigo') {
             this._hitPlayer(bot.atkDmg);
             this._showHammerSpin(bot.sprite.x, bot.sprite.y, 100);
+          } else if (bot.charKey === 'coch') {
+            this._hitPlayer(bot.atkDmg);
+            this._showCochDash(bot.sprite.x, bot.sprite.y, dx / nd, dy / nd, Math.min(dist, 80));
           } else {
             this._hitPlayer(bot.atkDmg);
             this._showBotAtk(bot, this.player.sprite.x, this.player.sprite.y);
@@ -605,15 +662,16 @@ class GameScene extends Phaser.Scene {
 
       const isRanged  = bot.charKey === 'fik' || bot.charKey === 'dim';
       const isAoE     = bot.charKey === 'bigo';
-      const atkRange  = isRanged ? 190 : isAoE ? 100 : 65;
+      const isCoch    = bot.charKey === 'coch';
+      const atkRange  = isRanged ? 190 : isAoE ? 100 : isCoch ? 80 : 65;
       const stopRange = isRanged ? 110 : atkRange;
 
       if (dist < atkRange) {
         if (dist < stopRange) bot.sprite.body.setVelocity(0, 0);
         if (bot.atkCd <= 0) {
           bot.atkCd = bot.atkCdBase;
+          const nd = dist || 1;
           if (isRanged) {
-            const nd   = dist || 1;
             const opts = bot.charKey === 'dim'
               ? { speed: 640, color: 0xccccdd, gcolor: 0xffffff, radius: 5, maxDist: 270, splatColor: 0xaaaacc, hitRadius: 24 }
               : {};
@@ -627,6 +685,10 @@ class GameScene extends Phaser.Scene {
                 this._botHitBot(other, bot, bot.atkDmg);
             });
             this._showHammerSpin(bot.sprite.x, bot.sprite.y, atkRange);
+          } else if (isCoch) {
+            if (target.isPlayer) this._hitPlayer(bot.atkDmg);
+            else this._botHitBot(target.bot, bot, bot.atkDmg);
+            this._showCochDash(bot.sprite.x, bot.sprite.y, dx / nd, dy / nd, Math.min(dist, 80));
           } else if (target.isPlayer) {
             this._hitPlayer(bot.atkDmg);
             this._showBotAtk(bot, target.x, target.y);
@@ -1009,6 +1071,7 @@ class GameScene extends Phaser.Scene {
       else if (msg.kind === 'slime') this._spawnProjectile(msg.x, msg.y, msg.ax, msg.ay, 0, true, null);
       else if (msg.kind === 'dagger') this._spawnProjectile(msg.x, msg.y, msg.ax, msg.ay, 0, true, null,
         { speed: 640, color: 0xccccdd, gcolor: 0xffffff, radius: 5, maxDist: 270, splatColor: 0xaaaacc, hitRadius: 24 });
+      else if (msg.kind === 'coch') this._showCochDash(msg.x, msg.y, msg.ax, msg.ay, 200);
     });
 
     net.on('disconnect', () => {
