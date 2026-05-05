@@ -217,16 +217,17 @@ class MenuScene extends Phaser.Scene {
     closeBtn.on('pointerout',  () => closeBtn.setStyle({ color: '#aabbcc' }));
 
     // ── Grid + scroll setup ──────────────────────────────────────────────────
-    const HEADER    = 62;
-    const PAD       = 18;
-    const COL_GAP   = 14;
-    const ROW_GAP   = 12;
-    const COLS      = 3;
-    const cardW     = (panelW - PAD * 2 - COL_GAP) / COLS;
-    const cardH     = 240;
-    const scrollTop = h / 2 - panelH / 2 + HEADER;
-    const scrollH   = panelH - HEADER - 8;
-    const pLeft     = w / 2 - panelW / 2;
+    const HEADER      = 62;
+    const PAD         = 18;
+    const COL_GAP     = 14;
+    const ROW_GAP     = 10;
+    const ROWS_PER_COL = 3;
+    const COLS        = Math.ceil(window.PAWER_CHARS.length / ROWS_PER_COL);
+    const scrollTop   = h / 2 - panelH / 2 + HEADER;
+    const scrollH     = panelH - HEADER - 8;
+    const pLeft       = w / 2 - panelW / 2;
+    const cardH       = Math.floor((scrollH - (ROWS_PER_COL - 1) * ROW_GAP) / ROWS_PER_COL);
+    const cardW       = Math.floor((panelW - PAD * 2 - (COLS - 1) * COL_GAP) / COLS);
 
     // Mask clips content to the scroll region
     const maskGfx = this.make.graphics({ add: false });
@@ -251,8 +252,8 @@ class MenuScene extends Phaser.Scene {
     // Build cards
     const chars = window.PAWER_CHARS;
     chars.forEach((ch, i) => {
-      const col = i % COLS;
-      const row = Math.floor(i / COLS);
+      const col = Math.floor(i / ROWS_PER_COL);
+      const row = i % ROWS_PER_COL;
       const cx  = pLeft + PAD + col * (cardW + COL_GAP) + cardW / 2;
       const cy  = scrollTop + ROW_GAP + row * (cardH + ROW_GAP) + cardH / 2;
 
@@ -280,7 +281,7 @@ class MenuScene extends Phaser.Scene {
     });
 
     // Scroll logic
-    const totalRows = Math.ceil(chars.length / COLS);
+    const totalRows = Math.min(chars.length, ROWS_PER_COL);
     const contentH  = totalRows * (cardH + ROW_GAP) + ROW_GAP;
     const maxScroll = Math.max(0, contentH - scrollH);
 
@@ -358,12 +359,8 @@ class MenuScene extends Phaser.Scene {
     if (collected) {
       const charT = window.PAWER_SAVE.getCharTrophies(charDef.key);
       const rank  = window.PAWER_SAVE.getCharRank(charT);
-      objs.push(this.add.text(cx, cy + ch * 0.45, `🏆 ${charT}`, {
-        fontSize: '13px', color: '#ffdd77', fontFamily: 'Arial', fontStyle: 'bold',
-        stroke: '#000000', strokeThickness: 2,
-      }).setOrigin(0.5).setDepth(D + 1));
-      objs.push(this.add.text(cx, cy + ch * 0.46 + 18, `★ ${rank.label}`, {
-        fontSize: '12px', color: rank.color, fontFamily: 'Arial', fontStyle: 'bold',
+      objs.push(this.add.text(cx, cy + ch * 0.42, `🏆 ${charT}  ★ ${rank.label}`, {
+        fontSize: '12px', color: '#ffdd77', fontFamily: 'Arial', fontStyle: 'bold',
         stroke: '#000000', strokeThickness: 2,
       }).setOrigin(0.5).setDepth(D + 1));
     }
