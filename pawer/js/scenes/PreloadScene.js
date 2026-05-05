@@ -36,7 +36,7 @@ class PreloadScene extends Phaser.Scene {
     this._makeWall();
     this._makeBots();
     this._makeBullet();
-    this.scene.start('IntroScene');
+    this.scene.start(window.PAWER_SAVE.hasName() ? 'MenuScene' : 'SetupScene');
   }
 
   _makeFloor() {
