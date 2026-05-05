@@ -892,158 +892,16 @@ class GameScene extends Phaser.Scene {
         this.time.delayedCall(300, () => this.scene.start('MenuScene'));
       });
 
-      this.time.delayedCall(900, () => this._checkRankUp(oldCharT, totalChar, charName));
-    });
-  }
-
-  // ─── RANK-UP ANIMATION ───────────────────────────────────────────────────────
-
-  _checkRankUp(oldT, newT, charName) {
-    const RANKS = [
-      { at: 250,  label: 'נחמד',  hex: 0x44ff88, css: '#44ff88', tier: 1 },
-      { at: 500,  label: 'טוב',   hex: 0x44aaff, css: '#44aaff', tier: 2 },
-      { at: 750,  label: 'מטורף', hex: 0xcc44ff, css: '#cc44ff', tier: 3 },
-      { at: 1000, label: 'סופי',  hex: 0xFFD700, css: '#FFD700', tier: 4 },
-    ];
-    const hit = RANKS.filter(r => oldT < r.at && newT >= r.at);
-    if (hit.length === 0) return;
-    this._showRankUp(hit[hit.length - 1], charName);
-  }
-
-  _showRankUp(rank, charName) {
-    const W = this.scale.width, H = this.scale.height;
-    const ov = this.add.rectangle(W / 2, H / 2, W, H, 0x000000, 0)
-      .setScrollFactor(0).setDepth(250).setInteractive();
-    this.tweens.add({ targets: ov, alpha: 0.8, duration: 280 });
-    const hdr = this.add.text(W / 2, H * 0.25, '⬆️  עלית דרגה!', {
-      fontSize: '26px', color: '#ffffff',
-      fontFamily: 'Arial Black, Arial', fontStyle: 'bold',
-      stroke: '#000000', strokeThickness: 4,
-    }).setOrigin(0.5).setScrollFactor(0).setDepth(251).setAlpha(0);
-    this.tweens.add({ targets: hdr, alpha: 1, duration: 320 });
-    const dismiss = (extra) => {
-      this.tweens.add({
-        targets: [ov, hdr, ...extra], alpha: 0, duration: 400,
-        onComplete: () => { ov.destroy(); hdr.destroy(); extra.forEach(o => o.destroy?.() || o.remove?.()); },
-      });
-    };
-    if (rank.tier === 4) this._rankUpFinal(W, H, dismiss, charName);
-    else                 this._rankUpNormal(rank, W, H, dismiss, charName);
-  }
-
-  _rankUpNormal(rank, W, H, dismiss, charName) {
-    // Ring burst
-    const ring = this.add.graphics().setScrollFactor(0).setDepth(252);
-    ring.lineStyle(rank.tier * 2 + 2, rank.hex, 0.85);
-    ring.strokeCircle(W / 2, H / 2, 5);
-    this.tweens.add({ targets: ring, scaleX: 60, scaleY: 60, alpha: 0,
-      duration: 580, ease: 'Expo.easeOut', onComplete: () => ring.destroy() });
-
-    for (let i = 0; i < rank.tier * 4 + 4; i++) {
-      const a = Math.random() * Math.PI * 2, d = 65 + Math.random() * 140;
-      const c = this.add.circle(W / 2, H / 2, 4 + Math.random() * 5, rank.hex, 0.9)
-        .setScrollFactor(0).setDepth(252);
-      this.tweens.add({ targets: c, x: W / 2 + Math.cos(a) * d, y: H / 2 + Math.sin(a) * d,
-        alpha: 0, scaleX: 0.1, scaleY: 0.1, duration: 420 + Math.random() * 200,
-        onComplete: () => c.destroy() });
-    }
-
-    const txt = this.add.text(W / 2, H + 80, rank.label, {
-      fontSize: '76px', color: rank.css,
-      fontFamily: 'Arial Black, Arial', fontStyle: 'bold',
-      stroke: '#000000', strokeThickness: 6,
-    }).setOrigin(0.5).setScrollFactor(0).setDepth(253).setAlpha(0);
-
-    const charTxt = this.add.text(W / 2, H + 140, charName, {
-      fontSize: '28px', color: '#ffffff',
-      fontFamily: 'Arial Black, Arial', fontStyle: 'bold',
-      stroke: '#000000', strokeThickness: 4,
-    }).setOrigin(0.5).setScrollFactor(0).setDepth(253).setAlpha(0);
-
-    this.tweens.add({ targets: txt, y: H / 2 - 30, alpha: 1, duration: 340, ease: 'Expo.easeOut',
-      onComplete: () => {
-        this.tweens.add({ targets: charTxt, y: H / 2 + 48, alpha: 1, duration: 280, ease: 'Expo.easeOut' });
-        this.time.delayedCall(1800, () => dismiss([txt, charTxt]));
-      }
-    });
-  }
-
-  _rankUpFinal(W, H, dismiss, charName) {
-    // Gold rain
-    for (let i = 0; i < 45; i++) {
-      const px = Math.random() * W;
-      const c = this.add.circle(px, -20, 3 + Math.random() * 6, 0xFFD700, 0.9)
-        .setScrollFactor(0).setDepth(252);
-      this.tweens.add({ targets: c, y: H + 30, x: px + (Math.random() - 0.5) * 240,
-        alpha: 0.25, delay: Math.random() * 700, duration: 1300 + Math.random() * 700,
-        onComplete: () => c.destroy() });
-    }
-    this.cameras.main.flash(480, 220, 160, 0, true);
-    this.cameras.main.shake(600, 0.015);
-
-    const ring = this.add.graphics().setScrollFactor(0).setDepth(252);
-    ring.lineStyle(9, 0xFFD700, 1);
-    ring.strokeCircle(W / 2, H / 2, 5);
-    this.tweens.add({ targets: ring, scaleX: Math.max(W, H) / 5 * 2, scaleY: Math.max(W, H) / 5 * 2,
-      alpha: 0, duration: 700, ease: 'Expo.easeOut', onComplete: () => ring.destroy() });
-
-    for (let i = 0; i < 22; i++) {
-      const a = Math.random() * Math.PI * 2, d = 90 + Math.random() * Math.min(W, H) * 0.36;
-      const c = this.add.circle(W / 2, H / 2, 7 + Math.random() * 9, 0xFFD700)
-        .setScrollFactor(0).setDepth(253);
-      this.tweens.add({ targets: c, x: W / 2 + Math.cos(a) * d, y: H / 2 + Math.sin(a) * d,
-        alpha: 0, scaleX: 0.1, scaleY: 0.1, duration: 560 + Math.random() * 300,
-        onComplete: () => c.destroy() });
-    }
-
-    // Orbiting stars
-    const orbitR = Math.min(W, H) * 0.22;
-    const stars  = [];
-    for (let i = 0; i < 8; i++) {
-      const star = this.add.text(W / 2, H / 2, '✦', { fontSize: '18px', color: '#FFD700' })
-        .setOrigin(0.5).setScrollFactor(0).setDepth(254).setAlpha(0);
-      this.tweens.add({ targets: star, alpha: 0.95, delay: 260 + i * 50, duration: 200 });
-      stars.push({ obj: star, base: (i / 8) * Math.PI * 2 });
-    }
-    let elapsed = 0;
-    const starTimer = this.time.addEvent({ delay: 16, repeat: 200, callback: () => {
-      elapsed += 0.022;
-      stars.forEach(s => s.obj.setPosition(W / 2 + Math.cos(s.base + elapsed) * orbitR,
-                                            H / 2 + Math.sin(s.base + elapsed) * orbitR));
-    }});
-
-    // Glow + main text
-    const glows = [120, 108].map(sz =>
-      this.add.text(W / 2, H + 120, 'סופי', { fontSize: `${sz}px`, color: '#FFD700',
-        fontFamily: 'Arial Black, Arial', fontStyle: 'bold' })
-        .setOrigin(0.5).setScrollFactor(0).setDepth(253).setAlpha(0));
-    glows.forEach((gl, g) => this.tweens.add({
-      targets: gl, y: H / 2, alpha: 0.14 - g * 0.04, duration: 480,
-      ease: 'Back.easeOut', delay: g * 25 }));
-
-    const txt = this.add.text(W / 2, H + 120, 'סופי', {
-      fontSize: '96px', color: '#FFD700',
-      fontFamily: 'Arial Black, Arial', fontStyle: 'bold',
-      stroke: '#000000', strokeThickness: 9,
-    }).setOrigin(0.5).setScrollFactor(0).setDepth(255).setAlpha(0);
-
-    const charTxt = this.add.text(W / 2, H + 160, charName, {
-      fontSize: '32px', color: '#FFD700',
-      fontFamily: 'Arial Black, Arial', fontStyle: 'bold',
-      stroke: '#000000', strokeThickness: 5,
-    }).setOrigin(0.5).setScrollFactor(0).setDepth(255).setAlpha(0);
-
-    this.tweens.add({ targets: txt, y: H / 2 - 36, alpha: 1, duration: 480, ease: 'Back.easeOut',
-      onComplete: () => {
-        this.tweens.add({ targets: charTxt, y: H / 2 + 56, alpha: 1, duration: 320, ease: 'Back.easeOut' });
-        this.tweens.add({ targets: txt, scaleX: 1.10, scaleY: 1.10,
-          duration: 320, yoyo: true, repeat: 2,
-          onComplete: () => this.time.delayedCall(900, () => {
-            starTimer.remove();
-            dismiss([...glows, txt, charTxt, ...stars.map(s => s.obj)]);
-          })
-        });
-      }
+      // Store rank-up so MenuScene shows it after returning home
+      const RANKS = [
+        { at: 250,  label: 'נחמד',  hex: 0x44ff88, css: '#44ff88', tier: 1 },
+        { at: 500,  label: 'טוב',   hex: 0x44aaff, css: '#44aaff', tier: 2 },
+        { at: 750,  label: 'מטורף', hex: 0xcc44ff, css: '#cc44ff', tier: 3 },
+        { at: 1000, label: 'סופי',  hex: 0xFFD700, css: '#FFD700', tier: 4 },
+      ];
+      const hit = RANKS.filter(r => oldCharT < r.at && totalChar >= r.at);
+      if (hit.length > 0)
+        window.PAWER_CONFIG.pendingRankUp = { rank: hit[hit.length - 1], charName };
     });
   }
 
