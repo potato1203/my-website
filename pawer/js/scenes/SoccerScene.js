@@ -216,7 +216,7 @@ class SoccerScene extends Phaser.Scene {
       return {
         sprite: s, charKey, team: d.team, color: d.color, name: d.name,
         speed: 188, startX: d.x, startY: d.y,
-        hp: 1600, maxHp: 1600, alive: true,
+        hp: 1600, maxHp: 1600, alive: true, noHitTime: 0,
         atkCd: 0, atkDmg: d.atkDmg, atkCdBase: d.atkCdBase,
         facing: { x: d.team === 0 ? 1 : -1, y: 0 },
       };
@@ -470,6 +470,7 @@ class SoccerScene extends Phaser.Scene {
 
   _hitBot(bot, dmg, fromX, fromY) {
     if (!bot.alive) return;
+    bot.noHitTime = 0;
     bot.hp = Math.max(0, bot.hp - dmg);
     this._popNumber(bot.sprite.x, bot.sprite.y - 40, dmg, '#ff6666');
     const ox = fromX ?? this.player.sprite.x, oy = fromY ?? this.player.sprite.y;
@@ -513,9 +514,10 @@ class SoccerScene extends Phaser.Scene {
 
   _respawnBot(bot, idx) {
     if (this.gameOver) return;
-    bot.hp    = bot.maxHp;
-    bot.alive = true;
-    bot.atkCd = 0;
+    bot.hp       = bot.maxHp;
+    bot.alive    = true;
+    bot.atkCd    = 0;
+    bot.noHitTime = 0;
     bot.sprite.setPosition(bot.startX, bot.startY).setVisible(true).setAlpha(0.3);
     this.botRings[idx]?.setVisible(true);
     this.tweens.add({ targets: bot.sprite, alpha: 1, duration: 600 });
@@ -710,6 +712,9 @@ class SoccerScene extends Phaser.Scene {
     this.bots.forEach((bot, i) => {
       if (!bot.alive) return;
       bot.atkCd = Math.max(0, bot.atkCd - delta);
+      bot.noHitTime += delta;
+      if (bot.noHitTime > 3000 && bot.hp < bot.maxHp)
+        bot.hp = Math.min(bot.maxHp, bot.hp + 150 * delta / 1000);
 
       // Find nearest enemy
       const enemy = this._nearestEnemyForBot(bot);

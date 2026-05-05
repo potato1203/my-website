@@ -164,7 +164,7 @@ class GameScene extends Phaser.Scene {
         sprite: s, hp: stat.hp, maxHp: stat.hp,
         speed: stat.speed, name, color: stat.color, charKey: key,
         atkDmg: stat.atkDmg, atkCdBase: stat.atkCd,
-        atkCd: 0, wanderVel: { x: 0, y: 0 }, wanderTimer: 0, alive: true,
+        atkCd: 0, wanderVel: { x: 0, y: 0 }, wanderTimer: 0, alive: true, noHitTime: 0,
       };
     });
   }
@@ -460,6 +460,7 @@ class GameScene extends Phaser.Scene {
   // ─── DAMAGE ──────────────────────────────────────────────────────────────────
 
   _hitBot(bot, dmg, fromX, fromY) {
+    bot.noHitTime = 0;
     // CLIENT: forward hit to HOST who is authoritative for bot HP
     if (window.PAWER_NET?.connected && !window.PAWER_NET.isHost) {
       const i = this.bots.indexOf(bot);
@@ -547,6 +548,9 @@ class GameScene extends Phaser.Scene {
       this.bots.forEach(bot => {
         if (!bot.alive) return;
         bot.atkCd = Math.max(0, bot.atkCd - delta);
+        bot.noHitTime += delta;
+        if (bot.noHitTime > 3000 && bot.hp < bot.maxHp)
+          bot.hp = Math.min(bot.maxHp, bot.hp + 150 * delta / 1000);
         if (bot.atkCd > 0) return;
         const dx   = this.player.sprite.x - bot.sprite.x;
         const dy   = this.player.sprite.y - bot.sprite.y;
@@ -577,6 +581,9 @@ class GameScene extends Phaser.Scene {
       if (!bot.alive) return;
       bot.atkCd    = Math.max(0, bot.atkCd - delta);
       bot.wanderTimer = Math.max(0, bot.wanderTimer - delta);
+      bot.noHitTime += delta;
+      if (bot.noHitTime > 3000 && bot.hp < bot.maxHp)
+        bot.hp = Math.min(bot.maxHp, bot.hp + 150 * delta / 1000);
 
       const target = this._nearestTargetForBot(bot);
 
