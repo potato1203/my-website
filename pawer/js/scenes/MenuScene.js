@@ -215,48 +215,105 @@ class MenuScene extends Phaser.Scene {
     pool.push(closeBtn);
     closeBtn.on('pointerover', () => closeBtn.setStyle({ color: '#ffffff' }));
     closeBtn.on('pointerout',  () => closeBtn.setStyle({ color: '#aabbcc' }));
-    closeBtn.on('pointerdown', () => pool.forEach(o => o.destroy()));
 
-    // Cards
+    // ── Grid + scroll setup ──────────────────────────────────────────────────
+    const HEADER    = 62;
+    const PAD       = 18;
+    const COL_GAP   = 14;
+    const ROW_GAP   = 12;
+    const COLS      = 2;
+    const cardW     = (panelW - PAD * 2 - COL_GAP) / COLS;
+    const cardH     = 240;
+    const scrollTop = h / 2 - panelH / 2 + HEADER;
+    const scrollH   = panelH - HEADER - 8;
+    const pLeft     = w / 2 - panelW / 2;
+
+    // Mask clips content to the scroll region
+    const maskGfx = this.make.graphics({ add: false });
+    maskGfx.fillRect(pLeft, scrollTop, panelW, scrollH);
+    const mask = maskGfx.createGeometryMask();
+
+    // Container holds all scrollable card objects
+    const cnt = this.add.container(0, 0).setDepth(82);
+    cnt.setMask(mask);
+    pool.push(cnt);
+
+    let closed = false;
+    const closeAll = () => {
+      if (closed) return; closed = true;
+      this.input.off('pointermove', onDragMove);
+      this.input.off('pointerup',   onDragEnd);
+      pool.forEach(o => o.destroy());
+      maskGfx.destroy();
+    };
+    closeBtn.on('pointerdown', closeAll);
+
+    // Build cards
     const chars = window.PAWER_CHARS;
-    const cardW = Math.min((panelW - 60) / chars.length - 20, 210);
-    const cardH = Math.min(panelH - 100, 360);
-    const totalW = chars.length * (cardW + 20) - 20;
-    const startX = w / 2 - totalW / 2 + cardW / 2;
-    const cardY  = h / 2 + 16;
-
     chars.forEach((ch, i) => {
-      const cx = startX + i * (cardW + 20);
-      const collected = window.PAWER_SAVE.isCollected(ch.key);
+      const col = i % COLS;
+      const row = Math.floor(i / COLS);
+      const cx  = pLeft + PAD + col * (cardW + COL_GAP) + cardW / 2;
+      const cy  = scrollTop + ROW_GAP + row * (cardH + ROW_GAP) + cardH / 2;
+
+      const collected  = window.PAWER_SAVE.isCollected(ch.key);
       const affordable = trophies >= ch.cost;
       const selected   = ch.key === currentKey;
-      const rar = window.RARITIES[ch.rarity];
+      const rar        = window.RARITIES[ch.rarity];
 
-      const { zone, objs } = this._makeCard(cx, cardY, cardW, cardH, ch, rar, collected, affordable, selected, trophies, pool);
-      pool.push(...objs);
+      const { zone, objs } = this._makeCard(cx, cy, cardW, cardH, ch, rar, collected, affordable, selected, trophies, pool);
+      objs.forEach(o => cnt.add(o));
 
-      zone.on('pointerdown', () => {
+      zone.on('pointerup', (ptr) => {
+        if (closed || isDragging) return;
+        if (ptr.y < scrollTop || ptr.y > scrollTop + scrollH) return;
         if (!collected && affordable) {
-          // Show unlock animation!
-          pool.forEach(o => o.destroy());
-          this._playUnlockAnim(ch, rar, w, h);
+          closeAll(); this._playUnlockAnim(ch, rar, w, h);
         } else if (collected && !selected) {
           window.PAWER_SAVE.setChar(ch.key);
-          pool.forEach(o => o.destroy());
-          this._refreshScene();
+          closeAll(); this._refreshScene();
         } else if (!affordable) {
           this._showMsg(w / 2, h / 2 + panelH / 2 - 20,
             `צריך עוד ${ch.cost - trophies} 🏆 לפתיחת ${ch.name}`, '#ff6666');
         }
       });
     });
+
+    // Scroll logic
+    const totalRows = Math.ceil(chars.length / COLS);
+    const contentH  = totalRows * (cardH + ROW_GAP) + ROW_GAP;
+    const maxScroll = Math.max(0, contentH - scrollH);
+
+    let scrollY = 0, dragY0 = null, scroll0 = 0, isDragging = false;
+
+    const onDragMove = (ptr) => {
+      if (closed || dragY0 === null) return;
+      const dy = ptr.y - dragY0;
+      if (Math.abs(dy) > 6) isDragging = true;
+      if (!isDragging) return;
+      scrollY = Phaser.Math.Clamp(scroll0 - dy, 0, maxScroll);
+      cnt.setY(-scrollY);
+    };
+    const onDragEnd = () => {
+      if (closed) return;
+      dragY0 = null;
+      this.time.delayedCall(50, () => { isDragging = false; });
+    };
+
+    backdrop.on('pointerdown', (ptr) => {
+      if (closed) return;
+      if (ptr.y >= scrollTop && ptr.y <= h / 2 + panelH / 2) {
+        dragY0 = ptr.y; scroll0 = scrollY; isDragging = false;
+      }
+    });
+    this.input.on('pointermove', onDragMove);
+    this.input.on('pointerup',   onDragEnd);
   }
 
   _makeCard(cx, cy, cw, ch, charDef, rar, collected, affordable, selected, trophies, pool) {
     const D = 82;
     const objs = [];
 
-    // Rarity border color
     const borderCol = selected ? 0xffdd00 : (collected ? rar.hex : 0x334466);
     const bgCol     = selected ? 0x112255 : 0x0d1a33;
 
@@ -264,82 +321,77 @@ class MenuScene extends Phaser.Scene {
       .setDepth(D).setStrokeStyle(selected ? 3 : 2, borderCol);
     objs.push(bg);
 
-    // Rarity color strip at top
-    const strip = this.add.rectangle(cx, cy - ch / 2 + 6, cw, 12, rar.hex, collected ? 0.7 : 0.25).setDepth(D + 1);
+    // Rarity strip at top
+    const strip = this.add.rectangle(cx, cy - ch / 2 + 8, cw, 16, rar.hex, collected ? 0.75 : 0.25).setDepth(D + 1);
     objs.push(strip);
 
-    // Character image
-    const img = this.add.image(cx, cy - ch * 0.08, charDef.key);
-    img.setScale(Math.min(cw * 0.72, ch * 0.52) / img.height).setDepth(D + 1);
+    // Status label on strip
+    if (selected) {
+      objs.push(this.add.text(cx, cy - ch / 2 + 8, '👑 נבחר', {
+        fontSize: '11px', color: '#ffdd00', fontFamily: 'Arial', fontStyle: 'bold',
+      }).setOrigin(0.5).setDepth(D + 2));
+    } else if (collected) {
+      objs.push(this.add.text(cx, cy - ch / 2 + 8, '✔ נאסף', {
+        fontSize: '11px', color: '#ffffff', fontFamily: 'Arial',
+      }).setOrigin(0.5).setDepth(D + 2));
+    }
+
+    // Character image (upper half)
+    const img = this.add.image(cx, cy - ch * 0.14, charDef.key);
+    img.setScale(Math.min(cw * 0.65, ch * 0.42) / img.height).setDepth(D + 1);
     objs.push(img);
 
     // Name
-    objs.push(this.add.text(cx, cy + ch * 0.31, charDef.name, {
-      fontSize: '18px', color: selected ? '#ffdd00' : '#ffffff',
+    objs.push(this.add.text(cx, cy + ch * 0.20, charDef.name, {
+      fontSize: '17px', color: selected ? '#ffdd00' : '#ffffff',
       fontFamily: 'Arial', fontStyle: 'bold',
     }).setOrigin(0.5).setDepth(D + 1));
 
     // Rarity badge
-    objs.push(this._rarityBadge(cx, cy + ch * 0.41, charDef.rarity, rar, D + 1, 12));
+    objs.push(this._rarityBadge(cx, cy + ch * 0.30, charDef.rarity, rar, D + 1, 12));
 
     // Description
-    objs.push(this.add.text(cx, cy + ch * 0.49, charDef.desc, {
+    objs.push(this.add.text(cx, cy + ch * 0.38, charDef.desc, {
       fontSize: '12px', color: '#8899cc', fontFamily: 'Arial',
     }).setOrigin(0.5).setDepth(D + 1));
 
-    // Character personal trophies + rank (only if collected)
     if (collected) {
       const charT = window.PAWER_SAVE.getCharTrophies(charDef.key);
       const rank  = window.PAWER_SAVE.getCharRank(charT);
-      objs.push(this.add.text(cx, cy + ch * 0.56, `🏆 ${charT}`, {
-        fontSize: '14px', color: '#ffdd77',
-        fontFamily: 'Arial', fontStyle: 'bold',
+      objs.push(this.add.text(cx, cy + ch * 0.45, `🏆 ${charT}`, {
+        fontSize: '13px', color: '#ffdd77', fontFamily: 'Arial', fontStyle: 'bold',
         stroke: '#000000', strokeThickness: 2,
       }).setOrigin(0.5).setDepth(D + 1));
-      objs.push(this.add.text(cx, cy + ch * 0.65, `★ ${rank.label}`, {
-        fontSize: '13px', color: rank.color,
-        fontFamily: 'Arial', fontStyle: 'bold',
+      objs.push(this.add.text(cx, cy + ch * 0.46 + 18, `★ ${rank.label}`, {
+        fontSize: '12px', color: rank.color, fontFamily: 'Arial', fontStyle: 'bold',
         stroke: '#000000', strokeThickness: 2,
       }).setOrigin(0.5).setDepth(D + 1));
     }
 
-    // Status indicator
-    if (selected) {
-      objs.push(this.add.text(cx, cy - ch / 2 - 14, '👑 נבחר', {
-        fontSize: '13px', color: '#ffdd00', fontFamily: 'Arial', fontStyle: 'bold',
-      }).setOrigin(0.5).setDepth(D + 1));
-    } else if (collected) {
-      objs.push(this.add.text(cx, cy - ch / 2 - 14, '✔ נאסף', {
-        fontSize: '12px', color: '#88ff88', fontFamily: 'Arial',
-      }).setOrigin(0.5).setDepth(D + 1));
-    }
-
-    // Lock overlay (not yet collected)
+    // Lock overlay
     if (!collected) {
       objs.push(this.add.rectangle(cx, cy, cw, ch, 0x000000, 0.6).setDepth(D + 2));
-      objs.push(this.add.text(cx, cy - 28, affordable ? '🔓' : '🔒', { fontSize: '32px' })
+      objs.push(this.add.text(cx, cy - 22, affordable ? '🔓' : '🔒', { fontSize: '30px' })
         .setOrigin(0.5).setDepth(D + 3));
       objs.push(this.add.text(cx, cy + 16, `${charDef.cost} 🏆`, {
-        fontSize: '17px', color: affordable ? '#88ff88' : '#ffdd00',
+        fontSize: '16px', color: affordable ? '#88ff88' : '#ffdd00',
         fontFamily: 'Arial', fontStyle: 'bold',
       }).setOrigin(0.5).setDepth(D + 3));
 
       const bw = cw * 0.7;
       const prog = Math.min(trophies / charDef.cost, 1);
-      objs.push(this.add.rectangle(cx, cy + 42, bw, 9, 0x223355).setDepth(D + 3));
-      if (prog > 0) objs.push(this.add.rectangle(cx - bw / 2 + (bw * prog) / 2, cy + 42, bw * prog, 9, affordable ? 0x44ff88 : 0xffaa00).setDepth(D + 3));
-      objs.push(this.add.text(cx, cy + 56, `${trophies} / ${charDef.cost}`, {
+      objs.push(this.add.rectangle(cx, cy + 38, bw, 8, 0x223355).setDepth(D + 3));
+      if (prog > 0) objs.push(this.add.rectangle(cx - bw / 2 + (bw * prog) / 2, cy + 38, bw * prog, 8, affordable ? 0x44ff88 : 0xffaa00).setDepth(D + 3));
+      objs.push(this.add.text(cx, cy + 52, `${trophies} / ${charDef.cost}`, {
         fontSize: '11px', color: '#aabbcc', fontFamily: 'Arial',
       }).setOrigin(0.5).setDepth(D + 3));
-
       if (affordable) {
-        objs.push(this.add.text(cx, cy + 72, '👆 לחץ לפתיחה!', {
+        objs.push(this.add.text(cx, cy + 66, '👆 לחץ לפתיחה!', {
           fontSize: '12px', color: '#aaffaa', fontFamily: 'Arial',
         }).setOrigin(0.5).setDepth(D + 3));
       }
     }
 
-    // Hover
     bg.setInteractive({ useHandCursor: true });
     bg.on('pointerover', () => { if (!selected) bg.setFillStyle(0x152040); });
     bg.on('pointerout',  () => { bg.setFillStyle(selected ? 0x112255 : 0x0d1a33); });
