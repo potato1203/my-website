@@ -226,7 +226,7 @@ class MenuScene extends Phaser.Scene {
     const scrollTop   = h / 2 - panelH / 2 + HEADER;
     const scrollH     = panelH - HEADER - 8;
     const pLeft       = w / 2 - panelW / 2;
-    const cardH       = Math.floor((scrollH - (ROWS_PER_COL - 1) * ROW_GAP) / ROWS_PER_COL);
+    const cardH       = 200;
     const cardW       = Math.floor((panelW - PAD * 2 - (COLS - 1) * COL_GAP) / COLS);
 
     // Mask clips content to the scroll region
@@ -242,6 +242,7 @@ class MenuScene extends Phaser.Scene {
     let closed = false;
     const closeAll = () => {
       if (closed) return; closed = true;
+      this.input.off('pointerdown', onDragStart);
       this.input.off('pointermove', onDragMove);
       this.input.off('pointerup',   onDragEnd);
       pool.forEach(o => o.destroy());
@@ -287,6 +288,13 @@ class MenuScene extends Phaser.Scene {
 
     let scrollY = 0, dragY0 = null, scroll0 = 0, isDragging = false;
 
+    const onDragStart = (ptr) => {
+      if (closed) return;
+      if (ptr.y >= scrollTop && ptr.y <= h / 2 + panelH / 2 &&
+          ptr.x >= pLeft && ptr.x <= pLeft + panelW) {
+        dragY0 = ptr.y; scroll0 = scrollY; isDragging = false;
+      }
+    };
     const onDragMove = (ptr) => {
       if (closed || dragY0 === null) return;
       const dy = ptr.y - dragY0;
@@ -301,12 +309,7 @@ class MenuScene extends Phaser.Scene {
       this.time.delayedCall(50, () => { isDragging = false; });
     };
 
-    backdrop.on('pointerdown', (ptr) => {
-      if (closed) return;
-      if (ptr.y >= scrollTop && ptr.y <= h / 2 + panelH / 2) {
-        dragY0 = ptr.y; scroll0 = scrollY; isDragging = false;
-      }
-    });
+    this.input.on('pointerdown', onDragStart);
     this.input.on('pointermove', onDragMove);
     this.input.on('pointerup',   onDragEnd);
   }
