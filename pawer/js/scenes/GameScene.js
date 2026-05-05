@@ -827,15 +827,14 @@ class GameScene extends Phaser.Scene {
     this._clearSlimes();
     const { width, height } = this.scale;
 
-    // Award trophies – global + per-character
-    const earned  = win ? 10 : 1;
-    const charKey = window.PAWER_SAVE.getChar();
+    // Award trophies: win → +10 global + char; loss → -2 char only (min 0)
+    const charKey  = window.PAWER_SAVE.getChar();
+    const charDef  = window.PAWER_CHARS.find(c => c.key === charKey);
+    const charName = charDef ? charDef.name : charKey;
     const oldCharT = window.PAWER_SAVE.getCharTrophies(charKey);
-    window.PAWER_SAVE.addTrophies(earned);
-    window.PAWER_SAVE.addCharTrophies(charKey, earned);
-
-    const charDef    = window.PAWER_CHARS.find(c => c.key === charKey);
-    const charName   = charDef ? charDef.name : charKey;
+    const charChange = win ? 10 : -Math.min(2, oldCharT);
+    if (win) window.PAWER_SAVE.addTrophies(10);
+    window.PAWER_SAVE.addCharTrophies(charKey, charChange);
     const totalGlobal = window.PAWER_SAVE.getTrophies();
     const totalChar   = window.PAWER_SAVE.getCharTrophies(charKey);
 
@@ -844,18 +843,19 @@ class GameScene extends Phaser.Scene {
       const overlay = this.add.rectangle(width / 2, height / 2, width, height, 0x000000, 0.65)
         .setScrollFactor(0).setDepth(200);
 
-      // Global trophies
-      this.add.text(width / 2, height / 2 - 118,
-        `+${earned} 🏆  סה"כ כללי: ${totalGlobal}`, {
+      // Global trophies (win only)
+      if (win) this.add.text(width / 2, height / 2 - 118,
+        `+10 🏆  סה"כ כללי: ${totalGlobal}`, {
           fontSize: '18px', color: '#ffdd00',
           fontFamily: 'Arial', fontStyle: 'bold',
           stroke: '#000000', strokeThickness: 3,
         }).setOrigin(0.5).setScrollFactor(0).setDepth(201);
 
       // Character trophies
-      this.add.text(width / 2, height / 2 - 90,
-        `+${earned} 🏆  ${charName}: ${totalChar}`, {
-          fontSize: '16px', color: '#ffcc77',
+      const charLabel = charChange >= 0 ? `+${charChange}` : `${charChange}`;
+      this.add.text(width / 2, win ? height / 2 - 90 : height / 2 - 104,
+        `${charLabel} 🏆  ${charName}: ${totalChar}`, {
+          fontSize: win ? '16px' : '18px', color: win ? '#ffcc77' : '#ff9966',
           fontFamily: 'Arial', fontStyle: 'bold',
           stroke: '#000000', strokeThickness: 3,
         }).setOrigin(0.5).setScrollFactor(0).setDepth(201);

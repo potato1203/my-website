@@ -827,13 +827,13 @@ class SoccerScene extends Phaser.Scene {
   _endGame(win) {
     this.gameOver = true;
     const { width, height } = this.scale;
-    const earned  = win ? 10 : 1;
     const charKey  = window.PAWER_SAVE.getChar();
     const charDef  = window.PAWER_CHARS.find(c => c.key === charKey);
     const charName = charDef ? charDef.name : charKey;
     const oldCharT = window.PAWER_SAVE.getCharTrophies(charKey);
-    window.PAWER_SAVE.addTrophies(earned);
-    window.PAWER_SAVE.addCharTrophies(charKey, earned);
+    const charChange = win ? 10 : -Math.min(2, oldCharT);
+    if (win) window.PAWER_SAVE.addTrophies(10);
+    window.PAWER_SAVE.addCharTrophies(charKey, charChange);
 
     this.time.delayedCall(400, () => {
       this.add.rectangle(width / 2, height / 2, width, height, 0x000000, 0.65)
@@ -850,9 +850,13 @@ class SoccerScene extends Phaser.Scene {
           fontFamily: 'Arial Black, Arial', fontStyle: 'bold',
           stroke: '#000000', strokeThickness: 4,
         }).setOrigin(0.5).setScrollFactor(0).setDepth(201);
+      const charLabel = charChange >= 0 ? `+${charChange}` : `${charChange}`;
+      const charTotal = window.PAWER_SAVE.getCharTrophies(charKey);
       this.add.text(width / 2, height / 2 + 30,
-        `+${earned} 🏆  סה"כ: ${window.PAWER_SAVE.getTrophies()}`, {
-          fontSize: '16px', color: '#ffdd00', fontFamily: 'Arial', fontStyle: 'bold',
+        win
+          ? `+10 🏆  ${charName}: ${charTotal}  |  סה"כ: ${window.PAWER_SAVE.getTrophies()}`
+          : `${charLabel} 🏆  ${charName}: ${charTotal}`, {
+          fontSize: '16px', color: win ? '#ffdd00' : '#ff9966', fontFamily: 'Arial', fontStyle: 'bold',
           stroke: '#000000', strokeThickness: 3,
         }).setOrigin(0.5).setScrollFactor(0).setDepth(201);
 
