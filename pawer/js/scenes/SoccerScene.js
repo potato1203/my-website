@@ -828,7 +828,9 @@ class SoccerScene extends Phaser.Scene {
     this.gameOver = true;
     const { width, height } = this.scale;
     const earned  = win ? 10 : 1;
-    const charKey = window.PAWER_SAVE.getChar();
+    const charKey  = window.PAWER_SAVE.getChar();
+    const charDef  = window.PAWER_CHARS.find(c => c.key === charKey);
+    const charName = charDef ? charDef.name : charKey;
     const oldCharT = window.PAWER_SAVE.getCharTrophies(charKey);
     window.PAWER_SAVE.addTrophies(earned);
     window.PAWER_SAVE.addCharTrophies(charKey, earned);
@@ -873,13 +875,13 @@ class SoccerScene extends Phaser.Scene {
       });
 
       this.time.delayedCall(900, () =>
-        this._checkRankUp(oldCharT, window.PAWER_SAVE.getCharTrophies(charKey)));
+        this._checkRankUp(oldCharT, window.PAWER_SAVE.getCharTrophies(charKey), charName));
     });
   }
 
   // ─── RANK-UP ANIMATION ───────────────────────────────────────────────────────
 
-  _checkRankUp(oldT, newT) {
+  _checkRankUp(oldT, newT, charName) {
     const RANKS = [
       { at: 250,  label: 'נחמד',  hex: 0x44ff88, css: '#44ff88', tier: 1 },
       { at: 500,  label: 'טוב',   hex: 0x44aaff, css: '#44aaff', tier: 2 },
@@ -888,10 +890,10 @@ class SoccerScene extends Phaser.Scene {
     ];
     const hit = RANKS.filter(r => oldT < r.at && newT >= r.at);
     if (hit.length === 0) return;
-    this._showRankUp(hit[hit.length - 1]);
+    this._showRankUp(hit[hit.length - 1], charName);
   }
 
-  _showRankUp(rank) {
+  _showRankUp(rank, charName) {
     const W = this.scale.width, H = this.scale.height;
     const ov = this.add.rectangle(W / 2, H / 2, W, H, 0x000000, 0)
       .setScrollFactor(0).setDepth(250).setInteractive();
@@ -908,11 +910,11 @@ class SoccerScene extends Phaser.Scene {
         onComplete: () => { ov.destroy(); hdr.destroy(); extra.forEach(o => o.destroy?.() || o.remove?.()); },
       });
     };
-    if (rank.tier === 4) this._rankUpFinal(W, H, dismiss);
-    else                 this._rankUpNormal(rank, W, H, dismiss);
+    if (rank.tier === 4) this._rankUpFinal(W, H, dismiss, charName);
+    else                 this._rankUpNormal(rank, W, H, dismiss, charName);
   }
 
-  _rankUpNormal(rank, W, H, dismiss) {
+  _rankUpNormal(rank, W, H, dismiss, charName) {
     const ring = this.add.graphics().setScrollFactor(0).setDepth(252);
     ring.lineStyle(rank.tier * 2 + 2, rank.hex, 0.85);
     ring.strokeCircle(W / 2, H / 2, 5);
@@ -933,11 +935,21 @@ class SoccerScene extends Phaser.Scene {
       fontFamily: 'Arial Black, Arial', fontStyle: 'bold',
       stroke: '#000000', strokeThickness: 6,
     }).setOrigin(0.5).setScrollFactor(0).setDepth(253).setAlpha(0);
-    this.tweens.add({ targets: txt, y: H / 2, alpha: 1, duration: 340, ease: 'Expo.easeOut',
-      onComplete: () => this.time.delayedCall(1800, () => dismiss([txt])) });
+    const charTxt = this.add.text(W / 2, H + 140, charName, {
+      fontSize: '28px', color: '#ffffff',
+      fontFamily: 'Arial Black, Arial', fontStyle: 'bold',
+      stroke: '#000000', strokeThickness: 4,
+    }).setOrigin(0.5).setScrollFactor(0).setDepth(253).setAlpha(0);
+
+    this.tweens.add({ targets: txt, y: H / 2 - 30, alpha: 1, duration: 340, ease: 'Expo.easeOut',
+      onComplete: () => {
+        this.tweens.add({ targets: charTxt, y: H / 2 + 48, alpha: 1, duration: 280, ease: 'Expo.easeOut' });
+        this.time.delayedCall(1800, () => dismiss([txt, charTxt]));
+      }
+    });
   }
 
-  _rankUpFinal(W, H, dismiss) {
+  _rankUpFinal(W, H, dismiss, charName) {
     for (let i = 0; i < 45; i++) {
       const px = Math.random() * W;
       const c = this.add.circle(px, -20, 3 + Math.random() * 6, 0xFFD700, 0.9)
@@ -992,14 +1004,23 @@ class SoccerScene extends Phaser.Scene {
       fontFamily: 'Arial Black, Arial', fontStyle: 'bold',
       stroke: '#000000', strokeThickness: 9,
     }).setOrigin(0.5).setScrollFactor(0).setDepth(255).setAlpha(0);
-    this.tweens.add({ targets: txt, y: H / 2, alpha: 1, duration: 480, ease: 'Back.easeOut',
-      onComplete: () => this.tweens.add({ targets: txt, scaleX: 1.10, scaleY: 1.10,
-        duration: 320, yoyo: true, repeat: 2,
-        onComplete: () => this.time.delayedCall(900, () => {
-          starTimer.remove();
-          dismiss([...glows, txt, ...stars.map(s => s.obj)]);
-        })
-      })
+    const charTxt = this.add.text(W / 2, H + 160, charName, {
+      fontSize: '32px', color: '#FFD700',
+      fontFamily: 'Arial Black, Arial', fontStyle: 'bold',
+      stroke: '#000000', strokeThickness: 5,
+    }).setOrigin(0.5).setScrollFactor(0).setDepth(255).setAlpha(0);
+
+    this.tweens.add({ targets: txt, y: H / 2 - 36, alpha: 1, duration: 480, ease: 'Back.easeOut',
+      onComplete: () => {
+        this.tweens.add({ targets: charTxt, y: H / 2 + 56, alpha: 1, duration: 320, ease: 'Back.easeOut' });
+        this.tweens.add({ targets: txt, scaleX: 1.10, scaleY: 1.10,
+          duration: 320, yoyo: true, repeat: 2,
+          onComplete: () => this.time.delayedCall(900, () => {
+            starTimer.remove();
+            dismiss([...glows, txt, charTxt, ...stars.map(s => s.obj)]);
+          })
+        });
+      }
     });
   }
 
