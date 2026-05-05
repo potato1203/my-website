@@ -100,6 +100,7 @@ class GameScene extends Phaser.Scene {
       facing: { x: 1, y: 0 },
       alive: true,
       noHitTime: 0,
+      dashUntil: 0, dashVx: 0, dashVy: 0,
     };
     // Physics body centered on character
     const bw = nixSprite.displayWidth * 0.5;
@@ -348,51 +349,96 @@ class GameScene extends Phaser.Scene {
     this.player.facing = { x: ax, y: ay };
     this.player.atkCd = 620;
 
-    const DASH_DIST = 200;
+    // Actual dash movement – overrides input for 190ms
+    this.player.dashVx   = ax * 760;
+    this.player.dashVy   = ay * 760;
+    this.player.dashUntil = this.time.now + 190;
+
+    const DASH_DIST = 220;
     const hitBots = new Set();
-    for (let i = 1; i <= 10; i++) {
-      const tx = p.x + ax * DASH_DIST * (i / 10);
-      const ty = p.y + ay * DASH_DIST * (i / 10);
+    for (let i = 1; i <= 12; i++) {
+      const tx = p.x + ax * DASH_DIST * (i / 12);
+      const ty = p.y + ay * DASH_DIST * (i / 12);
       this.bots.forEach(bot => {
         if (!bot.alive || hitBots.has(bot)) return;
-        if (Math.hypot(bot.sprite.x - tx, bot.sprite.y - ty) < 54) {
+        if (Math.hypot(bot.sprite.x - tx, bot.sprite.y - ty) < 56) {
           hitBots.add(bot);
           this._hitBot(bot, 460, tx, ty);
         }
       });
     }
+    if (hitBots.size > 0) this.cameras.main.shake(120, 0.007);
 
     this._showCochDash(p.x, p.y, ax, ay, DASH_DIST);
     if (window.PAWER_NET?.connected) this._mpSendAtk('coch', ax, ay);
   }
 
   _showCochDash(px, py, ax, ay, dist) {
-    const g = this.add.graphics().setDepth(8);
     const perp = { x: -ay, y: ax };
 
-    g.lineStyle(5, 0xff4400, 0.8);
+    // Bright directional flash rectangle
+    const flash = this.add.rectangle(
+      px + ax * dist * 0.5, py + ay * dist * 0.5,
+      dist, 32, 0xff5500, 0.55
+    ).setRotation(Math.atan2(ay, ax)).setDepth(8);
+    this.tweens.add({ targets: flash, alpha: 0, scaleX: 1.6, duration: 280,
+      onComplete: () => flash.destroy() });
+
+    // Spike lines + tips
+    const g = this.add.graphics().setDepth(9);
+
+    // Thick center trail: dark core + bright highlight
+    g.lineStyle(8, 0xff3300, 0.85);
+    g.lineBetween(px, py, px + ax * dist, py + ay * dist);
+    g.lineStyle(3, 0xffee88, 0.9);
     g.lineBetween(px, py, px + ax * dist, py + ay * dist);
 
-    const numSpikes = 6;
-    for (let i = 0; i < numSpikes; i++) {
-      const t  = (i + 0.5) / numSpikes;
+    // 7 crossbar spikes
+    for (let i = 0; i < 7; i++) {
+      const t  = (i + 0.5) / 7;
       const cx = px + ax * dist * t;
       const cy = py + ay * dist * t;
-      const sl = 18 + (i % 2) * 8;
-      g.lineStyle(3, 0xff6600, 0.95);
-      g.lineBetween(cx + perp.x * sl, cy + perp.y * sl, cx - perp.x * sl, cy - perp.y * sl);
-      g.fillStyle(0xffaa00, 1);
-      g.fillCircle(cx + perp.x * sl, cy + perp.y * sl, 4);
-      g.fillCircle(cx - perp.x * sl, cy - perp.y * sl, 4);
+      const sl = 26 + (i % 2) * 14;
+      const tx1 = cx + perp.x * sl,  ty1 = cy + perp.y * sl;
+      const tx2 = cx - perp.x * sl,  ty2 = cy - perp.y * sl;
+
+      g.lineStyle(5, 0xff6600, 1);
+      g.lineBetween(tx1, ty1, tx2, ty2);
+
+      // Arrow tips pointing forward
+      g.lineStyle(3, 0xffcc00, 0.95);
+      g.lineBetween(tx1, ty1, tx1 - perp.x * 10 + ax * 12, ty1 - perp.y * 10 + ay * 12);
+      g.lineBetween(tx2, ty2, tx2 + perp.x * 10 + ax * 12, ty2 + perp.y * 10 + ay * 12);
+
+      // Bright tip dots
+      g.fillStyle(0xffee00, 1);
+      g.fillCircle(tx1, ty1, 5);
+      g.fillCircle(tx2, ty2, 5);
     }
 
-    g.fillStyle(0xff2200, 0.65);
-    g.fillCircle(px + ax * dist, py + ay * dist, 13);
+    // Impact burst at far end
+    g.fillStyle(0xff2200, 0.7);
+    g.fillCircle(px + ax * dist, py + ay * dist, 18);
+    g.fillStyle(0xffcc00, 1);
+    g.fillCircle(px + ax * dist, py + ay * dist, 8);
 
-    this.tweens.add({
-      targets: g, alpha: 0, duration: 370,
-      onComplete: () => g.destroy(),
-    });
+    this.tweens.add({ targets: g, alpha: 0, duration: 420,
+      onComplete: () => g.destroy() });
+
+    // Particle scatter at impact
+    for (let i = 0; i < 10; i++) {
+      const angle = Math.atan2(ay, ax) + (Math.random() - 0.5) * Math.PI * 0.9;
+      const c = this.add.circle(px + ax * dist, py + ay * dist,
+        3 + Math.random() * 5, Math.random() > 0.5 ? 0xff6600 : 0xffcc00).setDepth(9);
+      this.tweens.add({
+        targets: c,
+        x: px + ax * dist + Math.cos(angle) * (35 + Math.random() * 45),
+        y: py + ay * dist + Math.sin(angle) * (35 + Math.random() * 45),
+        alpha: 0, scaleX: 0, scaleY: 0,
+        duration: 280 + Math.random() * 160,
+        onComplete: () => c.destroy(),
+      });
+    }
   }
 
   _spawnProjectile(fromX, fromY, ax, ay, dmg, isPlayerSlime, ownerBot, opts = {}) {
@@ -808,12 +854,15 @@ class GameScene extends Phaser.Scene {
       if (Phaser.Input.Keyboard.JustDown(k.atk) && p.atkCd <= 0) this._doAttack();
     }
 
-    p.sprite.body.setVelocity(vx, vy);
-
-    if (vx !== 0 || vy !== 0) {
-      const d = Math.hypot(vx, vy);
-      p.facing = { x: vx / d, y: vy / d };
-      p.sprite.setFlipX(vx < 0);
+    if (p.dashUntil > this.time.now) {
+      p.sprite.body.setVelocity(p.dashVx, p.dashVy);
+    } else {
+      p.sprite.body.setVelocity(vx, vy);
+      if (vx !== 0 || vy !== 0) {
+        const d = Math.hypot(vx, vy);
+        p.facing = { x: vx / d, y: vy / d };
+        p.sprite.setFlipX(vx < 0);
+      }
     }
     p.sprite.setDepth(5 + p.sprite.y * 0.00001);
 

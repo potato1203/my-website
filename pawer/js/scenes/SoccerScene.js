@@ -178,6 +178,7 @@ class SoccerScene extends Phaser.Scene {
       sprite, charKey, speed: 245,
       hp: 3000, maxHp: 3000, atkCd: 0, facing: { x: 1, y: 0 },
       alive: true, noHitTime: 0,
+      dashUntil: 0, dashVx: 0, dashVy: 0,
     };
 
     const playerName = window.PAWER_SAVE.getName() || 'שחקן';
@@ -415,51 +416,83 @@ class SoccerScene extends Phaser.Scene {
     this.player.facing = { x: ax, y: ay };
     this.player.atkCd  = 620;
 
-    const DASH_DIST = 200;
+    this.player.dashVx    = ax * 760;
+    this.player.dashVy    = ay * 760;
+    this.player.dashUntil = this.time.now + 190;
+
+    const DASH_DIST = 220;
     const hitBots = new Set();
-    for (let i = 1; i <= 10; i++) {
-      const tx = p.x + ax * DASH_DIST * (i / 10);
-      const ty = p.y + ay * DASH_DIST * (i / 10);
+    for (let i = 1; i <= 12; i++) {
+      const tx = p.x + ax * DASH_DIST * (i / 12);
+      const ty = p.y + ay * DASH_DIST * (i / 12);
       this.bots.forEach(bot => {
         if (!bot.alive || bot.team === 0 || hitBots.has(bot)) return;
-        if (Math.hypot(bot.sprite.x - tx, bot.sprite.y - ty) < 54) {
+        if (Math.hypot(bot.sprite.x - tx, bot.sprite.y - ty) < 56) {
           hitBots.add(bot);
           this._hitBot(bot, 460, tx, ty);
         }
       });
-      this._tryKickBall(tx, ty, ax * 500, ay * 500, 40);
+      this._tryKickBall(tx, ty, ax * 560, ay * 560, 42);
     }
+    if (hitBots.size > 0) this.cameras.main.shake(120, 0.007);
 
     this._showCochDash(p.x, p.y, ax, ay, DASH_DIST);
   }
 
   _showCochDash(px, py, ax, ay, dist) {
-    const g = this.add.graphics().setDepth(8);
     const perp = { x: -ay, y: ax };
 
-    g.lineStyle(5, 0xff4400, 0.8);
+    const flash = this.add.rectangle(
+      px + ax * dist * 0.5, py + ay * dist * 0.5,
+      dist, 32, 0xff5500, 0.55
+    ).setRotation(Math.atan2(ay, ax)).setDepth(8);
+    this.tweens.add({ targets: flash, alpha: 0, scaleX: 1.6, duration: 280,
+      onComplete: () => flash.destroy() });
+
+    const g = this.add.graphics().setDepth(9);
+    g.lineStyle(8, 0xff3300, 0.85);
+    g.lineBetween(px, py, px + ax * dist, py + ay * dist);
+    g.lineStyle(3, 0xffee88, 0.9);
     g.lineBetween(px, py, px + ax * dist, py + ay * dist);
 
-    const numSpikes = 6;
-    for (let i = 0; i < numSpikes; i++) {
-      const t  = (i + 0.5) / numSpikes;
+    for (let i = 0; i < 7; i++) {
+      const t  = (i + 0.5) / 7;
       const cx = px + ax * dist * t;
       const cy = py + ay * dist * t;
-      const sl = 18 + (i % 2) * 8;
-      g.lineStyle(3, 0xff6600, 0.95);
-      g.lineBetween(cx + perp.x * sl, cy + perp.y * sl, cx - perp.x * sl, cy - perp.y * sl);
-      g.fillStyle(0xffaa00, 1);
-      g.fillCircle(cx + perp.x * sl, cy + perp.y * sl, 4);
-      g.fillCircle(cx - perp.x * sl, cy - perp.y * sl, 4);
+      const sl = 26 + (i % 2) * 14;
+      const tx1 = cx + perp.x * sl, ty1 = cy + perp.y * sl;
+      const tx2 = cx - perp.x * sl, ty2 = cy - perp.y * sl;
+      g.lineStyle(5, 0xff6600, 1);
+      g.lineBetween(tx1, ty1, tx2, ty2);
+      g.lineStyle(3, 0xffcc00, 0.95);
+      g.lineBetween(tx1, ty1, tx1 - perp.x * 10 + ax * 12, ty1 - perp.y * 10 + ay * 12);
+      g.lineBetween(tx2, ty2, tx2 + perp.x * 10 + ax * 12, ty2 + perp.y * 10 + ay * 12);
+      g.fillStyle(0xffee00, 1);
+      g.fillCircle(tx1, ty1, 5);
+      g.fillCircle(tx2, ty2, 5);
     }
 
-    g.fillStyle(0xff2200, 0.65);
-    g.fillCircle(px + ax * dist, py + ay * dist, 13);
+    g.fillStyle(0xff2200, 0.7);
+    g.fillCircle(px + ax * dist, py + ay * dist, 18);
+    g.fillStyle(0xffcc00, 1);
+    g.fillCircle(px + ax * dist, py + ay * dist, 8);
 
-    this.tweens.add({
-      targets: g, alpha: 0, duration: 370,
-      onComplete: () => g.destroy(),
-    });
+    this.tweens.add({ targets: g, alpha: 0, duration: 420,
+      onComplete: () => g.destroy() });
+
+    for (let i = 0; i < 10; i++) {
+      const angle = Math.atan2(ay, ax) + (Math.random() - 0.5) * Math.PI * 0.9;
+      const c = this.add.circle(px + ax * dist, py + ay * dist,
+        3 + Math.random() * 5, Math.random() > 0.5 ? 0xff6600 : 0xffcc00).setDepth(9);
+      this.tweens.add({
+        targets: c,
+        x: px + ax * dist + Math.cos(angle) * (35 + Math.random() * 45),
+        y: py + ay * dist + Math.sin(angle) * (35 + Math.random() * 45),
+        alpha: 0, scaleX: 0, scaleY: 0,
+        duration: 280 + Math.random() * 160,
+        onComplete: () => c.destroy(),
+      });
+    }
   }
 
   // ownerTeam 0 = blue (hits team 1); ownerTeam 1 = red (hits player + team 0)
@@ -735,8 +768,12 @@ class SoccerScene extends Phaser.Scene {
       if (Phaser.Input.Keyboard.JustDown(k.atk) && p.atkCd <= 0) this._doAttack();
     }
 
-    p.sprite.body.setVelocity(vx, vy);
-    if (vx !== 0) { p.sprite.setFlipX(vx < 0); p.facing = { x: vx > 0 ? 1 : -1, y: 0 }; }
+    if (p.dashUntil > this.time.now) {
+      p.sprite.body.setVelocity(p.dashVx, p.dashVy);
+    } else {
+      p.sprite.body.setVelocity(vx, vy);
+      if (vx !== 0) { p.sprite.setFlipX(vx < 0); p.facing = { x: vx > 0 ? 1 : -1, y: 0 }; }
+    }
     this.playerNameText.setPosition(p.sprite.x, p.sprite.y - p.sprite.displayHeight / 2 - 6);
     this.playerRing.setPosition(p.sprite.x, p.sprite.y);
     this._tryKickBall(p.sprite.x, p.sprite.y, vx, vy, 38);
