@@ -701,6 +701,10 @@ class SoccerScene extends Phaser.Scene {
         b.x = spr.x + (fac.x || 1) * 28;
         b.y = spr.y + (fac.y || 0) * 28;
         b.vx = 0; b.vy = 0;
+        if (b.y > this.GOAL_Y1 && b.y < this.GOAL_Y2) {
+          if (b.x < 128) { b.carrier = null; this._scoreGoal(1); return; }
+          if (b.x > W - 128) { b.carrier = null; this._scoreGoal(0); return; }
+        }
       }
     } else {
       const dt   = delta / 1000;
@@ -711,11 +715,11 @@ class SoccerScene extends Phaser.Scene {
       if (b.y > H - 128 - b.r) { b.y = H - 128 - b.r; b.vy = -Math.abs(b.vy) * 0.78; }
       const inGoalY = b.y > this.GOAL_Y1 && b.y < this.GOAL_Y2;
       if (b.x < 128) {
-        if (inGoalY) { if (b.x < 30) { this._scoreGoal(1); return; } b.vx *= 0.94; }
+        if (inGoalY) { this._scoreGoal(1); return; }
         else { b.x = 128; b.vx = Math.abs(b.vx) * 0.78; }
       }
       if (b.x > W - 128) {
-        if (inGoalY) { if (b.x > W - 30) { this._scoreGoal(0); return; } b.vx *= 0.94; }
+        if (inGoalY) { this._scoreGoal(0); return; }
         else { b.x = W - 128; b.vx = -Math.abs(b.vx) * 0.78; }
       }
 
