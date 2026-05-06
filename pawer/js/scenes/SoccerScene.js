@@ -11,7 +11,7 @@ class SoccerScene extends Phaser.Scene {
     const GOAL_H  = 420;
     this.GOAL_Y1  = H / 2 - GOAL_H / 2;
     this.GOAL_Y2  = H / 2 + GOAL_H / 2;
-    this.ball     = { x: W / 2, y: H / 2, vx: 60, vy: 40, r: 18 };
+    this.ball     = { x: W / 2, y: H / 2, vx: 60, vy: 40, r: 18, carrier: null };
 
     this.slimes   = [];
     this.swordGfx = this.add.graphics().setDepth(8);
@@ -370,6 +370,7 @@ class SoccerScene extends Phaser.Scene {
     const { ax, ay } = this._getAimDir();
     this.player.facing = { x: ax, y: ay };
     this.player.atkCd  = 550;
+    this._kickBallIfCarrying(ax, ay);
     const RANGE = 90, ARC = Math.PI * 0.72, aimAngle = Math.atan2(ay, ax);
     this.bots.forEach(bot => {
       if (!bot.alive || bot.team === 0) return;
@@ -387,6 +388,7 @@ class SoccerScene extends Phaser.Scene {
     const { ax, ay } = this._getAimDir();
     this.player.facing = { x: ax, y: ay };
     this.player.atkCd  = 700;
+    this._kickBallIfCarrying(ax, ay);
     this._spawnProjectile(p.x, p.y, ax, ay, 380, 0);
   }
 
@@ -394,6 +396,8 @@ class SoccerScene extends Phaser.Scene {
     const p = this.player.sprite;
     this.player.atkCd = 850;
     const RANGE = 115;
+    const { x: hax, y: hay } = this.player.facing;
+    this._kickBallIfCarrying(hax, hay);
     this.bots.forEach(bot => {
       if (!bot.alive || bot.team === 0) return;
       if (Math.hypot(bot.sprite.x - p.x, bot.sprite.y - p.y) <= RANGE) this._hitBot(bot, 520);
@@ -406,6 +410,7 @@ class SoccerScene extends Phaser.Scene {
     const { ax, ay } = this._getAimDir();
     this.player.facing = { x: ax, y: ay };
     this.player.atkCd  = 480;
+    this._kickBallIfCarrying(ax, ay);
     this._spawnProjectile(p.x, p.y, ax, ay, 310, 0,
       { speed: 640, color: 0xccccdd, gcolor: 0xffffff, radius: 5, maxDist: 270, splatColor: 0xaaaacc, hitRadius: 24 });
   }
@@ -415,6 +420,7 @@ class SoccerScene extends Phaser.Scene {
     const { ax, ay } = this._getAimDir();
     this.player.facing = { x: ax, y: ay };
     this.player.atkCd  = 620;
+    this._kickBallIfCarrying(ax, ay);
 
     this.player.dashVx    = ax * 760;
     this.player.dashVy    = ay * 760;
@@ -594,6 +600,7 @@ class SoccerScene extends Phaser.Scene {
     p.alive = false;
     p.sprite.setVisible(false);
     this.playerRing.setVisible(false);
+    if (this.ball.carrier) this.ball.carrier = null;
     this._burstEffect(p.sprite.x, p.sprite.y, 0x4488ff);
     this._flashText('💀 מתחדש...', '#ff6666', 3200);
     this.time.delayedCall(3500, () => this._respawnPlayer());
@@ -677,41 +684,52 @@ class SoccerScene extends Phaser.Scene {
 
   _updateBall(delta) {
     if (this.goalCooldown > 0) { this.goalCooldown -= delta; return; }
-    const dt   = delta / 1000;
-    const b    = this.ball;
-    const W    = this.W, H = this.H;
-    const fric = Math.pow(0.984, delta / 16.67);
-    b.vx *= fric; b.vy *= fric;
-    b.x  += b.vx * dt; b.y += b.vy * dt;
-    if (b.y < 128 + b.r)     { b.y = 128 + b.r;     b.vy =  Math.abs(b.vy) * 0.78; }
-    if (b.y > H - 128 - b.r) { b.y = H - 128 - b.r; b.vy = -Math.abs(b.vy) * 0.78; }
-    const inGoalY = b.y > this.GOAL_Y1 && b.y < this.GOAL_Y2;
-    if (b.x < 128) {
-      if (inGoalY) { if (b.x < 30) { this._scoreGoal(1); return; } b.vx *= 0.94; }
-      else { b.x = 128; b.vx = Math.abs(b.vx) * 0.78; }
-    }
-    if (b.x > W - 128) {
-      if (inGoalY) { if (b.x > W - 30) { this._scoreGoal(0); return; } b.vx *= 0.94; }
-      else { b.x = W - 128; b.vx = -Math.abs(b.vx) * 0.78; }
-    }
+    const b = this.ball;
+    const W = this.W, H = this.H;
 
-    // ── Bumper collisions ─────────────────────────────────────────────────────
-    this.bumpers.forEach(bumper => {
-      if (bumper.cooldown > 0) { bumper.cooldown -= delta; return; }
-      const dist = Math.hypot(b.x - bumper.x, b.y - bumper.y);
-      if (dist < bumper.r + b.r) {
-        const nd = dist || 1;
-        const nx = (b.x - bumper.x) / nd;
-        const ny = (b.y - bumper.y) / nd;
-        // Launch ball away at high speed
-        b.vx = nx * 560;
-        b.vy = ny * 560;
-        // Separate to prevent sticking
-        b.x = bumper.x + nx * (bumper.r + b.r + 3);
-        b.y = bumper.y + ny * (bumper.r + b.r + 3);
-        this._activateBumper(bumper);
+    if (b.carrier) {
+      if (!this.player.alive) {
+        b.carrier = null;
+      } else {
+        const spr = this.player.sprite;
+        const fac = this.player.facing;
+        b.x = spr.x + (fac.x || 1) * 28;
+        b.y = spr.y + (fac.y || 0) * 28;
+        b.vx = 0; b.vy = 0;
       }
-    });
+    } else {
+      const dt   = delta / 1000;
+      const fric = Math.pow(0.984, delta / 16.67);
+      b.vx *= fric; b.vy *= fric;
+      b.x  += b.vx * dt; b.y += b.vy * dt;
+      if (b.y < 128 + b.r)     { b.y = 128 + b.r;     b.vy =  Math.abs(b.vy) * 0.78; }
+      if (b.y > H - 128 - b.r) { b.y = H - 128 - b.r; b.vy = -Math.abs(b.vy) * 0.78; }
+      const inGoalY = b.y > this.GOAL_Y1 && b.y < this.GOAL_Y2;
+      if (b.x < 128) {
+        if (inGoalY) { if (b.x < 30) { this._scoreGoal(1); return; } b.vx *= 0.94; }
+        else { b.x = 128; b.vx = Math.abs(b.vx) * 0.78; }
+      }
+      if (b.x > W - 128) {
+        if (inGoalY) { if (b.x > W - 30) { this._scoreGoal(0); return; } b.vx *= 0.94; }
+        else { b.x = W - 128; b.vx = -Math.abs(b.vx) * 0.78; }
+      }
+
+      // ── Bumper collisions ─────────────────────────────────────────────────────
+      this.bumpers.forEach(bumper => {
+        if (bumper.cooldown > 0) { bumper.cooldown -= delta; return; }
+        const dist = Math.hypot(b.x - bumper.x, b.y - bumper.y);
+        if (dist < bumper.r + b.r) {
+          const nd = dist || 1;
+          const nx = (b.x - bumper.x) / nd;
+          const ny = (b.y - bumper.y) / nd;
+          b.vx = nx * 560;
+          b.vy = ny * 560;
+          b.x = bumper.x + nx * (bumper.r + b.r + 3);
+          b.y = bumper.y + ny * (bumper.r + b.r + 3);
+          this._activateBumper(bumper);
+        }
+      });
+    }
 
     this.ballShadow.setPosition(b.x + 5, b.y + 5);
     this.ballSprite.setPosition(b.x, b.y);
@@ -736,6 +754,14 @@ class SoccerScene extends Phaser.Scene {
     const ny = dist > 0 ? (b.y - py) / dist : 0;
     const spd = Math.max(170, Math.hypot(pvx, pvy) * 1.45 + 110);
     b.vx = nx * spd; b.vy = ny * spd;
+  }
+
+  _kickBallIfCarrying(ax, ay) {
+    const b = this.ball;
+    if (!b.carrier) return;
+    b.carrier = null;
+    b.vx = ax * 820;
+    b.vy = ay * 820;
   }
 
   // ─── PLAYER UPDATE ───────────────────────────────────────────────────────────
@@ -776,7 +802,10 @@ class SoccerScene extends Phaser.Scene {
     }
     this.playerNameText.setPosition(p.sprite.x, p.sprite.y - p.sprite.displayHeight / 2 - 6);
     this.playerRing.setPosition(p.sprite.x, p.sprite.y);
-    this._tryKickBall(p.sprite.x, p.sprite.y, vx, vy, 38);
+    const pb = this.ball;
+    if (!pb.carrier && Math.hypot(pb.x - p.sprite.x, pb.y - p.sprite.y) < 38 + pb.r) {
+      pb.carrier = { type: 'player' };
+    }
   }
 
   // ─── BOT AI ──────────────────────────────────────────────────────────────────
@@ -883,6 +912,7 @@ class SoccerScene extends Phaser.Scene {
 
   _scoreGoal(scoringTeam) {
     if (this.gameOver) return;
+    this.ball.carrier = null;
     this.goalCooldown = 2800;
     this.score[scoringTeam]++;
     this.scoreTxt.setText(`${this.score[0]}  –  ${this.score[1]}`);
@@ -903,6 +933,7 @@ class SoccerScene extends Phaser.Scene {
     const W = this.W, H = this.H;
     this.ball.x = W / 2; this.ball.y = H / 2;
     this.ball.vx = 60;   this.ball.vy = 0;
+    this.ball.carrier = null;
     this.ballSprite.setPosition(W / 2, H / 2);
     this.ballShadow.setPosition(W / 2 + 5, H / 2 + 5);
     this.ballInner.setPosition(W / 2, H / 2);
