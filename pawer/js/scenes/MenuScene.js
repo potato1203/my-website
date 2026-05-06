@@ -188,9 +188,9 @@ class MenuScene extends Phaser.Scene {
   // ─── CHARACTER SELECTION OVERLAY ─────────────────────────────────────────────
 
   _openCharSelect(w, h) {
-    const trophies = window.PAWER_SAVE.getTrophies();
+    const trophies   = window.PAWER_SAVE.getTrophies();
     const currentKey = window.PAWER_SAVE.getChar();
-    const pool = []; // objects to destroy on close
+    const pool = [];
 
     // Backdrop
     const backdrop = this.add.rectangle(w / 2, h / 2, w, h, 0x000011, 0.85).setDepth(80).setInteractive();
@@ -205,7 +205,6 @@ class MenuScene extends Phaser.Scene {
     pool.push(this.add.text(w / 2, h / 2 - panelH / 2 + 28, '🧑‍🤝‍🧑  בחר דמות', {
       fontSize: '22px', color: '#ffffff', fontFamily: 'Arial Black, Arial', fontStyle: 'bold',
     }).setOrigin(0.5).setDepth(82));
-
     pool.push(this.add.rectangle(w / 2, h / 2 - panelH / 2 + 50, panelW - 40, 1, 0x334466).setDepth(82));
 
     // Close
@@ -216,30 +215,40 @@ class MenuScene extends Phaser.Scene {
     closeBtn.on('pointerover', () => closeBtn.setStyle({ color: '#ffffff' }));
     closeBtn.on('pointerout',  () => closeBtn.setStyle({ color: '#aabbcc' }));
 
-    // ── Grid + scroll setup ──────────────────────────────────────────────────
-    const HEADER      = 62;
-    const PAD         = 18;
-    const COL_GAP     = 14;
-    const ROW_GAP     = 10;
-    const ROWS_PER_COL = 3;
-    const COLS        = Math.ceil(window.PAWER_CHARS.length / ROWS_PER_COL);
-    const scrollTop   = h / 2 - panelH / 2 + HEADER;
-    const scrollH     = panelH - HEADER - 8;
-    const pLeft       = w / 2 - panelW / 2;
-    const cardH       = 200;
-    const cardW       = Math.floor((panelW - PAD * 2 - (COLS - 1) * COL_GAP) / COLS);
+    // ── Search input ─────────────────────────────────────────────────────────
+    const searchY = h / 2 - panelH / 2 + 78;
+    pool.push(this.add.text(w / 2 - panelW / 2 + 22, searchY, '🔍', { fontSize: '15px' })
+      .setOrigin(0, 0.5).setDepth(83));
+    const searchInput = this._makeHTMLInput(w, h, searchY);
+    searchInput.maxLength = 14;
+    searchInput.placeholder = 'חפש דמות...';
+    pool.push({ destroy: () => {
+      if (document.body.contains(searchInput)) document.body.removeChild(searchInput);
+    }});
 
-    // Mask clips content to the scroll region
+    // ── Grid setup ───────────────────────────────────────────────────────────
+    const HEADER       = 108;
+    const PAD          = 18;
+    const COL_GAP      = 14;
+    const ROW_GAP      = 10;
+    const ROWS_PER_COL = 3;
+    const COLS         = Math.ceil(window.PAWER_CHARS.length / ROWS_PER_COL);
+    const scrollTop    = h / 2 - panelH / 2 + HEADER;
+    const scrollH      = panelH - HEADER - 8;
+    const pLeft        = w / 2 - panelW / 2;
+    const cardH        = 200;
+    const cardW        = Math.floor((panelW - PAD * 2 - (COLS - 1) * COL_GAP) / COLS);
+
     const maskGfx = this.make.graphics({ add: false });
     maskGfx.fillRect(pLeft, scrollTop, panelW, scrollH);
     const mask = maskGfx.createGeometryMask();
-
-    // Container holds all scrollable card objects
-    const cnt = this.add.container(0, 0).setDepth(82);
+    const cnt  = this.add.container(0, 0).setDepth(82);
     cnt.setMask(mask);
     pool.push(cnt);
 
-    let closed = false;
+    let closed = false, maxScroll = 0, scrollY = 0;
+    let dragY0 = null, scroll0 = 0, isDragging = false;
+
     const closeAll = () => {
       if (closed) return; closed = true;
       this.input.off('pointerdown', onDragStart);
@@ -250,44 +259,54 @@ class MenuScene extends Phaser.Scene {
     };
     closeBtn.on('pointerdown', closeAll);
 
-    // Build cards
-    const chars = window.PAWER_CHARS;
-    chars.forEach((ch, i) => {
-      const col = Math.floor(i / ROWS_PER_COL);
-      const row = i % ROWS_PER_COL;
-      const cx  = pLeft + PAD + col * (cardW + COL_GAP) + cardW / 2;
-      const cy  = scrollTop + ROW_GAP + row * (cardH + ROW_GAP) + cardH / 2;
+    // ── Build / rebuild cards for a given filter ──────────────────────────────
+    const buildCards = (filter) => {
+      cnt.list.slice().forEach(o => o.destroy());
 
-      const collected  = window.PAWER_SAVE.isCollected(ch.key);
-      const affordable = trophies >= ch.cost;
-      const selected   = ch.key === currentKey;
-      const rar        = window.RARITIES[ch.rarity];
+      const chars = filter
+        ? window.PAWER_CHARS.filter(ch => ch.name.includes(filter))
+        : window.PAWER_CHARS;
 
-      const { zone, objs } = this._makeCard(cx, cy, cardW, cardH, ch, rar, collected, affordable, selected, trophies, pool);
-      objs.forEach(o => cnt.add(o));
+      chars.forEach((ch, i) => {
+        const col = Math.floor(i / ROWS_PER_COL);
+        const row = i % ROWS_PER_COL;
+        const cx  = pLeft + PAD + col * (cardW + COL_GAP) + cardW / 2;
+        const cy  = scrollTop + ROW_GAP + row * (cardH + ROW_GAP) + cardH / 2;
 
-      zone.on('pointerup', (ptr) => {
-        if (closed || isDragging) return;
-        if (ptr.y < scrollTop || ptr.y > scrollTop + scrollH) return;
-        if (!collected && affordable) {
-          closeAll(); this._playUnlockAnim(ch, rar, w, h);
-        } else if (collected && !selected) {
-          window.PAWER_SAVE.setChar(ch.key);
-          closeAll(); this._refreshScene();
-        } else if (!affordable) {
-          this._showMsg(w / 2, h / 2 + panelH / 2 - 20,
-            `צריך עוד ${ch.cost - trophies} 🏆 לפתיחת ${ch.name}`, '#ff6666');
-        }
+        const collected  = window.PAWER_SAVE.isCollected(ch.key);
+        const affordable = trophies >= ch.cost;
+        const selected   = ch.key === currentKey;
+        const rar        = window.RARITIES[ch.rarity];
+
+        const { zone, objs } = this._makeCard(cx, cy, cardW, cardH, ch, rar, collected, affordable, selected, trophies, pool);
+        objs.forEach(o => cnt.add(o));
+
+        zone.on('pointerup', (ptr) => {
+          if (closed || isDragging) return;
+          if (ptr.y < scrollTop || ptr.y > scrollTop + scrollH) return;
+          if (!collected && affordable) {
+            closeAll(); this._playUnlockAnim(ch, rar, w, h);
+          } else if (collected && !selected) {
+            window.PAWER_SAVE.setChar(ch.key);
+            closeAll(); this._refreshScene();
+          } else if (!affordable) {
+            this._showMsg(w / 2, h / 2 + panelH / 2 - 20,
+              `צריך עוד ${ch.cost - trophies} 🏆 לפתיחת ${ch.name}`, '#ff6666');
+          }
+        });
       });
-    });
 
-    // Scroll logic
-    const totalRows = Math.min(chars.length, ROWS_PER_COL);
-    const contentH  = totalRows * (cardH + ROW_GAP) + ROW_GAP;
-    const maxScroll = Math.max(0, contentH - scrollH);
+      const rows    = Math.min(chars.length, ROWS_PER_COL);
+      const contentH = rows * (cardH + ROW_GAP) + ROW_GAP;
+      maxScroll = Math.max(0, contentH - scrollH);
+      scrollY   = 0;
+      cnt.setY(0);
+    };
 
-    let scrollY = 0, dragY0 = null, scroll0 = 0, isDragging = false;
+    buildCards('');
+    searchInput.addEventListener('input', () => { if (!closed) buildCards(searchInput.value.trim()); });
 
+    // ── Scroll ────────────────────────────────────────────────────────────────
     const onDragStart = (ptr) => {
       if (closed) return;
       if (ptr.y >= scrollTop && ptr.y <= h / 2 + panelH / 2 &&
