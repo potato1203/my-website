@@ -199,6 +199,13 @@ class SoccerScene extends Phaser.Scene {
     const charKeys = window.PAWER_CHARS.map(c => c.key);
     const shuffled = Phaser.Utils.Array.Shuffle([...charKeys]);
 
+    // Scale bots with player trophies
+    const t = Math.min(window.PAWER_SAVE.getTrophies(), 1000) / 1000;
+    const hpScale  = 1 + t;
+    const spdScale = 1 + t * 0.4;
+    const dmgScale = 1 + t * 0.8;
+    const cdScale  = 1 - t * 0.25;
+
     const defs = [
       { x: 280,     y: H / 2 - 330, team: 0, color: 0x4488ff, name: 'עמית',  atkDmg: 260, atkCdBase: 1300 },
       { x: 280,     y: H / 2 + 330, team: 0, color: 0x44aaff, name: 'חבר',   atkDmg: 240, atkCdBase: 1200 },
@@ -217,9 +224,9 @@ class SoccerScene extends Phaser.Scene {
         .setOffset((s.width - bw / s.scaleX) / 2, (s.height - bh / s.scaleY) * 0.7);
       return {
         sprite: s, charKey, team: d.team, color: d.color, name: d.name,
-        speed: 188, startX: d.x, startY: d.y,
-        hp: 1600, maxHp: 1600, alive: true, noHitTime: 0,
-        atkCd: 0, atkDmg: d.atkDmg, atkCdBase: d.atkCdBase,
+        speed: Math.round(188 * spdScale), startX: d.x, startY: d.y,
+        hp: Math.round(1600 * hpScale), maxHp: Math.round(1600 * hpScale), alive: true, noHitTime: 0,
+        atkCd: 0, atkDmg: Math.round(d.atkDmg * dmgScale), atkCdBase: Math.round(d.atkCdBase * cdScale),
         facing: { x: d.team === 0 ? 1 : -1, y: 0 },
         pickupCd: 0, dashUntil: 0, dashVx: 0, dashVy: 0,
       };

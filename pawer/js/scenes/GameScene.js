@@ -144,6 +144,13 @@ class GameScene extends Phaser.Scene {
     const NAME_POOL = ['צל', 'רוח', 'לוחם', 'אש', 'קרח', 'ברק', 'סערה', 'חושך', 'ריק', 'עשן'];
     const shuffledNames = Phaser.Utils.Array.Shuffle([...NAME_POOL]);
 
+    // Scale bots with player trophies
+    const t = Math.min(window.PAWER_SAVE.getTrophies(), 1000) / 1000;
+    const hpScale  = 1 + t;
+    const spdScale = 1 + t * 0.4;
+    const dmgScale = 1 + t * 0.8;
+    const cdScale  = 1 - t * 0.25;
+
     // Available char sprites – shuffle so every game looks different
     const charKeys = window.PAWER_CHARS.map(c => c.key);
     const shuffledKeys = Phaser.Utils.Array.Shuffle([...charKeys]);
@@ -162,9 +169,10 @@ class GameScene extends Phaser.Scene {
         .setOffset((s.width - bw / s.scaleX) / 2, (s.height - bh / s.scaleY) * 0.7);
 
       return {
-        sprite: s, hp: stat.hp, maxHp: stat.hp,
-        speed: stat.speed, name, color: stat.color, charKey: key,
-        atkDmg: stat.atkDmg, atkCdBase: stat.atkCd,
+        sprite: s,
+        hp: Math.round(stat.hp * hpScale), maxHp: Math.round(stat.hp * hpScale),
+        speed: Math.round(stat.speed * spdScale), name, color: stat.color, charKey: key,
+        atkDmg: Math.round(stat.atkDmg * dmgScale), atkCdBase: Math.round(stat.atkCd * cdScale),
         atkCd: 0, wanderVel: { x: 0, y: 0 }, wanderTimer: 0, alive: true, noHitTime: 0,
         dashUntil: 0, dashVx: 0, dashVy: 0,
       };
