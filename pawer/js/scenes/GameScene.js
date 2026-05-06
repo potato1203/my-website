@@ -166,6 +166,7 @@ class GameScene extends Phaser.Scene {
         speed: stat.speed, name, color: stat.color, charKey: key,
         atkDmg: stat.atkDmg, atkCdBase: stat.atkCd,
         atkCd: 0, wanderVel: { x: 0, y: 0 }, wanderTimer: 0, alive: true, noHitTime: 0,
+        dashUntil: 0, dashVx: 0, dashVy: 0,
       };
     });
   }
@@ -819,6 +820,9 @@ class GameScene extends Phaser.Scene {
             });
             this._showHammerSpin(bot.sprite.x, bot.sprite.y, atkRange);
           } else if (isCoch) {
+            bot.dashVx    = dx / nd * 680;
+            bot.dashVy    = dy / nd * 680;
+            bot.dashUntil = this.time.now + 190;
             if (target.isPlayer) this._hitPlayer(bot.atkDmg);
             else this._botHitBot(target.bot, bot, bot.atkDmg);
             this._showCochDash(bot.sprite.x, bot.sprite.y, dx / nd, dy / nd, Math.min(dist, 200));
@@ -841,6 +845,7 @@ class GameScene extends Phaser.Scene {
         bot.sprite.body.setVelocity(bot.wanderVel.x, bot.wanderVel.y);
       }
 
+      if (bot.dashUntil > this.time.now) bot.sprite.body.setVelocity(bot.dashVx, bot.dashVy);
       if (dx < 0) bot.sprite.setFlipX(true);
       else bot.sprite.setFlipX(false);
       bot.sprite.setDepth(5 + bot.sprite.y * 0.00001);

@@ -221,7 +221,7 @@ class SoccerScene extends Phaser.Scene {
         hp: 1600, maxHp: 1600, alive: true, noHitTime: 0,
         atkCd: 0, atkDmg: d.atkDmg, atkCdBase: d.atkCdBase,
         facing: { x: d.team === 0 ? 1 : -1, y: 0 },
-        pickupCd: 0,
+        pickupCd: 0, dashUntil: 0, dashVx: 0, dashVy: 0,
       };
     });
 
@@ -963,6 +963,9 @@ class SoccerScene extends Phaser.Scene {
             else this._hitBot(enemy.bot, bot.atkDmg, bot.sprite.x, bot.sprite.y);
             this._showHammerSpin(bot.sprite.x, bot.sprite.y, 100);
           } else if (bot.charKey === 'coch') {
+            bot.dashVx    = dx / nd * 680;
+            bot.dashVy    = dy / nd * 680;
+            bot.dashUntil = this.time.now + 190;
             if (enemy.isPlayer) this._hitPlayer(bot.atkDmg);
             else this._hitBot(enemy.bot, bot.atkDmg, bot.sprite.x, bot.sprite.y);
             this._showCochDash(bot.sprite.x, bot.sprite.y, dx / nd, dy / nd, Math.min(dist, 200));
@@ -1005,6 +1008,7 @@ class SoccerScene extends Phaser.Scene {
       }
 
       bot.sprite.body.setVelocity(vx, vy);
+      if (bot.dashUntil > this.time.now) bot.sprite.body.setVelocity(bot.dashVx, bot.dashVy);
       if (vx !== 0 || vy !== 0) {
         const spd = Math.hypot(vx, vy) || 1;
         bot.facing = { x: vx / spd, y: vy / spd };
