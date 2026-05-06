@@ -301,7 +301,7 @@ class SoccerScene extends Phaser.Scene {
     }).setOrigin(0.5).setScrollFactor(0).setDepth(101);
 
     const charDef  = window.PAWER_CHARS.find(c => c.key === this.player.charKey);
-    const icon     = { nix: '⚔️', fik: '💚', bigo: '🪓', dim: '🗡️', coch: '⚡' }[this.player.charKey] || '⚔️';
+    const icon     = { nix: '⚔️', fik: '💚', bigo: '🪓', dim: '🗡️', coch: '⚡', priti: '🌩️' }[this.player.charKey] || '⚔️';
     this.nixLabel  = this.add.text(0, 0, `${charDef?.name || ''} ${icon}`, {
       fontSize: '14px', color: '#ffffff', fontFamily: 'Arial', fontStyle: 'bold',
     }).setScrollFactor(0).setDepth(101).setOrigin(0.5, 1);
@@ -345,11 +345,12 @@ class SoccerScene extends Phaser.Scene {
     const p = this.player;
     if (!p.alive || p.atkCd > 0 || this.goalCooldown > 0) return;
     const ck = p.charKey;
-    if      (ck === 'fik')  this._doSlimeAttack();
-    else if (ck === 'bigo') this._doHammerAttack();
-    else if (ck === 'dim')  this._doDaggerAttack();
-    else if (ck === 'coch') this._doCochAttack();
-    else                    this._doSwordAttack();
+    if      (ck === 'fik')   this._doSlimeAttack();
+    else if (ck === 'bigo')  this._doHammerAttack();
+    else if (ck === 'dim')   this._doDaggerAttack();
+    else if (ck === 'coch')  this._doCochAttack();
+    else if (ck === 'priti') this._doPritiAttack();
+    else                     this._doSwordAttack();
   }
 
   _getAimDir() {
@@ -445,6 +446,87 @@ class SoccerScene extends Phaser.Scene {
     if (hitBots.size > 0) this.cameras.main.shake(120, 0.007);
 
     this._showCochDash(p.x, p.y, ax, ay, DASH_DIST);
+  }
+
+  _doPritiAttack() {
+    const p = this.player.sprite;
+    const { ax, ay } = this._getAimDir();
+    this.player.facing = { x: ax, y: ay };
+    this.player.atkCd  = 580;
+    this._kickBallIfCarrying(ax, ay);
+
+    const RANGE = 300, CHAIN_R = 200, CHAIN_N = 2;
+    let primary = null, bestDot = 0.4;
+    this.bots.forEach(bot => {
+      if (!bot.alive || bot.team === 0) return;
+      const dx = bot.sprite.x - p.x, dy = bot.sprite.y - p.y;
+      const dist = Math.hypot(dx, dy);
+      if (dist > RANGE) return;
+      const dot = (dx / dist) * ax + (dy / dist) * ay;
+      if (dot > bestDot) { bestDot = dot; primary = bot; }
+    });
+
+    if (!primary) {
+      this._showLightningBolt(p.x, p.y, p.x + ax * RANGE, p.y + ay * RANGE, false);
+      return;
+    }
+
+    this._hitBot(primary, 360);
+    this._showLightningBolt(p.x, p.y, primary.sprite.x, primary.sprite.y, true);
+
+    const hit = new Set([primary]);
+    let last = primary;
+    for (let c = 0; c < CHAIN_N; c++) {
+      let next = null, nearestD = CHAIN_R;
+      this.bots.forEach(bot => {
+        if (!bot.alive || bot.team === 0 || hit.has(bot)) return;
+        const d = Math.hypot(bot.sprite.x - last.sprite.x, bot.sprite.y - last.sprite.y);
+        if (d < nearestD) { nearestD = d; next = bot; }
+      });
+      if (!next) break;
+      hit.add(next); this._hitBot(next, 220);
+      this._showLightningBolt(last.sprite.x, last.sprite.y, next.sprite.x, next.sprite.y, true);
+      last = next;
+    }
+    this.cameras.main.shake(70, 0.003);
+  }
+
+  _showLightningBolt(x1, y1, x2, y2, impact) {
+    const g    = this.add.graphics().setDepth(9);
+    const dx   = x2 - x1, dy = y2 - y1;
+    const len  = Math.hypot(dx, dy) || 1;
+    const jit  = Math.min(28, len * 0.18);
+    const ppx  = -dy / len, ppy = dx / len;
+    const SEGS = 10;
+    const pts  = [{ x: x1, y: y1 }];
+    for (let i = 1; i < SEGS; i++) {
+      const t = i / SEGS, off = (Math.random() - 0.5) * 2 * jit;
+      pts.push({ x: x1 + dx * t + ppx * off, y: y1 + dy * t + ppy * off });
+    }
+    pts.push({ x: x2, y: y2 });
+
+    g.lineStyle(5, 0x6655ff, 0.6);
+    for (let i = 0; i < pts.length - 1; i++) g.lineBetween(pts[i].x, pts[i].y, pts[i+1].x, pts[i+1].y);
+    g.lineStyle(2, 0xeeeeff, 1);
+    for (let i = 0; i < pts.length - 1; i++) g.lineBetween(pts[i].x, pts[i].y, pts[i+1].x, pts[i+1].y);
+
+    if (impact) {
+      g.fillStyle(0xaaaaff, 0.8); g.fillCircle(x2, y2, 13);
+      g.fillStyle(0xffffff, 1);   g.fillCircle(x2, y2, 5);
+      for (let i = 0; i < 6; i++) {
+        const angle = (i / 6) * Math.PI * 2;
+        const c = this.add.circle(x2, y2, 3 + Math.random() * 3, 0x8888ff).setDepth(9);
+        this.tweens.add({
+          targets: c,
+          x: x2 + Math.cos(angle) * (18 + Math.random() * 18),
+          y: y2 + Math.sin(angle) * (18 + Math.random() * 18),
+          alpha: 0, scaleX: 0, scaleY: 0,
+          duration: 200 + Math.random() * 100,
+          onComplete: () => c.destroy(),
+        });
+      }
+    }
+    this.tweens.add({ targets: g, alpha: 0, duration: 320, onComplete: () => g.destroy() });
   }
 
   _showCochDash(px, py, ax, ay, dist) {
@@ -856,7 +938,7 @@ class SoccerScene extends Phaser.Scene {
         const ex = enemy.isPlayer ? this.player.sprite.x : enemy.bot.sprite.x;
         const ey = enemy.isPlayer ? this.player.sprite.y : enemy.bot.sprite.y;
         const dist = Math.hypot(ex - bot.sprite.x, ey - bot.sprite.y);
-        const isRanged = bot.charKey === 'fik' || bot.charKey === 'dim';
+        const isRanged = bot.charKey === 'fik' || bot.charKey === 'dim' || bot.charKey === 'priti';
         const atkRange = isRanged ? 190 : bot.charKey === 'bigo' ? 100 : bot.charKey === 'coch' ? 200 : 65;
 
         if (dist < atkRange) {
@@ -872,6 +954,8 @@ class SoccerScene extends Phaser.Scene {
           if (isRanged) {
             const opts = bot.charKey === 'dim'
               ? { speed: 640, color: 0xccccdd, gcolor: 0xffffff, radius: 5, maxDist: 270, splatColor: 0xaaaacc, hitRadius: 24 }
+              : bot.charKey === 'priti'
+              ? { speed: 480, color: 0x6655ff, gcolor: 0xddddff, radius: 6, maxDist: 300, splatColor: 0x9999ff }
               : {};
             this._spawnProjectile(bot.sprite.x, bot.sprite.y, dx / nd, dy / nd, bot.atkDmg, bot.team, opts, bot);
           } else if (bot.charKey === 'bigo') {
