@@ -179,6 +179,7 @@ class SoccerScene extends Phaser.Scene {
       hp: 3000, maxHp: 3000, atkCd: 0, facing: { x: 1, y: 0 },
       alive: true, noHitTime: 0,
       dashUntil: 0, dashVx: 0, dashVy: 0,
+      pickupCd: 0,
     };
 
     const playerName = window.PAWER_SAVE.getName() || 'שחקן';
@@ -762,6 +763,7 @@ class SoccerScene extends Phaser.Scene {
     b.carrier = null;
     b.vx = ax * 820;
     b.vy = ay * 820;
+    this.player.pickupCd = 550;
   }
 
   // ─── PLAYER UPDATE ───────────────────────────────────────────────────────────
@@ -769,6 +771,7 @@ class SoccerScene extends Phaser.Scene {
   _updatePlayer(delta) {
     const p = this.player;
     p.atkCd     = Math.max(0, p.atkCd - delta);
+    p.pickupCd  = Math.max(0, p.pickupCd - delta);
     p.noHitTime += delta;
     if (p.noHitTime > 3000 && p.hp < p.maxHp)
       p.hp = Math.min(p.maxHp, p.hp + 150 * delta / 1000);
@@ -803,7 +806,7 @@ class SoccerScene extends Phaser.Scene {
     this.playerNameText.setPosition(p.sprite.x, p.sprite.y - p.sprite.displayHeight / 2 - 6);
     this.playerRing.setPosition(p.sprite.x, p.sprite.y);
     const pb = this.ball;
-    if (!pb.carrier && Math.hypot(pb.x - p.sprite.x, pb.y - p.sprite.y) < 38 + pb.r) {
+    if (!pb.carrier && p.pickupCd <= 0 && Math.hypot(pb.x - p.sprite.x, pb.y - p.sprite.y) < 38 + pb.r) {
       pb.carrier = { type: 'player' };
     }
   }
