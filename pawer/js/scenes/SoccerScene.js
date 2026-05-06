@@ -221,6 +221,7 @@ class SoccerScene extends Phaser.Scene {
         hp: 1600, maxHp: 1600, alive: true, noHitTime: 0,
         atkCd: 0, atkDmg: d.atkDmg, atkCdBase: d.atkCdBase,
         facing: { x: d.team === 0 ? 1 : -1, y: 0 },
+        pickupCd: 0,
       };
     });
 
@@ -591,6 +592,7 @@ class SoccerScene extends Phaser.Scene {
     bot.hp    = 0;
     bot.sprite.setVisible(false);
     this.botRings[this.bots.indexOf(bot)]?.setVisible(false);
+    if (this.ball.carrier?.type === 'bot' && this.ball.carrier.bot === bot) this.ball.carrier = null;
     this._burstEffect(bot.sprite.x, bot.sprite.y, bot.color);
     const idx = this.bots.indexOf(bot);
     this.time.delayedCall(3500, () => this._respawnBot(bot, idx));
@@ -689,11 +691,13 @@ class SoccerScene extends Phaser.Scene {
     const W = this.W, H = this.H;
 
     if (b.carrier) {
-      if (!this.player.alive) {
+      const isPlayer = b.carrier.type === 'player';
+      const alive    = isPlayer ? this.player.alive : b.carrier.bot.alive;
+      if (!alive) {
         b.carrier = null;
       } else {
-        const spr = this.player.sprite;
-        const fac = this.player.facing;
+        const spr = isPlayer ? this.player.sprite : b.carrier.bot.sprite;
+        const fac = isPlayer ? this.player.facing  : b.carrier.bot.facing;
         b.x = spr.x + (fac.x || 1) * 28;
         b.y = spr.y + (fac.y || 0) * 28;
         b.vx = 0; b.vy = 0;
@@ -834,7 +838,8 @@ class SoccerScene extends Phaser.Scene {
 
     this.bots.forEach((bot, i) => {
       if (!bot.alive) return;
-      bot.atkCd = Math.max(0, bot.atkCd - delta);
+      bot.atkCd    = Math.max(0, bot.atkCd - delta);
+      bot.pickupCd = Math.max(0, bot.pickupCd - delta);
       bot.noHitTime += delta;
       if (bot.noHitTime > 3000 && bot.hp < bot.maxHp)
         bot.hp = Math.min(bot.maxHp, bot.hp + 150 * delta / 1000);
@@ -852,6 +857,13 @@ class SoccerScene extends Phaser.Scene {
 
         if (dist < atkRange) {
           bot.atkCd = bot.atkCdBase;
+          if (ball.carrier?.type === 'bot' && ball.carrier.bot === bot) {
+            ball.carrier = null; bot.pickupCd = 550;
+            const goalX0 = bot.team === 0 ? W - 160 : 160;
+            const kx = goalX0 - ball.x, ky = H / 2 - ball.y;
+            const kd = Math.hypot(kx, ky) || 1;
+            ball.vx = (kx / kd) * 820; ball.vy = (ky / kd) * 820;
+          }
           const dx = ex - bot.sprite.x, dy = ey - bot.sprite.y, nd = dist || 1;
           if (isRanged) {
             const opts = bot.charKey === 'dim'
@@ -873,24 +885,43 @@ class SoccerScene extends Phaser.Scene {
         }
       }
 
-      // Movement: chase ball or move toward enemy
+      // Movement: carry toward goal, chase ball, or chase enemy
       const goalX = bot.team === 0 ? W - 160 : 160;
-      const dBx   = ball.x - bot.sprite.x, dBy = ball.y - bot.sprite.y;
-      const distB = Math.hypot(dBx, dBy);
       let vx, vy;
 
-      if (distB < 50) {
+      if (ball.carrier?.type === 'bot' && ball.carrier.bot === bot) {
+        // Carrying — run toward goal, kick when close enough
         const dgx = goalX - bot.sprite.x, dgy = H / 2 - bot.sprite.y;
         const dg  = Math.hypot(dgx, dgy) || 1;
         vx = (dgx / dg) * bot.speed; vy = (dgy / dg) * bot.speed;
-        this._tryKickBall(bot.sprite.x, bot.sprite.y, vx, vy, 50);
+        if (Math.abs(bot.sprite.x - goalX) < 380) {
+          ball.carrier = null; bot.pickupCd = 550;
+          ball.vx = (dgx / dg) * 820; ball.vy = (dgy / dg) * 820;
+        }
       } else {
-        const nd = distB || 1;
-        vx = (dBx / nd) * bot.speed; vy = (dBy / nd) * bot.speed;
+        const dBx = ball.x - bot.sprite.x, dBy = ball.y - bot.sprite.y;
+        const distB = Math.hypot(dBx, dBy);
+        if (distB < 50 && !ball.carrier) {
+          const dgx = goalX - bot.sprite.x, dgy = H / 2 - bot.sprite.y;
+          const dg  = Math.hypot(dgx, dgy) || 1;
+          vx = (dgx / dg) * bot.speed; vy = (dgy / dg) * bot.speed;
+          this._tryKickBall(bot.sprite.x, bot.sprite.y, vx, vy, 50);
+        } else {
+          const nd = distB || 1;
+          vx = (dBx / nd) * bot.speed; vy = (dBy / nd) * bot.speed;
+        }
+        if (!ball.carrier && bot.pickupCd <= 0 &&
+            Math.hypot(ball.x - bot.sprite.x, ball.y - bot.sprite.y) < 40 + ball.r) {
+          ball.carrier = { type: 'bot', bot };
+        }
       }
 
       bot.sprite.body.setVelocity(vx, vy);
-      if (vx !== 0) bot.sprite.setFlipX(vx < 0);
+      if (vx !== 0 || vy !== 0) {
+        const spd = Math.hypot(vx, vy) || 1;
+        bot.facing = { x: vx / spd, y: vy / spd };
+        bot.sprite.setFlipX(vx < 0);
+      }
 
       this.botNameTxts[i].setPosition(bot.sprite.x, bot.sprite.y - bot.sprite.displayHeight / 2 - 6);
       this.botRings[i].setPosition(bot.sprite.x, bot.sprite.y);
