@@ -747,16 +747,14 @@ class GameScene extends Phaser.Scene {
         const dx   = this.player.sprite.x - bot.sprite.x;
         const dy   = this.player.sprite.y - bot.sprite.y;
         const dist = Math.hypot(dx, dy);
-        const isRanged  = bot.charKey === 'fik' || bot.charKey === 'dim' || bot.charKey === 'priti';
-        const atkRange  = isRanged ? 190 : bot.charKey === 'bigo' ? 100 : bot.charKey === 'coch' ? 200 : 65;
+        const isRanged  = bot.charKey === 'fik' || bot.charKey === 'dim';
+        const atkRange  = isRanged ? 190 : bot.charKey === 'bigo' ? 100 : (bot.charKey === 'coch' || bot.charKey === 'priti') ? 200 : 65;
         if (dist < atkRange) {
           bot.atkCd = bot.atkCdBase;
           const nd = dist || 1;
           if (isRanged) {
             const opts = bot.charKey === 'dim'
               ? { speed: 640, color: 0xccccdd, gcolor: 0xffffff, radius: 5, maxDist: 270, splatColor: 0xaaaacc, hitRadius: 24 }
-              : bot.charKey === 'priti'
-              ? { speed: 480, color: 0x6655ff, gcolor: 0xddddff, radius: 6, maxDist: 300, splatColor: 0x9999ff }
               : {};
             this._spawnProjectile(bot.sprite.x, bot.sprite.y, dx / nd, dy / nd, bot.atkDmg, false, bot, opts);
           } else if (bot.charKey === 'bigo') {
@@ -765,6 +763,9 @@ class GameScene extends Phaser.Scene {
           } else if (bot.charKey === 'coch') {
             this._hitPlayer(bot.atkDmg);
             this._showCochDash(bot.sprite.x, bot.sprite.y, dx / nd, dy / nd, Math.min(dist, 200));
+          } else if (bot.charKey === 'priti') {
+            this._hitPlayer(bot.atkDmg);
+            this._showLightningBolt(bot.sprite.x, bot.sprite.y, this.player.sprite.x, this.player.sprite.y, true);
           } else {
             this._hitPlayer(bot.atkDmg);
             this._showBotAtk(bot, this.player.sprite.x, this.player.sprite.y);
@@ -800,10 +801,11 @@ class GameScene extends Phaser.Scene {
       const dy   = target.y - bot.sprite.y;
       const dist = Math.hypot(dx, dy);
 
-      const isRanged  = bot.charKey === 'fik' || bot.charKey === 'dim' || bot.charKey === 'priti';
+      const isRanged  = bot.charKey === 'fik' || bot.charKey === 'dim';
       const isAoE     = bot.charKey === 'bigo';
       const isCoch    = bot.charKey === 'coch';
-      const atkRange  = isRanged ? 190 : isAoE ? 100 : isCoch ? 200 : 65;
+      const isPriti   = bot.charKey === 'priti';
+      const atkRange  = isRanged ? 190 : isAoE ? 100 : (isCoch || isPriti) ? 200 : 65;
       const stopRange = isRanged ? 110 : atkRange;
 
       if (dist < atkRange) {
@@ -814,10 +816,37 @@ class GameScene extends Phaser.Scene {
           if (isRanged) {
             const opts = bot.charKey === 'dim'
               ? { speed: 640, color: 0xccccdd, gcolor: 0xffffff, radius: 5, maxDist: 270, splatColor: 0xaaaacc, hitRadius: 24 }
-              : bot.charKey === 'priti'
-              ? { speed: 480, color: 0x6655ff, gcolor: 0xddddff, radius: 6, maxDist: 300, splatColor: 0x9999ff }
               : {};
             this._spawnProjectile(bot.sprite.x, bot.sprite.y, dx / nd, dy / nd, bot.atkDmg, false, bot, opts);
+          } else if (isPriti) {
+            if (target.isPlayer) this._hitPlayer(bot.atkDmg);
+            else this._botHitBot(target.bot, bot, bot.atkDmg);
+            this._showLightningBolt(bot.sprite.x, bot.sprite.y, target.x, target.y, true);
+            const chainDmg = Math.round(bot.atkDmg * 0.6);
+            const hitEnt = new Set(target.isPlayer ? [] : [target.bot]);
+            let lx = target.x, ly = target.y;
+            for (let c = 0; c < 2; c++) {
+              let nextBot = null, minD = 200, chainPlayer = false;
+              this.bots.forEach(other => {
+                if (!other.alive || hitEnt.has(other)) return;
+                const d = Math.hypot(other.sprite.x - lx, other.sprite.y - ly);
+                if (d < minD) { minD = d; nextBot = other; }
+              });
+              if (this.player.alive && !target.isPlayer) {
+                const dp = Math.hypot(this.player.sprite.x - lx, this.player.sprite.y - ly);
+                if (dp < minD) { nextBot = null; chainPlayer = true; }
+              }
+              if (chainPlayer) {
+                this._hitPlayer(chainDmg);
+                this._showLightningBolt(lx, ly, this.player.sprite.x, this.player.sprite.y, true);
+                break;
+              } else if (nextBot) {
+                hitEnt.add(nextBot);
+                this._botHitBot(nextBot, bot, chainDmg);
+                this._showLightningBolt(lx, ly, nextBot.sprite.x, nextBot.sprite.y, true);
+                lx = nextBot.sprite.x; ly = nextBot.sprite.y;
+              } else break;
+            }
           } else if (isAoE) {
             // Bigo: AoE hit all in range
             if (target.isPlayer) this._hitPlayer(bot.atkDmg);

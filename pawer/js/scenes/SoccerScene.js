@@ -945,8 +945,9 @@ class SoccerScene extends Phaser.Scene {
         const ex = enemy.isPlayer ? this.player.sprite.x : enemy.bot.sprite.x;
         const ey = enemy.isPlayer ? this.player.sprite.y : enemy.bot.sprite.y;
         const dist = Math.hypot(ex - bot.sprite.x, ey - bot.sprite.y);
-        const isRanged = bot.charKey === 'fik' || bot.charKey === 'dim' || bot.charKey === 'priti';
-        const atkRange = isRanged ? 190 : bot.charKey === 'bigo' ? 100 : bot.charKey === 'coch' ? 200 : 65;
+        const isRanged = bot.charKey === 'fik' || bot.charKey === 'dim';
+        const isPriti  = bot.charKey === 'priti';
+        const atkRange = isRanged ? 190 : bot.charKey === 'bigo' ? 100 : (bot.charKey === 'coch' || isPriti) ? 200 : 65;
 
         if (dist < atkRange) {
           bot.atkCd = bot.atkCdBase;
@@ -961,10 +962,37 @@ class SoccerScene extends Phaser.Scene {
           if (isRanged) {
             const opts = bot.charKey === 'dim'
               ? { speed: 640, color: 0xccccdd, gcolor: 0xffffff, radius: 5, maxDist: 270, splatColor: 0xaaaacc, hitRadius: 24 }
-              : bot.charKey === 'priti'
-              ? { speed: 480, color: 0x6655ff, gcolor: 0xddddff, radius: 6, maxDist: 300, splatColor: 0x9999ff }
               : {};
             this._spawnProjectile(bot.sprite.x, bot.sprite.y, dx / nd, dy / nd, bot.atkDmg, bot.team, opts, bot);
+          } else if (isPriti) {
+            if (enemy.isPlayer) this._hitPlayer(bot.atkDmg);
+            else this._hitBot(enemy.bot, bot.atkDmg, bot.sprite.x, bot.sprite.y);
+            this._showLightningBolt(bot.sprite.x, bot.sprite.y, ex, ey, true);
+            const chainDmg = Math.round(bot.atkDmg * 0.6);
+            const hitEnt = new Set(enemy.isPlayer ? [] : [enemy.bot]);
+            let lx = ex, ly = ey;
+            for (let c = 0; c < 2; c++) {
+              let nextTarget = null, minD = 200, chainPlayer = false;
+              this.bots.forEach(other => {
+                if (!other.alive || hitEnt.has(other) || other.team === bot.team) return;
+                const d = Math.hypot(other.sprite.x - lx, other.sprite.y - ly);
+                if (d < minD) { minD = d; nextTarget = other; }
+              });
+              if (bot.team === 1 && this.player.alive && !enemy.isPlayer) {
+                const dp = Math.hypot(this.player.sprite.x - lx, this.player.sprite.y - ly);
+                if (dp < minD) { nextTarget = null; chainPlayer = true; }
+              }
+              if (chainPlayer) {
+                this._hitPlayer(chainDmg);
+                this._showLightningBolt(lx, ly, this.player.sprite.x, this.player.sprite.y, true);
+                break;
+              } else if (nextTarget) {
+                hitEnt.add(nextTarget);
+                this._hitBot(nextTarget, chainDmg, lx, ly);
+                this._showLightningBolt(lx, ly, nextTarget.sprite.x, nextTarget.sprite.y, true);
+                lx = nextTarget.sprite.x; ly = nextTarget.sprite.y;
+              } else break;
+            }
           } else if (bot.charKey === 'bigo') {
             if (enemy.isPlayer) this._hitPlayer(bot.atkDmg);
             else this._hitBot(enemy.bot, bot.atkDmg, bot.sprite.x, bot.sprite.y);
