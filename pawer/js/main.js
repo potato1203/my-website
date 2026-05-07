@@ -1,10 +1,16 @@
 // ─── Translation system ───────────────────────────────────────────────────────
+const _TRANS_KEY = 'pawer_trans2_'; // bump suffix to invalidate old caches
 window.PAWER_LANG = localStorage.getItem('pawer_lang') || 'iw';
 window.PAWER_TRANSLATIONS = {};
 try {
-  const _s = localStorage.getItem('pawer_trans_' + window.PAWER_LANG);
+  const _s = localStorage.getItem(_TRANS_KEY + window.PAWER_LANG);
   if (_s) window.PAWER_TRANSLATIONS = JSON.parse(_s);
 } catch(e) {}
+// If a non-Hebrew language is set but the cache is empty (stale), fall back to Hebrew
+if (window.PAWER_LANG !== 'iw' && Object.keys(window.PAWER_TRANSLATIONS).length === 0) {
+  localStorage.setItem('pawer_lang', 'iw');
+  window.PAWER_LANG = 'iw';
+}
 window.T = function(text) {
   if (!text || window.PAWER_LANG === 'iw') return text;
   return window.PAWER_TRANSLATIONS[text] || text;
@@ -158,7 +164,7 @@ window.PAWER_fetchTranslations = async function(langCode, onProgress) {
     }));
     if (onProgress) onProgress(Math.min((i + BATCH) / strings.length, 1));
   }
-  localStorage.setItem('pawer_trans_' + langCode, JSON.stringify(dict));
+  localStorage.setItem(_TRANS_KEY + langCode, JSON.stringify(dict));
   return dict;
 };
 
