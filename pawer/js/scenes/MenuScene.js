@@ -933,7 +933,7 @@ class MenuScene extends Phaser.Scene {
     pool.push(backdrop);
 
     const panelW = Math.min(w * 0.85, 460);
-    const panelH = 320;
+    const panelH = 370;
     pool.push(this.add.rectangle(w / 2, h / 2, panelW, panelH, 0x0a1a33, 1)
       .setDepth(81).setStrokeStyle(2, 0x3366aa));
 
@@ -973,6 +973,14 @@ class MenuScene extends Phaser.Scene {
     resetBtn.on('pointerdown', () => {
       pool.forEach(o => o.destroy());
       this._openResetConfirm(w, h);
+    });
+
+    // Language button
+    const langBtn = this._settingsBtn(w / 2, h / 2 + 130, '🌐  שינוי שפה', '#114433', 82);
+    pool.push(langBtn);
+    langBtn.on('pointerdown', () => {
+      pool.forEach(o => o.destroy());
+      this._openLanguageSelect(w, h);
     });
   }
 
@@ -1069,6 +1077,193 @@ class MenuScene extends Phaser.Scene {
       this.cameras.main.fade(400, 0, 0, 0);
       this.time.delayedCall(400, () => this.scene.start('SetupScene'));
     });
+  }
+
+  _openLanguageSelect(w, h) {
+    const LANGS = [
+      { code: 'af', name: 'Afrikaans' },       { code: 'sq', name: 'Albanian' },
+      { code: 'am', name: 'Amharic' },          { code: 'ar', name: 'Arabic' },
+      { code: 'hy', name: 'Armenian' },         { code: 'az', name: 'Azerbaijani' },
+      { code: 'eu', name: 'Basque' },           { code: 'be', name: 'Belarusian' },
+      { code: 'bn', name: 'Bengali' },          { code: 'bs', name: 'Bosnian' },
+      { code: 'bg', name: 'Bulgarian' },        { code: 'ca', name: 'Catalan' },
+      { code: 'ceb', name: 'Cebuano' },         { code: 'zh-CN', name: 'Chinese (Simplified)' },
+      { code: 'zh-TW', name: 'Chinese (Traditional)' }, { code: 'co', name: 'Corsican' },
+      { code: 'hr', name: 'Croatian' },         { code: 'cs', name: 'Czech' },
+      { code: 'da', name: 'Danish' },           { code: 'nl', name: 'Dutch' },
+      { code: 'en', name: 'English' },          { code: 'eo', name: 'Esperanto' },
+      { code: 'et', name: 'Estonian' },         { code: 'tl', name: 'Filipino' },
+      { code: 'fi', name: 'Finnish' },          { code: 'fr', name: 'French' },
+      { code: 'fy', name: 'Frisian' },          { code: 'gl', name: 'Galician' },
+      { code: 'ka', name: 'Georgian' },         { code: 'de', name: 'German' },
+      { code: 'el', name: 'Greek' },            { code: 'gu', name: 'Gujarati' },
+      { code: 'ht', name: 'Haitian Creole' },   { code: 'ha', name: 'Hausa' },
+      { code: 'haw', name: 'Hawaiian' },        { code: 'iw', name: 'Hebrew' },
+      { code: 'hi', name: 'Hindi' },            { code: 'hmn', name: 'Hmong' },
+      { code: 'hu', name: 'Hungarian' },        { code: 'is', name: 'Icelandic' },
+      { code: 'ig', name: 'Igbo' },             { code: 'id', name: 'Indonesian' },
+      { code: 'ga', name: 'Irish' },            { code: 'it', name: 'Italian' },
+      { code: 'ja', name: 'Japanese' },         { code: 'jw', name: 'Javanese' },
+      { code: 'kn', name: 'Kannada' },          { code: 'kk', name: 'Kazakh' },
+      { code: 'km', name: 'Khmer' },            { code: 'rw', name: 'Kinyarwanda' },
+      { code: 'ko', name: 'Korean' },           { code: 'ku', name: 'Kurdish' },
+      { code: 'ky', name: 'Kyrgyz' },           { code: 'lo', name: 'Lao' },
+      { code: 'la', name: 'Latin' },            { code: 'lv', name: 'Latvian' },
+      { code: 'lt', name: 'Lithuanian' },       { code: 'lb', name: 'Luxembourgish' },
+      { code: 'mk', name: 'Macedonian' },       { code: 'mg', name: 'Malagasy' },
+      { code: 'ms', name: 'Malay' },            { code: 'ml', name: 'Malayalam' },
+      { code: 'mt', name: 'Maltese' },          { code: 'mi', name: 'Maori' },
+      { code: 'mr', name: 'Marathi' },          { code: 'mn', name: 'Mongolian' },
+      { code: 'my', name: 'Myanmar (Burmese)' }, { code: 'ne', name: 'Nepali' },
+      { code: 'no', name: 'Norwegian' },        { code: 'ny', name: 'Nyanja' },
+      { code: 'or', name: 'Odia (Oriya)' },     { code: 'ps', name: 'Pashto' },
+      { code: 'fa', name: 'Persian' },          { code: 'pl', name: 'Polish' },
+      { code: 'pt', name: 'Portuguese' },       { code: 'pa', name: 'Punjabi' },
+      { code: 'ro', name: 'Romanian' },         { code: 'ru', name: 'Russian' },
+      { code: 'sm', name: 'Samoan' },           { code: 'gd', name: 'Scots Gaelic' },
+      { code: 'sr', name: 'Serbian' },          { code: 'st', name: 'Sesotho' },
+      { code: 'sn', name: 'Shona' },            { code: 'sd', name: 'Sindhi' },
+      { code: 'si', name: 'Sinhala' },          { code: 'sk', name: 'Slovak' },
+      { code: 'sl', name: 'Slovenian' },        { code: 'so', name: 'Somali' },
+      { code: 'es', name: 'Spanish' },          { code: 'su', name: 'Sundanese' },
+      { code: 'sw', name: 'Swahili' },          { code: 'sv', name: 'Swedish' },
+      { code: 'tg', name: 'Tajik' },            { code: 'ta', name: 'Tamil' },
+      { code: 'tt', name: 'Tatar' },            { code: 'te', name: 'Telugu' },
+      { code: 'th', name: 'Thai' },             { code: 'tr', name: 'Turkish' },
+      { code: 'tk', name: 'Turkmen' },          { code: 'uk', name: 'Ukrainian' },
+      { code: 'ur', name: 'Urdu' },             { code: 'ug', name: 'Uyghur' },
+      { code: 'uz', name: 'Uzbek' },            { code: 'vi', name: 'Vietnamese' },
+      { code: 'cy', name: 'Welsh' },            { code: 'xh', name: 'Xhosa' },
+      { code: 'yi', name: 'Yiddish' },          { code: 'yo', name: 'Yoruba' },
+      { code: 'zu', name: 'Zulu' },
+    ];
+
+    const pool = [];
+    const backdrop = this.add.rectangle(w / 2, h / 2, w, h, 0x000011, 0.88).setDepth(83).setInteractive();
+    pool.push(backdrop);
+
+    const panelW = Math.min(w * 0.95, 720);
+    const panelH = Math.min(h * 0.88, 520);
+    pool.push(this.add.rectangle(w / 2, h / 2, panelW, panelH, 0x07111f, 1).setDepth(84).setStrokeStyle(2, 0x227744));
+
+    pool.push(this.add.text(w / 2, h / 2 - panelH / 2 + 26, '🌐  שינוי שפה', {
+      fontSize: '21px', color: '#ffffff', fontFamily: 'Arial Black, Arial', fontStyle: 'bold',
+    }).setOrigin(0.5).setDepth(85));
+    pool.push(this.add.rectangle(w / 2, h / 2 - panelH / 2 + 48, panelW - 40, 1, 0x224433).setDepth(85));
+
+    const closeBtn = this.add.text(w / 2 + panelW / 2 - 14, h / 2 - panelH / 2 + 18, '✕', {
+      fontSize: '20px', color: '#aabbcc', fontFamily: 'Arial', fontStyle: 'bold',
+    }).setOrigin(1, 0.5).setDepth(86).setInteractive({ useHandCursor: true });
+    pool.push(closeBtn);
+    closeBtn.on('pointerover', () => closeBtn.setStyle({ color: '#ffffff' }));
+    closeBtn.on('pointerout',  () => closeBtn.setStyle({ color: '#aabbcc' }));
+
+    // Search input
+    const searchY = h / 2 - panelH / 2 + 74;
+    pool.push(this.add.text(w / 2 - panelW / 2 + 20, searchY, '🔍', { fontSize: '14px' })
+      .setOrigin(0, 0.5).setDepth(86));
+    const searchInput = this._makeHTMLInput(w, h, searchY);
+    searchInput.placeholder = 'Search language...';
+    searchInput.dir = 'ltr';
+    pool.push({ destroy: () => { if (document.body.contains(searchInput)) document.body.removeChild(searchInput); } });
+
+    // Scrollable grid
+    const HEADER   = 100;
+    const COLS     = 3;
+    const PAD      = 14;
+    const COL_GAP  = 8;
+    const ROW_H    = 36;
+    const ROW_GAP  = 5;
+    const pLeft    = w / 2 - panelW / 2;
+    const scrollTop = h / 2 - panelH / 2 + HEADER;
+    const scrollH   = panelH - HEADER - 8;
+    const colW      = Math.floor((panelW - PAD * 2 - (COLS - 1) * COL_GAP) / COLS);
+
+    const maskGfx = this.make.graphics({ add: false });
+    maskGfx.fillRect(pLeft, scrollTop, panelW, scrollH);
+    const mask = maskGfx.createGeometryMask();
+    const cnt  = this.add.container(0, 0).setDepth(85);
+    cnt.setMask(mask);
+    pool.push(cnt);
+
+    let closed = false, maxScroll = 0, scrollY = 0;
+    let dragY0 = null, scroll0 = 0, isDragging = false;
+
+    const closeAll = () => {
+      if (closed) return; closed = true;
+      this.input.off('pointerdown', onDragStart);
+      this.input.off('pointermove', onDragMove);
+      this.input.off('pointerup',   onDragEnd);
+      pool.forEach(o => o.destroy());
+      maskGfx.destroy();
+    };
+    closeBtn.on('pointerdown', closeAll);
+    backdrop.on('pointerdown', closeAll);
+
+    const buildList = (filter) => {
+      cnt.list.slice().forEach(o => o.destroy());
+      const list = filter
+        ? LANGS.filter(l => l.name.toLowerCase().includes(filter.toLowerCase()))
+        : LANGS;
+
+      list.forEach((lang, i) => {
+        const col = i % COLS;
+        const row = Math.floor(i / COLS);
+        const cx  = pLeft + PAD + col * (colW + COL_GAP) + colW / 2;
+        const cy  = scrollTop + ROW_GAP + row * (ROW_H + ROW_GAP) + ROW_H / 2;
+
+        const saved = localStorage.getItem('pawer_lang');
+        const isActive = saved === lang.code;
+
+        const bg = this.add.rectangle(cx, cy, colW, ROW_H, isActive ? 0x1a4a2a : 0x0e1e30, 1)
+          .setDepth(85).setStrokeStyle(1, isActive ? 0x44cc66 : 0x223344);
+        cnt.add(bg);
+
+        const txt = this.add.text(cx, cy, lang.name, {
+          fontSize: '12px', color: isActive ? '#88ffaa' : '#ccddee',
+          fontFamily: 'Arial', fontStyle: isActive ? 'bold' : 'normal',
+        }).setOrigin(0.5).setDepth(86);
+        cnt.add(txt);
+
+        bg.setInteractive({ useHandCursor: true });
+        bg.on('pointerover', () => { if (!isActive) bg.setFillStyle(0x152a40); });
+        bg.on('pointerout',  () => { bg.setFillStyle(isActive ? 0x1a4a2a : 0x0e1e30); });
+        bg.on('pointerup', () => {
+          if (closed || isDragging) return;
+          if (typeof window.PAWER_setLang === 'function') window.PAWER_setLang(lang.code);
+          closeAll();
+          this._openSettings(w, h);
+        });
+      });
+
+      const rows = Math.ceil(list.length / COLS);
+      const contentH = rows * (ROW_H + ROW_GAP) + ROW_GAP;
+      maxScroll = Math.max(0, contentH - scrollH);
+      scrollY = 0;
+      cnt.setY(0);
+    };
+
+    buildList('');
+    searchInput.addEventListener('input', () => { if (!closed) buildList(searchInput.value); });
+
+    const onDragStart = (ptr) => {
+      if (closed) return;
+      if (ptr.y >= scrollTop && ptr.y <= h / 2 + panelH / 2 && ptr.x >= pLeft && ptr.x <= pLeft + panelW)
+        { dragY0 = ptr.y; scroll0 = scrollY; isDragging = false; }
+    };
+    const onDragMove = (ptr) => {
+      if (closed || dragY0 === null) return;
+      const dy = ptr.y - dragY0;
+      if (Math.abs(dy) > 6) isDragging = true;
+      if (!isDragging) return;
+      scrollY = Phaser.Math.Clamp(scroll0 - dy, 0, maxScroll);
+      cnt.setY(-scrollY);
+    };
+    const onDragEnd = () => { if (!closed) { dragY0 = null; this.time.delayedCall(50, () => { isDragging = false; }); } };
+
+    this.input.on('pointerdown', onDragStart);
+    this.input.on('pointermove', onDragMove);
+    this.input.on('pointerup',   onDragEnd);
   }
 
   _makeHTMLInput(w, h, canvasY) {

@@ -55,6 +55,11 @@
       #rotate-msg     { display: flex; }
       #game-container { display: none; }
     }
+
+    /* ── Hide Google Translate toolbar ── */
+    .goog-te-banner-frame { display: none !important; }
+    body { top: 0 !important; }
+    #goog-gt-tt, .goog-te-balloon-frame { display: none !important; }
   </style>
 </head>
 <body>
@@ -64,6 +69,9 @@
     <p>PAWER עובד בצורה הטובה ביותר במצב לרוחב</p>
   </div>
 
+  <!-- Hidden Google Translate widget -->
+  <div id="google_translate_element" style="display:none;position:fixed;top:0;left:0;z-index:0"></div>
+
   <div id="game-container"></div>
 
   <script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"></script>
@@ -72,12 +80,46 @@
   <script src="js/ui/MobileControls.js?v=1"></script>
   <script src="js/scenes/PreloadScene.js?v=7"></script>
 <script src="js/scenes/SetupScene.js?v=1"></script>
-  <script src="js/scenes/MenuScene.js?v=9"></script>
+  <script src="js/scenes/MenuScene.js?v=10"></script>
   <script src="js/scenes/GameScene.js?v=13"></script>
   <script src="js/scenes/SoccerScene.js?v=17"></script>
   <script src="js/main.js?v=7"></script>
   <script>
     if (screen.orientation?.lock) screen.orientation.lock('landscape').catch(() => {});
   </script>
+
+  <!-- Google Translate init -->
+  <script>
+    function googleTranslateElementInit() {
+      new google.translate.TranslateElement(
+        { pageLanguage: 'iw', autoDisplay: false,
+          layout: google.translate.TranslateElement.InlineLayout.SIMPLE },
+        'google_translate_element'
+      );
+    }
+
+    window.PAWER_setLang = function(code) {
+      (function attempt() {
+        var sel = document.querySelector('.goog-te-combo');
+        if (!sel) { setTimeout(attempt, 400); return; }
+        sel.value = code;
+        sel.dispatchEvent(new Event('change'));
+        localStorage.setItem('pawer_lang', code);
+      })();
+    };
+
+    // Restore saved language on reload
+    (function() {
+      var saved = localStorage.getItem('pawer_lang');
+      if (!saved) return;
+      (function attempt() {
+        var sel = document.querySelector('.goog-te-combo');
+        if (!sel) { setTimeout(attempt, 500); return; }
+        sel.value = saved;
+        sel.dispatchEvent(new Event('change'));
+      })();
+    })();
+  </script>
+  <script src="//translate.google.com/translate_a/element.js?cb=googleTranslateElementInit"></script>
 </body>
 </html>
