@@ -234,7 +234,7 @@ class GameScene extends Phaser.Scene {
     const charKey = window.PAWER_SAVE.getChar();
     const charDef = window.PAWER_CHARS.find(c => c.key === charKey);
     const weaponIcon = { nix: '⚔️', fik: '💚', bigo: '🪓', dim: '🗡️', coch: '⚡', priti: '🌩️', sliper: '🔱' }[charKey] || '⚔️';
-    const hudLabel = charDef ? `${charDef.name}  ${weaponIcon}` : `${charKey.toUpperCase()}  ${weaponIcon}`;
+    const hudLabel = charDef ? `${window.T(charDef.name)}  ${weaponIcon}` : `${charKey.toUpperCase()}  ${weaponIcon}`;
     this.nixLabel = this.add.text(0, 0, hudLabel, {
       fontSize: '14px', color: '#ffffff', fontFamily: 'Arial', fontStyle: 'bold',
     }).setScrollFactor(0).setDepth(101).setOrigin(0.5, 1);
@@ -1131,7 +1131,7 @@ class GameScene extends Phaser.Scene {
       // Character trophies
       const charLabel = charChange >= 0 ? `+${charChange}` : `${charChange}`;
       this.add.text(width / 2, win ? height / 2 - 90 : height / 2 - 104,
-        `${charLabel} 🏆  ${charName}: ${totalChar}`, {
+        `${charLabel} 🏆  ${window.T(charName)}: ${totalChar}`, {
           fontSize: win ? '16px' : '18px', color: win ? '#ffcc77' : '#ff9966',
           fontFamily: 'Arial', fontStyle: 'bold',
           stroke: '#000000', strokeThickness: 3,

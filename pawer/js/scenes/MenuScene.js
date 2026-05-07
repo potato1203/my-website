@@ -90,7 +90,7 @@ class MenuScene extends Phaser.Scene {
     // Character personal trophies + rank
     const charT = window.PAWER_SAVE.getCharTrophies(key);
     const rank  = window.PAWER_SAVE.getCharRank(charT);
-    this.add.text(w / 2, nameY + 50, `🏆 ${charT} ${window.T('עם')} ${charDef.name}`, {
+    this.add.text(w / 2, nameY + 50, `🏆 ${charT} ${window.T('עם')} ${window.T(charDef.name)}`, {
       fontSize: '14px', color: '#ffdd99',
       fontFamily: 'Arial', fontStyle: 'bold',
       stroke: '#000000', strokeThickness: 2,
@@ -541,7 +541,7 @@ class MenuScene extends Phaser.Scene {
 
     // ── Phase 3: name text ────────────────────────────────────────────────────
     this.time.delayedCall(820, () => {
-      const nameT = this.add.text(cx, cy + h * 0.28, `🎉  ${charDef.name} ${window.T('נפתח!')}  🎉`, {
+      const nameT = this.add.text(cx, cy + h * 0.28, `🎉  ${window.T(charDef.name)} ${window.T('נפתח!')}  🎉`, {
         fontSize: '28px', color: '#ffffff',
         fontFamily: 'Arial Black, Arial', fontStyle: 'bold',
         stroke: '#000000', strokeThickness: 6,
@@ -828,7 +828,7 @@ class MenuScene extends Phaser.Scene {
       .setDepth(89).setStrokeStyle(2, 0x3366aa));
 
     // Title
-    pool.push(this.add.text(panelX, panelY - panelH / 2 + 26, `★  ${window.T('דרגות')} - ${charDef.name}`, {
+    pool.push(this.add.text(panelX, panelY - panelH / 2 + 26, `★  ${window.T('דרגות')} - ${window.T(charDef.name)}`, {
       fontSize: '19px', color: '#ffffff',
       fontFamily: 'Arial Black, Arial', fontStyle: 'bold',
     }).setOrigin(0.5).setDepth(90));
@@ -907,7 +907,7 @@ class MenuScene extends Phaser.Scene {
     });
 
     // Bottom: current trophy count
-    pool.push(this.add.text(panelX, panelY + panelH / 2 - 26, `${window.T('סה"כ עם')} ${charDef.name}: 🏆 ${charT}`, {
+    pool.push(this.add.text(panelX, panelY + panelH / 2 - 26, `${window.T('סה"כ עם')} ${window.T(charDef.name)}: 🏆 ${charT}`, {
       fontSize: '13px', color: '#ffdd99', fontFamily: 'Arial', fontStyle: 'bold',
     }).setOrigin(0.5).setDepth(90));
   }

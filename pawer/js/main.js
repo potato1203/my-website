@@ -16,6 +16,15 @@ window.T = function(text) {
   return window.PAWER_TRANSLATIONS[text] || text;
 };
 
+// Fixed Latin transliterations for character names (not via Google Translate)
+window._CHAR_NAME_MAP = {
+  'ניקס': 'Nix', 'פיק': 'Fik', 'ביגו': 'Bigo', 'דים': 'Dim',
+  'פריטי': 'Priti', 'סליפר': 'Sliper', "קוץ'": 'Coch',
+};
+if (window.PAWER_LANG !== 'iw') {
+  Object.assign(window.PAWER_TRANSLATIONS, window._CHAR_NAME_MAP);
+}
+
 // ─── Rarities ─────────────────────────────────────────────────────────────────
 window.RARITIES = {
   נחושת: { hex: 0x8B5A2B, css: '#8B5A2B', particle: 0xaa6633 },
