@@ -1,3 +1,15 @@
+// ─── Translation system ───────────────────────────────────────────────────────
+window.PAWER_LANG = localStorage.getItem('pawer_lang') || 'iw';
+window.PAWER_TRANSLATIONS = {};
+try {
+  const _s = localStorage.getItem('pawer_trans_' + window.PAWER_LANG);
+  if (_s) window.PAWER_TRANSLATIONS = JSON.parse(_s);
+} catch(e) {}
+window.T = function(text) {
+  if (!text || window.PAWER_LANG === 'iw') return text;
+  return window.PAWER_TRANSLATIONS[text] || text;
+};
+
 // ─── Rarities ─────────────────────────────────────────────────────────────────
 window.RARITIES = {
   נחושת: { hex: 0x8B5A2B, css: '#8B5A2B', particle: 0xaa6633 },
@@ -89,3 +101,73 @@ window.PAWER_GAME = new Phaser.Game(gameConfig);
 
 // Initialize peer connection early so ID is ready by the time MenuScene loads
 window.PAWER_NET.init(id => console.log('[NET] ready:', id));
+
+// ─── All translatable strings ──────────────────────────────────────────────────
+window.PAWER_ALL_STRINGS = [
+  // SetupScene
+  '👋 ברוך הבא ל-PAWER!', 'בחר שם משתמש:', '✅  התחל לשחק!',
+  '⚠️ השם צריך להיות לפחות 2 תווים',
+  // MenuScene
+  '👆 לחץ לבחירת דמות', '⚔️  קרב פאוור', '⚽  כדור פאוור', '▶  שחק',
+  '🧑‍🤝‍🧑  בחר דמות', '👑 נבחר', '✔ נאסף', '👆 לחץ לפתיחה!',
+  '👥  שחק עם חבר', 'הקוד שלך:', '📋 העתק קוד', '✅ הועתק!',
+  'קוד של חבר:', '✅ מחובר! — לחץ מוכן כשמוכן',
+  'אתה: ⏳', 'חבר: ⏳', '🚀 מתחיל...', 'אתה: ✅', 'חבר: ✅',
+  '✅  מוכן!', '🔗 התחבר', '⚠️ הזן קוד בן 6 תווים',
+  '🔄 מתחבר...', '❌ לא ניתן להתחבר — בדוק את הקוד',
+  '⚙️  הגדרות', '✏️  שנה שם', '🗑️  אפס משחק', '🌐  שינוי שפה',
+  '⚠️ לפחות 2 תווים', 'ביטול', '💾 שמור',
+  '⚠️  אפס משחק', 'כל הגביעים, הדמויות והשם\nיימחקו לתמיד!',
+  '❌ ביטול', '🗑️ אפס!', '⬆️  עלית דרגה!', '🏆 הושג!',
+  // Rank & rarity labels
+  'סופי', 'מטורף', 'טוב', 'נחמד', 'רגיל',
+  'נחושת', 'ברזל', 'ארד', 'כסף', 'זהב', 'יהלום',
+  // Character names / desc / sub
+  'ניקס', '⚔️ לוחם חרב', 'מהיר ועוצמתי',
+  'פיק', '🗡️ לוחם מהיר', 'חמקמק ומסוכן',
+  'ביגו', '🪓 לוחם כבד', 'חזק ועמיד',
+  'דים', '🗡️ לוחם ברזל', 'קשוח ומסוכן',
+  'פריטי', '🌩️ לוחמת ברקים', 'מכה מתפשטת',
+  'סליפר', '🔱 שלישיית כדורים', 'מכה שלוש כיוונים',
+  "קוץ'", '⚔️ לוחם זהב', 'אגרסיבי ועז',
+  // Game messages
+  'GO!', 'שחקן', '🔄  שחק שוב', '🏠  תפריט ראשי',
+  '🏆 ניצחון!', '💀 הובסת!', '💀 הפסד!', 'החבר התנתק 😢',
+  '💀 מתחדש...', '⚽  גול! 🔵', '⚽  גול! 🔴',
+  // Bot names
+  'צל', 'רוח', 'לוחם', 'אש', 'קרח', 'ברק', 'סערה', 'חושך', 'ריק', 'עשן',
+  'עמית', 'חבר', 'אויב', 'יריב', 'שומר',
+];
+
+// ─── Translation fetcher ───────────────────────────────────────────────────────
+window.PAWER_fetchTranslations = async function(langCode, onProgress) {
+  const BATCH = 5;
+  const strings = window.PAWER_ALL_STRINGS;
+  const dict = {};
+  for (let i = 0; i < strings.length; i += BATCH) {
+    const batch = strings.slice(i, i + BATCH);
+    await Promise.all(batch.map(async (s) => {
+      try {
+        const url = `https://translate.googleapis.com/translate_a/single?client=gtx&sl=iw&tl=${langCode}&dt=t&q=${encodeURIComponent(s)}`;
+        const r = await fetch(url);
+        const data = await r.json();
+        dict[s] = data[0].map(seg => seg[0]).join('');
+      } catch(e) { dict[s] = s; }
+    }));
+    if (onProgress) onProgress(Math.min((i + BATCH) / strings.length, 1));
+  }
+  localStorage.setItem('pawer_trans_' + langCode, JSON.stringify(dict));
+  return dict;
+};
+
+// ─── Phaser text monkey-patch (auto-translate all canvas text) ────────────────
+if (window.PAWER_LANG !== 'iw') {
+  const _origText = Phaser.GameObjects.GameObjectFactory.prototype.text;
+  Phaser.GameObjects.GameObjectFactory.prototype.text = function(x, y, t, s) {
+    return _origText.call(this, x, y, typeof t === 'string' ? window.T(t) : t, s);
+  };
+  const _origSetText = Phaser.GameObjects.Text.prototype.setText;
+  Phaser.GameObjects.Text.prototype.setText = function(v) {
+    return _origSetText.call(this, typeof v === 'string' ? window.T(v) : v);
+  };
+}

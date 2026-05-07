@@ -1230,9 +1230,13 @@ class MenuScene extends Phaser.Scene {
         bg.on('pointerout',  () => { bg.setFillStyle(isActive ? 0x1a4a2a : 0x0e1e30); });
         bg.on('pointerup', () => {
           if (closed || isDragging) return;
-          if (typeof window.PAWER_setLang === 'function') window.PAWER_setLang(lang.code);
           closeAll();
-          this._openSettings(w, h);
+          if (lang.code === 'iw') {
+            localStorage.setItem('pawer_lang', 'iw');
+            location.reload();
+          } else {
+            this._fetchAndApplyLang(w, h, lang.code, lang.name);
+          }
         });
       });
 
@@ -1264,6 +1268,34 @@ class MenuScene extends Phaser.Scene {
     this.input.on('pointerdown', onDragStart);
     this.input.on('pointermove', onDragMove);
     this.input.on('pointerup',   onDragEnd);
+  }
+
+  _fetchAndApplyLang(w, h, code, name) {
+    const backdrop = this.add.rectangle(w / 2, h / 2, w, h, 0x000011, 0.92)
+      .setDepth(90).setInteractive();
+    const barW = Math.min(w * 0.65, 380);
+    const barBg = this.add.rectangle(w / 2, h / 2, barW + 4, 20, 0x112244).setDepth(91);
+    const barGfx = this.add.graphics().setDepth(92);
+    const lbl = this.add.text(w / 2, h / 2 - 48, `🌐 מוריד ${name}...`, {
+      fontSize: '19px', color: '#ffffff', fontFamily: 'Arial', fontStyle: 'bold',
+    }).setOrigin(0.5).setDepth(91);
+    const pctTxt = this.add.text(w / 2, h / 2 + 26, '0%', {
+      fontSize: '15px', color: '#88ccff', fontFamily: 'Arial',
+    }).setOrigin(0.5).setDepth(91);
+    const pool = [backdrop, barBg, barGfx, lbl, pctTxt];
+
+    window.PAWER_fetchTranslations(code, (prog) => {
+      barGfx.clear();
+      barGfx.fillStyle(0x44aaff, 1);
+      barGfx.fillRect(w / 2 - barW / 2, h / 2 - 8, barW * prog, 16);
+      pctTxt.setText(Math.round(prog * 100) + '%');
+    }).then(() => {
+      localStorage.setItem('pawer_lang', code);
+      location.reload();
+    }).catch(() => {
+      pool.forEach(o => { try { o.destroy(); } catch(e){} });
+      this._showMsg(w / 2, h / 2, '❌ שגיאה בהורדת תרגום', '#ff6666');
+    });
   }
 
   _makeHTMLInput(w, h, canvasY) {
