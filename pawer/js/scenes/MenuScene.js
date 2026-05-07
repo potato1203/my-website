@@ -79,7 +79,7 @@ class MenuScene extends Phaser.Scene {
 
     // Name + rarity badge + character trophies
     const nameY = h * 0.51 + img.displayHeight / 2 + 16;
-    this.add.text(w / 2, nameY, window.T(charDef.name), {
+    this.add.text(w / 2, nameY, charDef.name, {
       fontSize: '26px', color: '#ffffff',
       fontFamily: 'Arial Black, Arial', fontStyle: 'bold',
       stroke: '#003366', strokeThickness: 4,
@@ -90,7 +90,7 @@ class MenuScene extends Phaser.Scene {
     // Character personal trophies + rank
     const charT = window.PAWER_SAVE.getCharTrophies(key);
     const rank  = window.PAWER_SAVE.getCharRank(charT);
-    this.add.text(w / 2, nameY + 50, `🏆 ${charT} ${window.T('עם')} ${window.T(charDef.name)}`, {
+    this.add.text(w / 2, nameY + 50, `🏆 ${charT} ${window.T('עם')} ${charDef.name}`, {
       fontSize: '14px', color: '#ffdd99',
       fontFamily: 'Arial', fontStyle: 'bold',
       stroke: '#000000', strokeThickness: 2,
@@ -291,7 +291,7 @@ class MenuScene extends Phaser.Scene {
             closeAll(); this._refreshScene();
           } else if (!affordable) {
             this._showMsg(w / 2, h / 2 + panelH / 2 - 20,
-              `${window.T('צריך עוד')} ${ch.cost - trophies} 🏆 ${window.T('לפתיחת')} ${window.T(ch.name)}`, '#ff6666');
+              `${window.T('צריך עוד')} ${ch.cost - trophies} 🏆 ${window.T('לפתיחת')} ${ch.name}`, '#ff6666');
           }
         });
       });
@@ -541,7 +541,7 @@ class MenuScene extends Phaser.Scene {
 
     // ── Phase 3: name text ────────────────────────────────────────────────────
     this.time.delayedCall(820, () => {
-      const nameT = this.add.text(cx, cy + h * 0.28, `🎉  ${window.T(charDef.name)} ${window.T('נפתח!')}  🎉`, {
+      const nameT = this.add.text(cx, cy + h * 0.28, `🎉  ${charDef.name} ${window.T('נפתח!')}  🎉`, {
         fontSize: '28px', color: '#ffffff',
         fontFamily: 'Arial Black, Arial', fontStyle: 'bold',
         stroke: '#000000', strokeThickness: 6,
@@ -828,7 +828,7 @@ class MenuScene extends Phaser.Scene {
       .setDepth(89).setStrokeStyle(2, 0x3366aa));
 
     // Title
-    pool.push(this.add.text(panelX, panelY - panelH / 2 + 26, `★  ${window.T('דרגות')} - ${window.T(charDef.name)}`, {
+    pool.push(this.add.text(panelX, panelY - panelH / 2 + 26, `★  ${window.T('דרגות')} - ${charDef.name}`, {
       fontSize: '19px', color: '#ffffff',
       fontFamily: 'Arial Black, Arial', fontStyle: 'bold',
     }).setOrigin(0.5).setDepth(90));
@@ -907,7 +907,7 @@ class MenuScene extends Phaser.Scene {
     });
 
     // Bottom: current trophy count
-    pool.push(this.add.text(panelX, panelY + panelH / 2 - 26, `${window.T('סה"כ עם')} ${window.T(charDef.name)}: 🏆 ${charT}`, {
+    pool.push(this.add.text(panelX, panelY + panelH / 2 - 26, `${window.T('סה"כ עם')} ${charDef.name}: 🏆 ${charT}`, {
       fontSize: '13px', color: '#ffdd99', fontFamily: 'Arial', fontStyle: 'bold',
     }).setOrigin(0.5).setDepth(90));
   }
