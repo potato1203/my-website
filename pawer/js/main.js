@@ -16,14 +16,6 @@ window.T = function(text) {
   return window.PAWER_TRANSLATIONS[text] || text;
 };
 
-// Fixed Latin transliterations for character names (not via Google Translate)
-window._CHAR_NAME_MAP = {
-  'ניקס': 'Nix', 'פיק': 'Fik', 'ביגו': 'Bigo', 'דים': 'Dim',
-  'פריטי': 'Priti', 'סליפר': 'Sliper', "קוץ'": 'Coch',
-};
-if (window.PAWER_LANG !== 'iw') {
-  Object.assign(window.PAWER_TRANSLATIONS, window._CHAR_NAME_MAP);
-}
 
 // ─── Rarities ─────────────────────────────────────────────────────────────────
 window.RARITIES = {
@@ -37,13 +29,13 @@ window.RARITIES = {
 
 // ─── Characters ───────────────────────────────────────────────────────────────
 window.PAWER_CHARS = [
-  { key: 'nix',  name: 'ניקס', desc: '⚔️ לוחם חרב',  sub: 'מהיר ועוצמתי',   rarity: 'נחושת', cost: 0  },
-  { key: 'fik',  name: 'פיק',  desc: '🗡️ לוחם מהיר', sub: 'חמקמק ומסוכן',   rarity: 'נחושת', cost: 10 },
-  { key: 'bigo', name: 'ביגו', desc: '🪓 לוחם כבד',  sub: 'חזק ועמיד',       rarity: 'נחושת', cost: 20 },
-  { key: 'dim',   name: 'דים',   desc: '🗡️ לוחם ברזל',    sub: 'קשוח ומסוכן',   rarity: 'ברזל',  cost: 50  },
-  { key: 'priti',  name: 'פריטי',  desc: '🌩️ לוחמת ברקים',   sub: 'מכה מתפשטת',    rarity: 'ברזל',  cost: 60  },
-  { key: 'sliper', name: 'סליפר', desc: '🔱 שלישיית כדורים', sub: 'מכה שלוש כיוונים', rarity: 'ברזל',  cost: 80  },
-  { key: 'coch',   name: "קוץ'",  desc: '⚔️ לוחם זהב',       sub: 'אגרסיבי ועז',    rarity: 'זהב',   cost: 200 },
+  { key: 'nix',    name: 'ניקס',   nameRom: 'Nix',    desc: '⚔️ לוחם חרב',         sub: 'מהיר ועוצמתי',      rarity: 'נחושת', cost: 0   },
+  { key: 'fik',    name: 'פיק',    nameRom: 'Fik',    desc: '🗡️ לוחם מהיר',        sub: 'חמקמק ומסוכן',      rarity: 'נחושת', cost: 10  },
+  { key: 'bigo',   name: 'ביגו',   nameRom: 'Bigo',   desc: '🪓 לוחם כבד',          sub: 'חזק ועמיד',         rarity: 'נחושת', cost: 20  },
+  { key: 'dim',    name: 'דים',    nameRom: 'Dim',    desc: '🗡️ לוחם ברזל',        sub: 'קשוח ומסוכן',       rarity: 'ברזל',  cost: 50  },
+  { key: 'priti',  name: 'פריטי',  nameRom: 'Priti',  desc: '🌩️ לוחמת ברקים',     sub: 'מכה מתפשטת',        rarity: 'ברזל',  cost: 60  },
+  { key: 'sliper', name: 'סליפר',  nameRom: 'Sliper', desc: '🔱 שלישיית כדורים',   sub: 'מכה שלוש כיוונים',  rarity: 'ברזל',  cost: 80  },
+  { key: 'coch',   name: "קוץ'",   nameRom: 'Coch',   desc: '⚔️ לוחם זהב',         sub: 'אגרסיבי ועז',       rarity: 'זהב',   cost: 200 },
 ];
 
 // ─── Save / progression ───────────────────────────────────────────────────────
@@ -160,7 +152,10 @@ window.PAWER_ALL_STRINGS = [
 window.PAWER_fetchTranslations = async function(langCode, onProgress) {
   const BATCH = 5;
   const strings = window.PAWER_ALL_STRINGS;
+  const total = strings.length + window.PAWER_CHARS.length;
   const dict = {};
+
+  // Translate regular UI strings from Hebrew
   for (let i = 0; i < strings.length; i += BATCH) {
     const batch = strings.slice(i, i + BATCH);
     await Promise.all(batch.map(async (s) => {
@@ -171,8 +166,21 @@ window.PAWER_fetchTranslations = async function(langCode, onProgress) {
         dict[s] = data[0].map(seg => seg[0]).join('');
       } catch(e) { dict[s] = s; }
     }));
-    if (onProgress) onProgress(Math.min((i + BATCH) / strings.length, 1));
+    if (onProgress) onProgress(Math.min((i + BATCH) / total, 0.9));
   }
+
+  // Transliterate character names from their Latin form (sl=en) so GT adapts
+  // the pronunciation to the target script instead of translating the meaning
+  await Promise.all(window.PAWER_CHARS.map(async (c) => {
+    try {
+      const url = `https://translate.googleapis.com/translate_a/single?client=gtx&sl=en&tl=${langCode}&dt=t&q=${encodeURIComponent(c.nameRom)}`;
+      const r = await fetch(url);
+      const data = await r.json();
+      dict[c.name] = data[0].map(seg => seg[0]).join('');
+    } catch(e) { dict[c.name] = c.nameRom; }
+  }));
+
+  if (onProgress) onProgress(1);
   localStorage.setItem(_TRANS_KEY + langCode, JSON.stringify(dict));
   return dict;
 };
