@@ -309,7 +309,7 @@ class SoccerScene extends Phaser.Scene {
 
     const charDef  = window.PAWER_CHARS.find(c => c.key === this.player.charKey);
     const icon     = { nix: '⚔️', fik: '💚', bigo: '🪓', dim: '🗡️', coch: '⚡', priti: '🌩️', sliper: '🔱' }[this.player.charKey] || '⚔️';
-    this.nixLabel  = this.add.text(0, 0, `${charDef?.name || ''} ${icon}`, {
+    this.nixLabel  = this.add.text(0, 0, `${window.T(charDef?.name || '')} ${icon}`, {
       fontSize: '14px', color: '#ffffff', fontFamily: 'Arial', fontStyle: 'bold',
     }).setScrollFactor(0).setDepth(101).setOrigin(0.5, 1);
   }
@@ -1168,8 +1168,8 @@ class SoccerScene extends Phaser.Scene {
       const charTotal = window.PAWER_SAVE.getCharTrophies(charKey);
       this.add.text(width / 2, height / 2 + 30,
         win
-          ? `+10 🏆  ${charName}: ${charTotal}  |  סה"כ: ${window.PAWER_SAVE.getTrophies()}`
-          : `${charLabel} 🏆  ${charName}: ${charTotal}`, {
+          ? `+10 🏆  ${window.T(charName)}: ${charTotal}  |  ${window.T('סה"כ:')} ${window.PAWER_SAVE.getTrophies()}`
+          : `${charLabel} 🏆  ${window.T(charName)}: ${charTotal}`, {
           fontSize: '16px', color: win ? '#ffdd00' : '#ff9966', fontFamily: 'Arial', fontStyle: 'bold',
           stroke: '#000000', strokeThickness: 3,
         }).setOrigin(0.5).setScrollFactor(0).setDepth(201);

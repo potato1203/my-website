@@ -93,7 +93,7 @@ class SetupScene extends Phaser.Scene {
     const el = document.createElement('input');
     el.type        = 'text';
     el.maxLength   = 14;
-    el.placeholder = 'שמך כאן...';
+    el.placeholder = window.T('שמך כאן...');
     el.dir         = 'rtl';
     el.autocomplete = 'off';
 

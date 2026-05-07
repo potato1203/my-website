@@ -79,7 +79,7 @@ class MenuScene extends Phaser.Scene {
 
     // Name + rarity badge + character trophies
     const nameY = h * 0.51 + img.displayHeight / 2 + 16;
-    this.add.text(w / 2, nameY, charDef.name, {
+    this.add.text(w / 2, nameY, window.T(charDef.name), {
       fontSize: '26px', color: '#ffffff',
       fontFamily: 'Arial Black, Arial', fontStyle: 'bold',
       stroke: '#003366', strokeThickness: 4,
@@ -90,15 +90,15 @@ class MenuScene extends Phaser.Scene {
     // Character personal trophies + rank
     const charT = window.PAWER_SAVE.getCharTrophies(key);
     const rank  = window.PAWER_SAVE.getCharRank(charT);
-    this.add.text(w / 2, nameY + 50, `🏆 ${charT} עם ${charDef.name}`, {
+    this.add.text(w / 2, nameY + 50, `🏆 ${charT} ${window.T('עם')} ${window.T(charDef.name)}`, {
       fontSize: '14px', color: '#ffdd99',
       fontFamily: 'Arial', fontStyle: 'bold',
       stroke: '#000000', strokeThickness: 2,
     }).setOrigin(0.5);
 
     const rankRow = rank.next !== null
-      ? `★ ${rank.label}  (${charT}/${rank.next})`
-      : `★ ${rank.label}  ✔`;
+      ? `★ ${window.T(rank.label)}  (${charT}/${rank.next})`
+      : `★ ${window.T(rank.label)}  ✔`;
     const rankBadge = this.add.text(w / 2, nameY + 68, rankRow, {
       fontSize: '13px', color: rank.color,
       fontFamily: 'Arial', fontStyle: 'bold',
@@ -122,7 +122,7 @@ class MenuScene extends Phaser.Scene {
   }
 
   _rarityBadge(x, y, label, rar, depth = 0, size = 13) {
-    const badge = this.add.text(x, y, `✦ ${label} ✦`, {
+    const badge = this.add.text(x, y, `✦ ${window.T(label)} ✦`, {
       fontSize: size + 'px',
       color: rar.css,
       fontFamily: 'Arial', fontStyle: 'bold',
@@ -221,7 +221,7 @@ class MenuScene extends Phaser.Scene {
       .setOrigin(0, 0.5).setDepth(83));
     const searchInput = this._makeHTMLInput(w, h, searchY);
     searchInput.maxLength = 14;
-    searchInput.placeholder = 'חפש דמות...';
+    searchInput.placeholder = window.T('חפש דמות...');
     pool.push({ destroy: () => {
       if (document.body.contains(searchInput)) document.body.removeChild(searchInput);
     }});
@@ -291,7 +291,7 @@ class MenuScene extends Phaser.Scene {
             closeAll(); this._refreshScene();
           } else if (!affordable) {
             this._showMsg(w / 2, h / 2 + panelH / 2 - 20,
-              `צריך עוד ${ch.cost - trophies} 🏆 לפתיחת ${ch.name}`, '#ff6666');
+              `${window.T('צריך עוד')} ${ch.cost - trophies} 🏆 ${window.T('לפתיחת')} ${window.T(ch.name)}`, '#ff6666');
           }
         });
       });
@@ -381,7 +381,7 @@ class MenuScene extends Phaser.Scene {
     if (collected) {
       const charT = window.PAWER_SAVE.getCharTrophies(charDef.key);
       const rank  = window.PAWER_SAVE.getCharRank(charT);
-      objs.push(this.add.text(cx, cy + ch * 0.42, `🏆 ${charT}  ★ ${rank.label}`, {
+      objs.push(this.add.text(cx, cy + ch * 0.42, `🏆 ${charT}  ★ ${window.T(rank.label)}`, {
         fontSize: '12px', color: '#ffdd77', fontFamily: 'Arial', fontStyle: 'bold',
         stroke: '#000000', strokeThickness: 2,
       }).setOrigin(0.5).setDepth(D + 1));
@@ -495,7 +495,7 @@ class MenuScene extends Phaser.Scene {
 
     // ── Phase 2: rarity label slams down ─────────────────────────────────────
     this.time.delayedCall(380, () => {
-      const lbl = this.add.text(cx, cy - h * 0.32, `✦  ${charDef.rarity}  ✦`, {
+      const lbl = this.add.text(cx, cy - h * 0.32, `✦  ${window.T(charDef.rarity)}  ✦`, {
         fontSize: '32px', color: rar.css,
         fontFamily: 'Arial Black, Arial', fontStyle: 'bold',
         stroke: '#000000', strokeThickness: 6,
@@ -541,7 +541,7 @@ class MenuScene extends Phaser.Scene {
 
     // ── Phase 3: name text ────────────────────────────────────────────────────
     this.time.delayedCall(820, () => {
-      const nameT = this.add.text(cx, cy + h * 0.28, `🎉  ${charDef.name} נפתח!  🎉`, {
+      const nameT = this.add.text(cx, cy + h * 0.28, `🎉  ${window.T(charDef.name)} ${window.T('נפתח!')}  🎉`, {
         fontSize: '28px', color: '#ffffff',
         fontFamily: 'Arial Black, Arial', fontStyle: 'bold',
         stroke: '#000000', strokeThickness: 6,
@@ -828,7 +828,7 @@ class MenuScene extends Phaser.Scene {
       .setDepth(89).setStrokeStyle(2, 0x3366aa));
 
     // Title
-    pool.push(this.add.text(panelX, panelY - panelH / 2 + 26, `★  דרגות - ${charDef.name}`, {
+    pool.push(this.add.text(panelX, panelY - panelH / 2 + 26, `★  ${window.T('דרגות')} - ${window.T(charDef.name)}`, {
       fontSize: '19px', color: '#ffffff',
       fontFamily: 'Arial Black, Arial', fontStyle: 'bold',
     }).setOrigin(0.5).setDepth(90));
@@ -861,7 +861,7 @@ class MenuScene extends Phaser.Scene {
       }
 
       // Rank name
-      pool.push(this.add.text(panelX - panelW * 0.28, ry, `${isDone ? '✔' : isCurrent ? '▶' : '○'} ${rank.label}`, {
+      pool.push(this.add.text(panelX - panelW * 0.28, ry, `${isDone ? '✔' : isCurrent ? '▶' : '○'} ${window.T(rank.label)}`, {
         fontSize: isCurrent ? '16px' : '14px',
         color: isDone ? '#448844' : rank.color,
         fontFamily: 'Arial', fontStyle: isCurrent ? 'bold' : 'normal',
@@ -907,7 +907,7 @@ class MenuScene extends Phaser.Scene {
     });
 
     // Bottom: current trophy count
-    pool.push(this.add.text(panelX, panelY + panelH / 2 - 26, `סה"כ עם ${charDef.name}: 🏆 ${charT}`, {
+    pool.push(this.add.text(panelX, panelY + panelH / 2 - 26, `${window.T('סה"כ עם')} ${window.T(charDef.name)}: 🏆 ${charT}`, {
       fontSize: '13px', color: '#ffdd99', fontFamily: 'Arial', fontStyle: 'bold',
     }).setOrigin(0.5).setDepth(90));
   }
@@ -955,7 +955,7 @@ class MenuScene extends Phaser.Scene {
 
     // Current name
     const currentName = window.PAWER_SAVE.getName();
-    pool.push(this.add.text(w / 2, h / 2 - 70, `שם נוכחי: ${currentName}`, {
+    pool.push(this.add.text(w / 2, h / 2 - 70, `${window.T('שם נוכחי:')} ${currentName}`, {
       fontSize: '16px', color: '#aaccee', fontFamily: 'Arial',
     }).setOrigin(0.5).setDepth(82));
 
