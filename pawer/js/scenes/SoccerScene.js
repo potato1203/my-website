@@ -308,7 +308,7 @@ class SoccerScene extends Phaser.Scene {
     }).setOrigin(0.5).setScrollFactor(0).setDepth(101);
 
     const charDef  = window.PAWER_CHARS.find(c => c.key === this.player.charKey);
-    const icon     = { nix: '⚔️', fik: '💚', bigo: '🪓', dim: '🗡️', coch: '⚡', priti: '🌩️' }[this.player.charKey] || '⚔️';
+    const icon     = { nix: '⚔️', fik: '💚', bigo: '🪓', dim: '🗡️', coch: '⚡', priti: '🌩️', sliper: '🔱' }[this.player.charKey] || '⚔️';
     this.nixLabel  = this.add.text(0, 0, `${charDef?.name || ''} ${icon}`, {
       fontSize: '14px', color: '#ffffff', fontFamily: 'Arial', fontStyle: 'bold',
     }).setScrollFactor(0).setDepth(101).setOrigin(0.5, 1);
@@ -356,8 +356,9 @@ class SoccerScene extends Phaser.Scene {
     else if (ck === 'bigo')  this._doHammerAttack();
     else if (ck === 'dim')   this._doDaggerAttack();
     else if (ck === 'coch')  this._doCochAttack();
-    else if (ck === 'priti') this._doPritiAttack();
-    else                     this._doSwordAttack();
+    else if (ck === 'priti')  this._doPritiAttack();
+    else if (ck === 'sliper') this._doSliperAttack();
+    else                      this._doSwordAttack();
   }
 
   _getAimDir() {
@@ -496,6 +497,20 @@ class SoccerScene extends Phaser.Scene {
       last = next;
     }
     this.cameras.main.shake(70, 0.003);
+  }
+
+  _doSliperAttack() {
+    const p = this.player.sprite;
+    const { ax, ay } = this._getAimDir();
+    this.player.facing = { x: ax, y: ay };
+    this.player.atkCd  = 650;
+    this._kickBallIfCarrying(ax, ay);
+
+    const baseAngle = Math.atan2(ay, ax);
+    const SPREAD = Math.PI / 6;
+    const opts = { speed: 480, color: 0x00ccdd, gcolor: 0x88ffff, radius: 7, maxDist: 320, splatColor: 0x00aacc };
+    for (let s = -1; s <= 1; s++)
+      this._spawnProjectile(p.x, p.y, Math.cos(baseAngle + s * SPREAD), Math.sin(baseAngle + s * SPREAD), 280, 0, opts);
   }
 
   _showLightningBolt(x1, y1, x2, y2, impact) {
@@ -947,7 +962,8 @@ class SoccerScene extends Phaser.Scene {
         const dist = Math.hypot(ex - bot.sprite.x, ey - bot.sprite.y);
         const isRanged = bot.charKey === 'fik' || bot.charKey === 'dim';
         const isPriti  = bot.charKey === 'priti';
-        const atkRange = isRanged ? 190 : bot.charKey === 'bigo' ? 100 : (bot.charKey === 'coch' || isPriti) ? 200 : 65;
+        const isSliper = bot.charKey === 'sliper';
+        const atkRange = isRanged ? 190 : bot.charKey === 'bigo' ? 100 : (bot.charKey === 'coch' || isPriti || isSliper) ? 200 : 65;
 
         if (dist < atkRange) {
           bot.atkCd = bot.atkCdBase;
@@ -964,6 +980,12 @@ class SoccerScene extends Phaser.Scene {
               ? { speed: 640, color: 0xccccdd, gcolor: 0xffffff, radius: 5, maxDist: 270, splatColor: 0xaaaacc, hitRadius: 24 }
               : {};
             this._spawnProjectile(bot.sprite.x, bot.sprite.y, dx / nd, dy / nd, bot.atkDmg, bot.team, opts, bot);
+          } else if (isSliper) {
+            const baseAngle = Math.atan2(dy, dx);
+            const SPREAD = Math.PI / 6;
+            const sOpts = { speed: 480, color: 0x00ccdd, gcolor: 0x88ffff, radius: 7, maxDist: 320, splatColor: 0x00aacc };
+            for (let s = -1; s <= 1; s++)
+              this._spawnProjectile(bot.sprite.x, bot.sprite.y, Math.cos(baseAngle + s * SPREAD), Math.sin(baseAngle + s * SPREAD), bot.atkDmg, bot.team, sOpts, bot);
           } else if (isPriti) {
             if (enemy.isPlayer) this._hitPlayer(bot.atkDmg);
             else this._hitBot(enemy.bot, bot.atkDmg, bot.sprite.x, bot.sprite.y);

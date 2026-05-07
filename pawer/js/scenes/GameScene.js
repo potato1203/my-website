@@ -233,7 +233,7 @@ class GameScene extends Phaser.Scene {
     this.hudGfx = this.add.graphics().setScrollFactor(0).setDepth(100);
     const charKey = window.PAWER_SAVE.getChar();
     const charDef = window.PAWER_CHARS.find(c => c.key === charKey);
-    const weaponIcon = { nix: '⚔️', fik: '💚', bigo: '🪓', dim: '🗡️', coch: '⚡', priti: '🌩️' }[charKey] || '⚔️';
+    const weaponIcon = { nix: '⚔️', fik: '💚', bigo: '🪓', dim: '🗡️', coch: '⚡', priti: '🌩️', sliper: '🔱' }[charKey] || '⚔️';
     const hudLabel = charDef ? `${charDef.name}  ${weaponIcon}` : `${charKey.toUpperCase()}  ${weaponIcon}`;
     this.nixLabel = this.add.text(0, 0, hudLabel, {
       fontSize: '14px', color: '#ffffff', fontFamily: 'Arial', fontStyle: 'bold',
@@ -264,8 +264,9 @@ class GameScene extends Phaser.Scene {
     else if (charKey === 'bigo')  this._doHammerAttack();
     else if (charKey === 'dim')   this._doDaggerAttack();
     else if (charKey === 'coch')  this._doCochAttack();
-    else if (charKey === 'priti') this._doPritiAttack();
-    else                          this._doSwordAttack();
+    else if (charKey === 'priti')  this._doPritiAttack();
+    else if (charKey === 'sliper') this._doSliperAttack();
+    else                           this._doSwordAttack();
   }
 
   _getAimDir() {
@@ -493,6 +494,21 @@ class GameScene extends Phaser.Scene {
     }
     this.cameras.main.shake(70, 0.003);
     if (window.PAWER_NET?.connected) this._mpSendAtk('priti', ax, ay);
+  }
+
+  _doSliperAttack() {
+    const p = this.player.sprite;
+    const { ax, ay } = this._getAimDir();
+    this.player.facing = { x: ax, y: ay };
+    this.player.atkCd  = 650;
+
+    const baseAngle = Math.atan2(ay, ax);
+    const SPREAD = Math.PI / 6;
+    const opts = { speed: 480, color: 0x00ccdd, gcolor: 0x88ffff, radius: 7, maxDist: 320, splatColor: 0x00aacc };
+    for (let s = -1; s <= 1; s++)
+      this._spawnProjectile(p.x, p.y, Math.cos(baseAngle + s * SPREAD), Math.sin(baseAngle + s * SPREAD), 280, true, null, opts);
+
+    if (window.PAWER_NET?.connected) this._mpSendAtk('sliper', ax, ay);
   }
 
   _showLightningBolt(x1, y1, x2, y2, impact) {
@@ -748,7 +764,7 @@ class GameScene extends Phaser.Scene {
         const dy   = this.player.sprite.y - bot.sprite.y;
         const dist = Math.hypot(dx, dy);
         const isRanged  = bot.charKey === 'fik' || bot.charKey === 'dim';
-        const atkRange  = isRanged ? 190 : bot.charKey === 'bigo' ? 100 : (bot.charKey === 'coch' || bot.charKey === 'priti') ? 200 : 65;
+        const atkRange  = isRanged ? 190 : bot.charKey === 'bigo' ? 100 : (bot.charKey === 'coch' || bot.charKey === 'priti' || bot.charKey === 'sliper') ? 200 : 65;
         if (dist < atkRange) {
           bot.atkCd = bot.atkCdBase;
           const nd = dist || 1;
@@ -757,6 +773,13 @@ class GameScene extends Phaser.Scene {
               ? { speed: 640, color: 0xccccdd, gcolor: 0xffffff, radius: 5, maxDist: 270, splatColor: 0xaaaacc, hitRadius: 24 }
               : {};
             this._spawnProjectile(bot.sprite.x, bot.sprite.y, dx / nd, dy / nd, bot.atkDmg, false, bot, opts);
+          } else if (bot.charKey === 'sliper') {
+            this._hitPlayer(bot.atkDmg);
+            const baseAngle = Math.atan2(dy, dx);
+            const SPREAD = Math.PI / 6;
+            const sOpts = { speed: 480, color: 0x00ccdd, gcolor: 0x88ffff, radius: 7, maxDist: 320, splatColor: 0x00aacc };
+            for (let s = -1; s <= 1; s++)
+              this._spawnProjectile(bot.sprite.x, bot.sprite.y, Math.cos(baseAngle + s * SPREAD), Math.sin(baseAngle + s * SPREAD), 0, false, bot, sOpts);
           } else if (bot.charKey === 'bigo') {
             this._hitPlayer(bot.atkDmg);
             this._showHammerSpin(bot.sprite.x, bot.sprite.y, 100);
@@ -805,7 +828,8 @@ class GameScene extends Phaser.Scene {
       const isAoE     = bot.charKey === 'bigo';
       const isCoch    = bot.charKey === 'coch';
       const isPriti   = bot.charKey === 'priti';
-      const atkRange  = isRanged ? 190 : isAoE ? 100 : (isCoch || isPriti) ? 200 : 65;
+      const isSliper  = bot.charKey === 'sliper';
+      const atkRange  = isRanged ? 190 : isAoE ? 100 : (isCoch || isPriti || isSliper) ? 200 : 65;
       const stopRange = isRanged ? 110 : atkRange;
 
       if (dist < atkRange) {
@@ -818,6 +842,12 @@ class GameScene extends Phaser.Scene {
               ? { speed: 640, color: 0xccccdd, gcolor: 0xffffff, radius: 5, maxDist: 270, splatColor: 0xaaaacc, hitRadius: 24 }
               : {};
             this._spawnProjectile(bot.sprite.x, bot.sprite.y, dx / nd, dy / nd, bot.atkDmg, false, bot, opts);
+          } else if (isSliper) {
+            const baseAngle = Math.atan2(dy, dx);
+            const SPREAD = Math.PI / 6;
+            const sOpts = { speed: 480, color: 0x00ccdd, gcolor: 0x88ffff, radius: 7, maxDist: 320, splatColor: 0x00aacc };
+            for (let s = -1; s <= 1; s++)
+              this._spawnProjectile(bot.sprite.x, bot.sprite.y, Math.cos(baseAngle + s * SPREAD), Math.sin(baseAngle + s * SPREAD), bot.atkDmg, false, bot, sOpts);
           } else if (isPriti) {
             if (target.isPlayer) this._hitPlayer(bot.atkDmg);
             else this._botHitBot(target.bot, bot, bot.atkDmg);
@@ -1251,6 +1281,13 @@ class GameScene extends Phaser.Scene {
         { speed: 640, color: 0xccccdd, gcolor: 0xffffff, radius: 5, maxDist: 270, splatColor: 0xaaaacc, hitRadius: 24 });
       else if (msg.kind === 'coch')  this._showCochDash(msg.x, msg.y, msg.ax, msg.ay, 200);
       else if (msg.kind === 'priti') this._showLightningBolt(msg.x, msg.y, msg.x + msg.ax * 300, msg.y + msg.ay * 300, false);
+      else if (msg.kind === 'sliper') {
+        const baseAngle = Math.atan2(msg.ay, msg.ax);
+        const SPREAD = Math.PI / 6;
+        const opts = { speed: 480, color: 0x00ccdd, gcolor: 0x88ffff, radius: 7, maxDist: 320, splatColor: 0x00aacc };
+        for (let s = -1; s <= 1; s++)
+          this._spawnProjectile(msg.x, msg.y, Math.cos(baseAngle + s * SPREAD), Math.sin(baseAngle + s * SPREAD), 0, true, null, opts);
+      }
     });
 
     net.on('disconnect', () => {
