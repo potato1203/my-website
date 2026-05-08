@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>היומן שלי</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <div class="app">
+    <header class="header">
+      <div class="header-content">
+        <div class="logo">
+          <span class="logo-icon">📔</span>
+          <h1>היומן שלי</h1>
+        </div>
+        <div class="header-actions">
+          <input class="search-box" type="text" id="search" placeholder="🔍 חיפוש ברשומות..." />
+          <div class="theme-picker-wrap">
+            <button class="btn btn-secondary theme-toggle-btn" id="themeToggleBtn" title="ערכת נושא">🎨</button>
+            <div class="theme-panel" id="themePanel">
+              <div class="theme-panel-title">ערכת נושא</div>
+              <div class="theme-options" id="themeOptions"></div>
+            </div>
+          </div>
+          <button class="btn btn-primary" id="newEntryBtn">+ רשומה חדשה</button>
+        </div>
+      </div>
+    </header>
+
+    <main class="main">
+      <div class="sidebar">
+        <div class="stats">
+          <div class="stat">
+            <span class="stat-number" id="totalEntries">0</span>
+            <span class="stat-label">רשומות</span>
+          </div>
+          <div class="stat">
+            <span class="stat-number" id="thisMonth">0</span>
+            <span class="stat-label">החודש</span>
+          </div>
+          <div class="stat">
+            <span class="stat-number" id="streak">0</span>
+            <span class="stat-label">ימים ברצף</span>
+          </div>
+        </div>
+
+        <div class="mood-filter">
+          <h3>סנן לפי מצב רוח</h3>
+          <div class="mood-buttons">
+            <button class="mood-btn active" data-mood="all">הכל</button>
+            <button class="mood-btn" data-mood="😊">😊</button>
+            <button class="mood-btn" data-mood="😔">😔</button>
+            <button class="mood-btn" data-mood="😠">😠</button>
+            <button class="mood-btn" data-mood="😴">😴</button>
+            <button class="mood-btn" data-mood="🤩">🤩</button>
+            <button class="mood-btn" data-mood="😰">😰</button>
+          </div>
+        </div>
+
+        <div class="entries-list" id="entriesList"></div>
+      </div>
+
+      <div class="content">
+        <div class="empty-state" id="emptyState">
+          <div class="empty-icon">📝</div>
+          <h2>כתוב את הרשומה הראשונה שלך</h2>
+          <p>כל יום הוא סיפור חדש. התחל לתעד אותו עכשיו.</p>
+          <button class="btn btn-primary" onclick="openNewEntry()">+ צור רשומה</button>
+        </div>
+
+        <div class="entry-view" id="entryView" style="display:none">
+          <div class="entry-view-header">
+            <div class="entry-view-meta">
+              <span class="entry-view-mood" id="viewMood"></span>
+              <span class="entry-view-date" id="viewDate"></span>
+            </div>
+            <div class="entry-view-actions">
+              <button class="btn btn-secondary" id="editBtn">✏️ עריכה</button>
+              <button class="btn btn-danger" id="deleteBtn">🗑️ מחיקה</button>
+            </div>
+          </div>
+          <h2 class="entry-view-title" id="viewTitle"></h2>
+          <div class="entry-view-body" id="viewBody"></div>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <div class="modal-overlay" id="modalOverlay">
+    <div class="modal" id="modal">
+      <div class="modal-header">
+        <h2 id="modalTitle">רשומה חדשה</h2>
+        <button class="modal-close" id="modalClose">✕</button>
+      </div>
+      <div class="modal-body">
+        <div class="form-group">
+          <label>כותרת</label>
+          <input type="text" id="entryTitle" placeholder="תן כותרת לרשומה..." maxlength="100" />
+        </div>
+        <div class="form-group">
+          <label>תאריך</label>
+          <input type="date" id="entryDate" />
+        </div>
+        <div class="form-group">
+          <label>מצב רוח</label>
+          <div class="mood-selector" id="moodSelector">
+            <button class="mood-pick" data-mood="🤩">🤩 מצוין</button>
+            <button class="mood-pick" data-mood="😊">😊 טוב</button>
+            <button class="mood-pick" data-mood="😴">😴 עייף</button>
+            <button class="mood-pick" data-mood="😰">😰 מתוח</button>
+            <button class="mood-pick" data-mood="😔">😔 עצוב</button>
+            <button class="mood-pick" data-mood="😠">😠 כועס</button>
+          </div>
+        </div>
+        <div class="form-group">
+          <label>מה עבר עליך היום?</label>
+          <textarea id="entryBody" placeholder="כתוב כאן בחופשיות..." rows="10"></textarea>
+          <div class="char-count"><span id="charCount">0</span> תווים</div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" id="cancelBtn">ביטול</button>
+        <button class="btn btn-primary" id="saveBtn">💾 שמור</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="toast" id="toast"></div>
+
+  <script src="app.js"></script>
+</body>
+</html>
