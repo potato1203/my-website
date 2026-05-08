@@ -24,6 +24,12 @@
 
 const PROJECTS = [
   {
+    title: "היומן שלי 📔",
+    description: "יומן אישי דיגיטלי — כתוב, ערוך ושמור רשומות יומיות.",
+    url: "./diary/",
+    icon: "📔"
+  },
+  {
     title: "PAWER 🐾",
     description: "אפליקציית PAWER — כנס ותגלה מה יש בפנים.",
     url: "./pawer/",
