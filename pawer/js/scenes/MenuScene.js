@@ -263,8 +263,13 @@ class MenuScene extends Phaser.Scene {
     const buildCards = (filter) => {
       cnt.list.slice().forEach(o => o.destroy());
 
+      const q = filter.toLowerCase();
       const chars = filter
-        ? window.PAWER_CHARS.filter(ch => ch.name.includes(filter))
+        ? window.PAWER_CHARS.filter(ch =>
+            ch.name.includes(filter) ||
+            window.T(ch.name).toLowerCase().includes(q) ||
+            ch.nameRom.toLowerCase().includes(q)
+          )
         : window.PAWER_CHARS;
 
       chars.forEach((ch, i) => {

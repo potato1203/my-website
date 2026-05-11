@@ -233,7 +233,7 @@ class GameScene extends Phaser.Scene {
     this.hudGfx = this.add.graphics().setScrollFactor(0).setDepth(100);
     const charKey = window.PAWER_SAVE.getChar();
     const charDef = window.PAWER_CHARS.find(c => c.key === charKey);
-    const weaponIcon = { nix: '⚔️', fik: '💚', bigo: '🪓', dim: '🗡️', coch: '⚡', priti: '🌩️', sliper: '🔱' }[charKey] || '⚔️';
+    const weaponIcon = { nix: '⚔️', fik: '💚', bigo: '🪓', dim: '🗡️', coch: '⚡', priti: '🌩️', sliper: '🔱', bow: '🏹' }[charKey] || '⚔️';
     const hudLabel = charDef ? `${window.T(charDef.name)}  ${weaponIcon}` : `${charKey.toUpperCase()}  ${weaponIcon}`;
     this.nixLabel = this.add.text(0, 0, hudLabel, {
       fontSize: '14px', color: '#ffffff', fontFamily: 'Arial', fontStyle: 'bold',
@@ -266,6 +266,7 @@ class GameScene extends Phaser.Scene {
     else if (charKey === 'coch')  this._doCochAttack();
     else if (charKey === 'priti')  this._doPritiAttack();
     else if (charKey === 'sliper') this._doSliperAttack();
+    else if (charKey === 'bow')    this._doBowAttack();
     else                           this._doSwordAttack();
   }
 
@@ -509,6 +510,23 @@ class GameScene extends Phaser.Scene {
       this._spawnProjectile(p.x, p.y, Math.cos(baseAngle + s * SPREAD), Math.sin(baseAngle + s * SPREAD), 280, true, null, opts);
 
     if (window.PAWER_NET?.connected) this._mpSendAtk('sliper', ax, ay);
+  }
+
+  _doBowAttack() {
+    const p = this.player.sprite;
+    const { ax, ay } = this._getAimDir();
+    this.player.facing = { x: ax, y: ay };
+    this.player.atkCd  = 750;
+    const opts = { speed: 580, color: 0xaacc44, gcolor: 0xddf077, radius: 5, maxDist: 480, splatColor: 0x88aa22 };
+    const baseAngle = Math.atan2(ay, ax);
+    for (let i = 0; i < 3; i++) {
+      this.time.delayedCall(i * 90, () => {
+        if (!this.player.alive) return;
+        const angle = baseAngle + (Math.random() - 0.5) * 0.12;
+        this._spawnProjectile(p.x, p.y, Math.cos(angle), Math.sin(angle), 300, true, null, opts);
+      });
+    }
+    if (window.PAWER_NET?.connected) this._mpSendAtk('bow', ax, ay);
   }
 
   _showLightningBolt(x1, y1, x2, y2, impact) {
@@ -763,7 +781,7 @@ class GameScene extends Phaser.Scene {
         const dx   = this.player.sprite.x - bot.sprite.x;
         const dy   = this.player.sprite.y - bot.sprite.y;
         const dist = Math.hypot(dx, dy);
-        const isRanged  = bot.charKey === 'fik' || bot.charKey === 'dim';
+        const isRanged  = bot.charKey === 'fik' || bot.charKey === 'dim' || bot.charKey === 'bow';
         const atkRange  = isRanged ? 190 : bot.charKey === 'bigo' ? 100 : (bot.charKey === 'coch' || bot.charKey === 'priti' || bot.charKey === 'sliper') ? 200 : 65;
         if (dist < atkRange) {
           bot.atkCd = bot.atkCdBase;
@@ -771,6 +789,8 @@ class GameScene extends Phaser.Scene {
           if (isRanged) {
             const opts = bot.charKey === 'dim'
               ? { speed: 640, color: 0xccccdd, gcolor: 0xffffff, radius: 5, maxDist: 270, splatColor: 0xaaaacc, hitRadius: 24 }
+              : bot.charKey === 'bow'
+              ? { speed: 580, color: 0xaacc44, gcolor: 0xddf077, radius: 5, maxDist: 480, splatColor: 0x88aa22 }
               : {};
             this._spawnProjectile(bot.sprite.x, bot.sprite.y, dx / nd, dy / nd, bot.atkDmg, false, bot, opts);
           } else if (bot.charKey === 'sliper') {
@@ -824,7 +844,7 @@ class GameScene extends Phaser.Scene {
       const dy   = target.y - bot.sprite.y;
       const dist = Math.hypot(dx, dy);
 
-      const isRanged  = bot.charKey === 'fik' || bot.charKey === 'dim';
+      const isRanged  = bot.charKey === 'fik' || bot.charKey === 'dim' || bot.charKey === 'bow';
       const isAoE     = bot.charKey === 'bigo';
       const isCoch    = bot.charKey === 'coch';
       const isPriti   = bot.charKey === 'priti';
@@ -840,6 +860,8 @@ class GameScene extends Phaser.Scene {
           if (isRanged) {
             const opts = bot.charKey === 'dim'
               ? { speed: 640, color: 0xccccdd, gcolor: 0xffffff, radius: 5, maxDist: 270, splatColor: 0xaaaacc, hitRadius: 24 }
+              : bot.charKey === 'bow'
+              ? { speed: 580, color: 0xaacc44, gcolor: 0xddf077, radius: 5, maxDist: 480, splatColor: 0x88aa22 }
               : {};
             this._spawnProjectile(bot.sprite.x, bot.sprite.y, dx / nd, dy / nd, bot.atkDmg, false, bot, opts);
           } else if (isSliper) {
@@ -1287,6 +1309,14 @@ class GameScene extends Phaser.Scene {
         const opts = { speed: 480, color: 0x00ccdd, gcolor: 0x88ffff, radius: 7, maxDist: 320, splatColor: 0x00aacc };
         for (let s = -1; s <= 1; s++)
           this._spawnProjectile(msg.x, msg.y, Math.cos(baseAngle + s * SPREAD), Math.sin(baseAngle + s * SPREAD), 0, true, null, opts);
+      } else if (msg.kind === 'bow') {
+        const bOpts = { speed: 580, color: 0xaacc44, gcolor: 0xddf077, radius: 5, maxDist: 480, splatColor: 0x88aa22 };
+        const baseAngle = Math.atan2(msg.ay, msg.ax);
+        for (let i = 0; i < 3; i++)
+          this.time.delayedCall(i * 90, () => {
+            const angle = baseAngle + (Math.random() - 0.5) * 0.12;
+            this._spawnProjectile(msg.x, msg.y, Math.cos(angle), Math.sin(angle), 0, true, null, bOpts);
+          });
       }
     });
 

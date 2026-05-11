@@ -35,6 +35,7 @@ window.PAWER_CHARS = [
   { key: 'dim',    name: 'דים',    nameRom: 'Dim',    desc: '🗡️ לוחם ברזל',        sub: 'קשוח ומסוכן',       rarity: 'ברזל',  cost: 50  },
   { key: 'priti',  name: 'פריטי',  nameRom: 'Priti',  desc: '🌩️ לוחמת ברקים',     sub: 'מכה מתפשטת',        rarity: 'ברזל',  cost: 60  },
   { key: 'sliper', name: 'סליפר',  nameRom: 'Sliper', desc: '🔱 שלישיית כדורים',   sub: 'מכה שלוש כיוונים',  rarity: 'ברזל',  cost: 80  },
+  { key: 'bow',    name: 'בו',     nameRom: 'Bow',    desc: '🏹 לוחמת קשת',        sub: 'יורה סדרות חיצים',  rarity: 'ארד',   cost: 35  },
   { key: 'coch',   name: "קוץ'",   nameRom: 'Coch',   desc: '⚔️ לוחם זהב',         sub: 'אגרסיבי ועז',       rarity: 'זהב',   cost: 200 },
 ];
 
