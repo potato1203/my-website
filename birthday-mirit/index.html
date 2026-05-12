@@ -1,0 +1,566 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>יום הולדת שמח אמא מירית ❤️</title>
+  <link href="https://fonts.googleapis.com/css2?family=Heebo:wght@300;400;700;900&display=swap" rel="stylesheet">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    :root {
+      --pink: #ff6eb4;
+      --rose: #ff3d7f;
+      --gold: #ffd700;
+      --purple: #c77dff;
+      --light: #fff0f7;
+    }
+
+    body {
+      font-family: 'Heebo', sans-serif;
+      background: linear-gradient(135deg, #ffe0f0 0%, #fff0fa 40%, #ffe8f5 100%);
+      min-height: 100vh;
+      overflow-x: hidden;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    /* ── CONFETTI ── */
+    #confetti-canvas {
+      position: fixed;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
+      pointer-events: none;
+      z-index: 999;
+    }
+
+    /* ── HERO ── */
+    .hero {
+      text-align: center;
+      padding: 60px 20px 30px;
+      position: relative;
+    }
+
+    .crown {
+      font-size: 80px;
+      animation: float 3s ease-in-out infinite;
+      display: block;
+      margin-bottom: 10px;
+    }
+
+    @keyframes float {
+      0%, 100% { transform: translateY(0) rotate(-5deg); }
+      50%       { transform: translateY(-18px) rotate(5deg); }
+    }
+
+    .hero h1 {
+      font-size: clamp(2.4rem, 7vw, 4.8rem);
+      font-weight: 900;
+      background: linear-gradient(135deg, var(--rose), var(--purple), var(--gold));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      line-height: 1.15;
+      margin-bottom: 10px;
+    }
+
+    .hero .sub {
+      font-size: clamp(1.1rem, 3vw, 1.5rem);
+      color: #a04070;
+      font-weight: 300;
+      letter-spacing: 1px;
+    }
+
+    /* ── CAKE ── */
+    .cake-section {
+      margin: 20px auto;
+      text-align: center;
+    }
+
+    .cake-wrap {
+      display: inline-block;
+      position: relative;
+      cursor: pointer;
+      filter: drop-shadow(0 10px 30px rgba(255,110,180,0.4));
+      transition: transform 0.3s;
+    }
+    .cake-wrap:hover { transform: scale(1.06); }
+
+    svg.cake { width: min(340px, 85vw); height: auto; }
+
+    /* candle flames */
+    .flame {
+      animation: flicker 0.4s ease-in-out infinite alternate;
+      transform-origin: 50% 100%;
+    }
+    .flame:nth-child(2) { animation-delay: 0.15s; }
+    .flame:nth-child(3) { animation-delay: 0.08s; }
+    .flame:nth-child(4) { animation-delay: 0.22s; }
+    .flame:nth-child(5) { animation-delay: 0.31s; }
+
+    @keyframes flicker {
+      0%   { transform: scaleX(1)   scaleY(1)   skewX(0deg); opacity: 1; }
+      100% { transform: scaleX(0.8) scaleY(1.15) skewX(6deg); opacity: 0.85; }
+    }
+
+    .blow-hint {
+      margin-top: 12px;
+      font-size: 1rem;
+      color: #c06090;
+      opacity: 0.8;
+    }
+
+    /* ── MESSAGE CARDS ── */
+    .cards {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+      gap: 22px;
+      padding: 20px 24px 10px;
+      max-width: 900px;
+      width: 100%;
+    }
+
+    .card {
+      background: white;
+      border-radius: 24px;
+      padding: 28px 22px;
+      text-align: center;
+      box-shadow: 0 8px 32px rgba(255,110,180,0.15);
+      transition: transform 0.3s, box-shadow 0.3s;
+      border: 2px solid rgba(255,110,180,0.12);
+    }
+    .card:hover {
+      transform: translateY(-6px);
+      box-shadow: 0 16px 48px rgba(255,110,180,0.25);
+    }
+
+    .card .icon { font-size: 2.6rem; margin-bottom: 12px; display: block; }
+    .card h3 { font-size: 1.25rem; font-weight: 700; color: var(--rose); margin-bottom: 8px; }
+    .card p  { font-size: 1rem; color: #805070; line-height: 1.6; font-weight: 300; }
+
+    /* ── BIG LOVE MESSAGE ── */
+    .love-msg {
+      max-width: 680px;
+      width: calc(100% - 48px);
+      margin: 10px auto 20px;
+      background: linear-gradient(135deg, var(--rose), var(--purple));
+      color: white;
+      border-radius: 28px;
+      padding: 40px 36px;
+      text-align: center;
+      box-shadow: 0 12px 50px rgba(199,125,255,0.35);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .love-msg::before {
+      content: '❤️';
+      position: absolute;
+      font-size: 200px;
+      opacity: 0.08;
+      top: -40px; left: -40px;
+      pointer-events: none;
+    }
+
+    .love-msg h2 {
+      font-size: clamp(1.6rem, 5vw, 2.4rem);
+      font-weight: 900;
+      margin-bottom: 16px;
+      text-shadow: 0 2px 8px rgba(0,0,0,0.15);
+    }
+
+    .love-msg p {
+      font-size: clamp(1rem, 2.5vw, 1.2rem);
+      line-height: 1.8;
+      font-weight: 300;
+      opacity: 0.95;
+    }
+
+    /* ── SIGNATURE ── */
+    .signature {
+      text-align: center;
+      padding: 30px 20px 50px;
+      font-size: 1.3rem;
+      color: #c06090;
+    }
+    .signature strong { font-weight: 900; color: var(--rose); }
+
+    /* ── HEARTS FLOAT ── */
+    .floating-hearts {
+      position: fixed;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
+      pointer-events: none;
+      z-index: 0;
+      overflow: hidden;
+    }
+    .fheart {
+      position: absolute;
+      bottom: -60px;
+      font-size: 1.4rem;
+      opacity: 0;
+      animation: riseUp 6s ease-in infinite;
+    }
+    @keyframes riseUp {
+      0%   { opacity: 0;   transform: translateY(0)   rotate(0deg); }
+      20%  { opacity: 0.7; }
+      100% { opacity: 0;   transform: translateY(-110vh) rotate(360deg); }
+    }
+
+    /* ── BLOW BUTTON ── */
+    .blow-btn {
+      display: inline-block;
+      margin: 8px auto 0;
+      background: linear-gradient(135deg, var(--rose), var(--purple));
+      color: white;
+      border: none;
+      border-radius: 50px;
+      padding: 14px 36px;
+      font-family: 'Heebo', sans-serif;
+      font-size: 1.1rem;
+      font-weight: 700;
+      cursor: pointer;
+      box-shadow: 0 6px 24px rgba(255,61,127,0.4);
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+    .blow-btn:hover {
+      transform: scale(1.07);
+      box-shadow: 0 10px 36px rgba(255,61,127,0.55);
+    }
+    .blow-btn:active { transform: scale(0.97); }
+
+    /* ── MUSIC BUTTON ── */
+    #music-btn {
+      position: fixed;
+      bottom: 28px;
+      left: 28px;
+      width: 62px;
+      height: 62px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, var(--rose), var(--purple));
+      color: white;
+      border: none;
+      font-size: 1.6rem;
+      cursor: pointer;
+      box-shadow: 0 6px 24px rgba(255,61,127,0.5);
+      z-index: 1000;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+    #music-btn:hover {
+      transform: scale(1.12);
+      box-shadow: 0 10px 36px rgba(255,61,127,0.65);
+    }
+    #music-btn.playing {
+      animation: pulse-ring 1.4s ease-out infinite;
+    }
+    @keyframes pulse-ring {
+      0%   { box-shadow: 0 0 0 0 rgba(255,61,127,0.55), 0 6px 24px rgba(255,61,127,0.5); }
+      70%  { box-shadow: 0 0 0 18px rgba(255,61,127,0), 0 6px 24px rgba(255,61,127,0.5); }
+      100% { box-shadow: 0 0 0 0 rgba(255,61,127,0), 0 6px 24px rgba(255,61,127,0.5); }
+    }
+    #music-label {
+      position: fixed;
+      bottom: 98px;
+      left: 16px;
+      background: white;
+      color: var(--rose);
+      font-family: 'Heebo', sans-serif;
+      font-size: 0.78rem;
+      font-weight: 700;
+      padding: 5px 10px;
+      border-radius: 12px;
+      box-shadow: 0 4px 14px rgba(255,61,127,0.2);
+      white-space: nowrap;
+      opacity: 0;
+      transform: translateY(6px);
+      transition: opacity 0.3s, transform 0.3s;
+      pointer-events: none;
+      z-index: 1000;
+    }
+    #music-label.visible { opacity: 1; transform: translateY(0); }
+
+    /* wish text popup */
+    #wish-text {
+      font-size: 1.3rem;
+      color: var(--rose);
+      font-weight: 700;
+      min-height: 36px;
+      margin-top: 14px;
+      opacity: 0;
+      transform: scale(0.7);
+      transition: opacity 0.5s, transform 0.5s;
+    }
+    #wish-text.show {
+      opacity: 1;
+      transform: scale(1);
+    }
+  </style>
+</head>
+<body>
+
+<canvas id="confetti-canvas"></canvas>
+
+<!-- floating hearts bg -->
+<div class="floating-hearts" id="hearts"></div>
+
+<!-- HERO -->
+<section class="hero">
+  <span class="crown">👑</span>
+  <h1>יום הולדת שמח<br>אמא מירית!</h1>
+  <p class="sub">אנחנו הכי אוהבים אותך בכל העולם ❤️</p>
+</section>
+
+<!-- CAKE -->
+<section class="cake-section">
+  <div class="cake-wrap" id="cakeWrap">
+    <svg class="cake" viewBox="0 0 340 310" xmlns="http://www.w3.org/2000/svg">
+      <!-- plate -->
+      <ellipse cx="170" cy="295" rx="155" ry="14" fill="#f9c4dc" opacity="0.6"/>
+
+      <!-- bottom tier -->
+      <rect x="30" y="205" width="280" height="80" rx="22" fill="#ff8cc8"/>
+      <rect x="30" y="205" width="280" height="30" rx="22" fill="#ff6eb4"/>
+      <!-- frosting drips bottom -->
+      <path d="M55,205 Q65,190 75,205 Q85,190 95,205 Q105,190 115,205 Q125,190 135,205 Q145,190 155,205 Q165,190 175,205 Q185,190 195,205 Q205,190 215,205 Q225,190 235,205 Q245,190 255,205 Q265,190 275,205 Q285,190 295,205" stroke="white" stroke-width="8" fill="none" stroke-linecap="round"/>
+      <!-- decorations bottom -->
+      <circle cx="80"  cy="240" r="8" fill="#ffd700"/>
+      <circle cx="130" cy="248" r="6" fill="#c77dff"/>
+      <circle cx="180" cy="242" r="8" fill="#ffd700"/>
+      <circle cx="230" cy="248" r="6" fill="#c77dff"/>
+      <circle cx="275" cy="242" r="7" fill="#ffd700"/>
+
+      <!-- middle tier -->
+      <rect x="60" y="130" width="220" height="80" rx="20" fill="#ff6eb4"/>
+      <rect x="60" y="130" width="220" height="28" rx="20" fill="#ff3d7f"/>
+      <!-- frosting drips mid -->
+      <path d="M80,130 Q90,116 100,130 Q110,116 120,130 Q130,116 140,130 Q150,116 160,130 Q170,116 180,130 Q190,116 200,130 Q210,116 220,130 Q230,116 240,130 Q250,116 260,130" stroke="white" stroke-width="7" fill="none" stroke-linecap="round"/>
+      <!-- hearts mid tier -->
+      <text x="110" y="165" font-size="22" text-anchor="middle">❤️</text>
+      <text x="170" y="170" font-size="18" text-anchor="middle">⭐</text>
+      <text x="230" y="165" font-size="22" text-anchor="middle">❤️</text>
+
+      <!-- top tier -->
+      <rect x="100" y="65" width="140" height="70" rx="18" fill="#ff3d7f"/>
+      <rect x="100" y="65" width="140" height="22" rx="18" fill="#c7005a"/>
+      <!-- frosting drips top -->
+      <path d="M115,65 Q122,54 129,65 Q136,54 143,65 Q150,54 157,65 Q164,54 171,65 Q178,54 185,65 Q192,54 199,65 Q206,54 213,65 Q220,54 227,65" stroke="white" stroke-width="6" fill="none" stroke-linecap="round"/>
+      <!-- text on cake -->
+      <text x="170" y="108" font-family="Heebo,sans-serif" font-size="14" font-weight="900" fill="white" text-anchor="middle" dominant-baseline="middle">מירית</text>
+
+      <!-- candles (5) -->
+      <!-- candle 1 -->
+      <rect x="118" y="30" width="12" height="36" rx="5" fill="#ffd700"/>
+      <ellipse class="flame" cx="124" cy="28" rx="7" ry="10" fill="#ff9500" opacity="0.95"/>
+      <ellipse class="flame" cx="124" cy="25" rx="4" ry="7"  fill="#fffde0"/>
+
+      <!-- candle 2 -->
+      <rect x="143" y="22" width="12" height="44" rx="5" fill="#c77dff"/>
+      <ellipse class="flame" cx="149" cy="20" rx="7" ry="10" fill="#ff9500" opacity="0.95"/>
+      <ellipse class="flame" cx="149" cy="17" rx="4" ry="7"  fill="#fffde0"/>
+
+      <!-- candle 3 -->
+      <rect x="164" y="18" width="12" height="48" rx="5" fill="#ff6eb4"/>
+      <ellipse class="flame" cx="170" cy="16" rx="7" ry="10" fill="#ff9500" opacity="0.95"/>
+      <ellipse class="flame" cx="170" cy="13" rx="4" ry="7"  fill="#fffde0"/>
+
+      <!-- candle 4 -->
+      <rect x="185" y="22" width="12" height="44" rx="5" fill="#c77dff"/>
+      <ellipse class="flame" cx="191" cy="20" rx="7" ry="10" fill="#ff9500" opacity="0.95"/>
+      <ellipse class="flame" cx="191" cy="17" rx="4" ry="7"  fill="#fffde0"/>
+
+      <!-- candle 5 -->
+      <rect x="210" y="30" width="12" height="36" rx="5" fill="#ffd700"/>
+      <ellipse class="flame" cx="216" cy="28" rx="7" ry="10" fill="#ff9500" opacity="0.95"/>
+      <ellipse class="flame" cx="216" cy="25" rx="4" ry="7"  fill="#fffde0"/>
+    </svg>
+  </div>
+
+  <br>
+  <button class="blow-btn" onclick="blowCandles()">🌬️ תנשפי את הנרות!</button>
+  <p id="wish-text"></p>
+</section>
+
+<!-- MESSAGE CARDS -->
+<div class="cards">
+  <div class="card">
+    <span class="icon">🌸</span>
+    <h3>האמא הכי טובה</h3>
+    <p>תמיד שם בשבילנו, בכל רגע ובכל מצב. אין מילים שיכולות לתאר כמה את מיוחדת.</p>
+  </div>
+  <div class="card">
+    <span class="icon">✨</span>
+    <h3>אור בחיינו</h3>
+    <p>החיוך שלך מאיר את כל החדר, והלב שלך — הכי גדול שיש. אנחנו כל כך בשבילנו שנולדנו לך.</p>
+  </div>
+  <div class="card">
+    <span class="icon">💪</span>
+    <h3>גיבורה שלנו</h3>
+    <p>את עושה הכל נראה פשוט וטבעי, אבל אנחנו יודעים כמה כוח ואהבה יש בכל מה שאת עושה.</p>
+  </div>
+</div>
+
+<!-- BIG LOVE MESSAGE -->
+<div class="love-msg">
+  <h2>💌 מכתב קטן מהלב</h2>
+  <p>
+    אמא מירית,<br><br>
+    יש אנשים שנולדים מיוחדים — ואת אחת מהם.<br>
+    כל חיבוק שלך מרגיש כמו בית,<br>
+    כל מילה שלך נחרתת בלב לנצח.<br><br>
+    ביום ההולדת שלך אנחנו רוצים שתדעי:<br>
+    <strong>אנחנו הכי אוהבים אותך בכל העולם.</strong><br><br>
+    שתמיד תהיי בריאה, שמחה ואהובה ❤️
+  </p>
+</div>
+
+<!-- MUSIC BUTTON -->
+<audio id="bg-music" src="./הכי_טובה_ביקום.mp3" loop></audio>
+<div id="music-label">♪ הכי טובה ביקום</div>
+<button id="music-btn" onclick="toggleMusic()" title="נגן מוזיקה">♪</button>
+
+<!-- SIGNATURE -->
+<div class="signature">
+  באהבה עצומה,<br>
+  <strong>המשפחה שלך ❤️</strong>
+</div>
+
+<script>
+  // ── Floating hearts ──
+  const heartsEl = document.getElementById('hearts');
+  const heartEmojis = ['❤️','💕','💖','💗','💓','🌸','✨'];
+  for (let i = 0; i < 18; i++) {
+    const h = document.createElement('span');
+    h.className = 'fheart';
+    h.textContent = heartEmojis[Math.floor(Math.random() * heartEmojis.length)];
+    h.style.left = Math.random() * 100 + 'vw';
+    h.style.animationDelay = (Math.random() * 6) + 's';
+    h.style.animationDuration = (4 + Math.random() * 5) + 's';
+    h.style.fontSize = (1 + Math.random() * 1.6) + 'rem';
+    heartsEl.appendChild(h);
+  }
+
+  // ── Confetti ──
+  const canvas = document.getElementById('confetti-canvas');
+  const ctx = canvas.getContext('2d');
+  let particles = [];
+  let running = false;
+
+  function resizeCanvas() {
+    canvas.width  = window.innerWidth;
+    canvas.height = window.innerHeight;
+  }
+  window.addEventListener('resize', resizeCanvas);
+  resizeCanvas();
+
+  function spawnConfetti(n = 120) {
+    const colors = ['#ff3d7f','#ffd700','#c77dff','#ff6eb4','#00e5ff','#69ff47','#ff9500'];
+    for (let i = 0; i < n; i++) {
+      particles.push({
+        x: Math.random() * canvas.width,
+        y: -20,
+        r: 5 + Math.random() * 8,
+        d: 30 + Math.random() * 80,
+        color: colors[Math.floor(Math.random() * colors.length)],
+        tilt: Math.random() * 10 - 10,
+        tiltAngleInc: 0.07 + Math.random() * 0.05,
+        tiltAngle: 0,
+        vx: (Math.random() - 0.5) * 3,
+        vy: 2 + Math.random() * 4,
+        life: 1,
+      });
+    }
+  }
+
+  function drawConfetti() {
+    if (!particles.length) { running = false; return; }
+    running = true;
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    particles.forEach(p => {
+      ctx.save();
+      ctx.translate(p.x, p.y);
+      ctx.rotate(p.tiltAngle);
+      ctx.beginPath();
+      ctx.ellipse(0, 0, p.r * 0.5, p.r, 0, 0, Math.PI * 2);
+      ctx.fillStyle = p.color;
+      ctx.globalAlpha = p.life;
+      ctx.fill();
+      ctx.restore();
+    });
+    particles.forEach(p => {
+      p.tiltAngle += p.tiltAngleInc;
+      p.x += p.vx;
+      p.y += p.vy;
+      p.vy += 0.06;
+      if (p.y > canvas.height * 0.8) p.life -= 0.025;
+    });
+    particles = particles.filter(p => p.life > 0);
+    requestAnimationFrame(drawConfetti);
+  }
+
+  function launchConfetti() {
+    spawnConfetti(160);
+    if (!running) drawConfetti();
+  }
+
+  // auto-launch on load
+  window.addEventListener('load', () => {
+    setTimeout(launchConfetti, 400);
+    setTimeout(launchConfetti, 1800);
+  });
+
+  // ── Music ──
+  function toggleMusic() {
+    const btn   = document.getElementById('music-btn');
+    const label = document.getElementById('music-label');
+    const music = document.getElementById('bg-music');
+
+    if (music.paused) {
+      music.play()
+        .then(() => {
+          btn.textContent = '⏸';
+          btn.classList.add('playing');
+          label.textContent = '♪ הכי טובה ביקום';
+          label.classList.add('visible');
+          setTimeout(() => label.classList.remove('visible'), 2800);
+        })
+        .catch(e => alert('שגיאת אודיו: ' + e.message));
+    } else {
+      music.pause();
+      btn.textContent = '♪';
+      btn.classList.remove('playing');
+      label.classList.remove('visible');
+    }
+  }
+
+  // ── Blow Candles ──
+  let blown = false;
+  const wishes = [
+    '🎂 שתהיי בריאה ומאושרת לנצח!',
+    '💛 כל הברכות מכל הלב!',
+    '🌟 שנה נפלאה ומלאה באהבה!',
+    '🌸 שכל משאלות ליבך תתגשמנה!',
+  ];
+
+  function blowCandles() {
+    if (blown) { launchConfetti(); return; }
+    blown = true;
+    // hide flames by shrinking them
+    document.querySelectorAll('.flame').forEach(f => {
+      f.style.transition = 'transform 0.4s, opacity 0.4s';
+      f.style.transform = 'scale(0)';
+      f.style.opacity = '0';
+    });
+    const wishEl = document.getElementById('wish-text');
+    wishEl.textContent = wishes[Math.floor(Math.random() * wishes.length)];
+    wishEl.classList.add('show');
+    launchConfetti();
+    setTimeout(launchConfetti, 600);
+    document.querySelector('.blow-btn').textContent = '🎉 עוד קונפטי!';
+  }
+</script>
+</body>
+</html>
